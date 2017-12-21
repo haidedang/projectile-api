@@ -1,0 +1,50 @@
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Desktop.ini
+ehthumbs.db
+Thumbs.db
+
+# Jetbrain IDEs (WebStorm, PhpStorm, etc.) #
+############################################
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Eclipse IDE #
+###############
+.project
+.externalToolBuilders/
+.settings/
+
+# SublimeText project files #
+#############################
+*.sublime-workspace
+*.sublime-project
+
+# Visual Studio Code #
+######################
+.vscode/
+
+# Node #
+#########
+node_modules
+npm-debug.log
+v8-compile-cache-0
+yarn-error.log
+
+# Project #
+###########
+/bin/
+/dist/
+/logs/*
+
+/ts-node-*
+v8-compile-cache-0
+yarn-error.lock
+package-lock.json
