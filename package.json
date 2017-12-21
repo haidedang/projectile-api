@@ -1,0 +1,11 @@
+{
+  "name": "ptile-vacation",
+  "version": "1.0.0",
+  "description": "Lists all employees on vacation",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jan Fanslau",
+  "license": "ISC"
+}
