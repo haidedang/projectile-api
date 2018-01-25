@@ -6,13 +6,14 @@ This should become an API to send booking information directly to Projectile.
 
 ```
 yarn install
-LOGIN={your projectile login} PASSWORD={your projectile password} node index.js
+LOGIN={your projectile login} PASSWORD={your projectile password} node userCred.js
+node main.js 
+
 ```
 
 ## todo
 
-* set default Employer ID for follwing calls
-* write bookings
+
 * make everything nice
 
 
@@ -20,6 +21,9 @@ LOGIN={your projectile login} PASSWORD={your projectile password} node index.js
 
 * read booking packages
 * read vacation list
+* set default Employer ID for follwing calls
+* write bookings
+* simple CLI program interface 
 
 
 

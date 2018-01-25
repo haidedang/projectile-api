@@ -1,14 +1,21 @@
 {
-  "name": "ptile-vacation",
+  "name": "projectile-CLI",
   "version": "1.0.0",
-  "description": "Lists all employees on vacation",
-  "main": "index.js",
+  "description": "booking hours for projectile",
+  "main": "projectileCli.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Jan Fanslau",
+  "author": "Hai Dang",
   "license": "ISC",
+  "bin": {
+    "projectile": "./projectileCli.js"
+  },
   "dependencies": {
+    "co": "^4.6.0",
+    "co-prompt": "^1.0.0",
+    "commander": "^2.13.0",
+    "csvtojson": "^1.1.9",
     "request": "^2.83.0",
     "request-promise-native": "^1.0.5"
   }

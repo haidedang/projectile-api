@@ -1,7 +1,11 @@
+#!/usr/bin/env node
 const fs = require('fs');
+let co = require('co');
+let prompt = require('co-prompt');
+
 let request = require("request");
 
-let user = JSON.parse(fs.readFileSync('user.txt'));
+
 request.defaults({jar: true});
 
 function createLogin() {
@@ -80,8 +84,9 @@ function createLogin() {
  * @returns {Promise} cookie
  */
 let login = async () => {
-
+    let user = await JSON.parse(fs.readFileSync('user.txt'));
     return new Promise((resolve, reject) => {
+
             let options = {
                 method: 'POST',
                 url: 'https://projectile.office.sevenval.de/projectile/start',
@@ -99,16 +104,15 @@ let login = async () => {
                     },
                 strictSSL: false //TODO: SSL Zertifizierung mit node.js
             };
+
             request(options, function (error, response, body) {
+                if (error) throw new Error(error);
 
-                            let temp = response.headers['set-cookie'][0];
-                            let cookie = temp.split(';')[0];
-                            resolve(cookie);
+                //  console.log(response.headers['set-cookie']);
+                let temp = response.headers['set-cookie'][0];
+                let cookie = temp.split(';')[0];
 
-                    //  console.log(response.headers['set-cookie']);
-                    if (error) { throw new Error("Zeitüberschreitung");}
-
-
+                resolve(cookie);
             });
         }
     )
@@ -305,18 +309,18 @@ async function Delete(listEntry) {
 }
 
 //simplified for API use
-exports.jobList = async () => {
+async function jobList () {
     console.log('fetching data...');
     let cookie = await login();
-   /* let employee = await getEmployee(cookie);
+    let employee = await getEmployee(cookie);
 
     return showJobList(cookie, employee).then((data) => {
         return data;
-    });*/
+    });
 };
 
 // simplified for API Use
-exports.save = async (date, listEntry, time, project, note) => {
+async function save (date, listEntry, time, project, note) {
     console.log('saving data...');
     let cookie = await login();
     let employee = await getEmployee(cookie);
@@ -326,8 +330,37 @@ exports.save = async (date, listEntry, time, project, note) => {
 }
 
 
+function configure(username, pass){
 
+    let login = username;
+    let password = pass;
 
+    let user = {login: login,
+        password: password
+    }
 
+    fs.writeFile('user.txt', JSON.stringify(user), (err) => {
+        if (err) throw err;
+        console.log("The file has been saved!");
+    });
+}
 
+if ((process.argv[2] =="configure" || process.argv[1] == "configure")){
+    co(function *(){
+        let username = yield prompt('username: ');
+        let pw = yield prompt.password('password: ');
+         configure(username,pw);
+    })
+}
 
+if ((process.argv[2] =="-j")){
+    jobList().then((data)=> { console.log(data)});
+}
+
+if ((process.argv[1]=="-t" || process.argv[2] == "-t")){
+
+    let temp = process.argv[5];
+
+   // console.log(process.argv[3], process.argv[4], process.argv[5], process.argv[6]) ;
+     save(Date.now(), process.argv[3], process.argv[4], process.argv[5], process.argv[6]).then(() => console.log('saved.'));
+}
