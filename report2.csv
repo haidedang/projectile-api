@@ -1,0 +1,4 @@
+Version,TimeEntryID,StartDate,StartTime,StartTimeOffset,EndDate,EndTime,EndTimeOffset,Duration,ActivityID,Activity,Username,Note
+"2","1182921","2018-01-25","11:00:00","+0100","2018-01-25","12:00:00","+0100","60","109208","bla [1234-56]","christoph.bussenius+timeular@sevenval.com","TEST"
+"2","1182902","2018-01-25","12:00:00","+0100","2018-01-25","13:00:00","+0100","60","109209","blubb [6543-21]","christoph.bussenius+timeular@sevenval.com","TEST Phonecall"
+"2","1182904","2018-01-25","13:00:00","+0100","2018-01-25","15:00:59","+0100","120","109208","bla [1234-56]","christoph.bussenius+timeular@sevenval.com","TEST"
