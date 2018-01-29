@@ -285,12 +285,14 @@ let saveEntry = async (cookie, employee, number, time, project, note) => {
     /* console.log("save" + JSON.stringify(TempJobTime.filter((item)=> {
         return item["no"]== project; 
     })[0] )); */
+    // store an updated Joblist in a variable 
     TempJobTime = exports.joblist;
+
     console.log(TempJobTime);
 }
 
 async function checkForSuccessfulSave(project){ 
-    // get actual time of jobs listed. 
+    // get actual Joblist  
     let NewJobList = await exports.fetchNewJobList(); 
     // extract the item out of the list 
     let entry2 = NewJobList.filter((item)=> {
@@ -302,7 +304,8 @@ async function checkForSuccessfulSave(project){
         return item["no"]== project; 
     })[0] );  */
 
-    // compare it to the old one 
+    // compare it to the updated Joblist after Saving 
+    // if it is not the same value, saving did not happen! 
     if ((TempJobTime.filter((item)=> {
         return item["no"]== project; 
     }))[0].time !== entry2[0].time ) { 
@@ -392,6 +395,7 @@ exports.save = async ( date, listEntry, time, project, note) => {
         await checkForSuccessfulSave(project); 
     } catch(err){ 
        console.log(err);
+       //TODO: store packages which couldnt be saved in an external file
     }
  
     await console.log('Finish'+ "\n");
