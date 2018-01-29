@@ -4,6 +4,11 @@ let request = require("request");
 let user = JSON.parse(fs.readFileSync('user.txt'));
 request.defaults({jar: true});
 
+let TempJobTime=[];
+
+
+//When initializing, this variable stores the total hours of a specific project after saving each entry
+
 function createLogin() {
 
     let j = request.jar();
@@ -77,7 +82,9 @@ function createLogin() {
 
 /**
  *
- * @returns {Promise} cookie
+ * @returns Promise {cookie}
+ * possible Error Cases: Wrong user and Login Data, No VPN Connection.  
+ *
  */
 exports.login = async () => {
 
@@ -108,11 +115,9 @@ exports.login = async () => {
                     let cookie = temp.split(';')[0];
                     resolve(cookie);
                 }
-
-
             });
         }
-    ).catch((e)=> console.log(e));
+    ).catch((e)=> {throw new Error(e)});
 }
 
 
@@ -134,7 +139,6 @@ function option(method, url, cookie, body) {
 
 let showJobList = async (cookie, employee) => {
 
-    try {
         let body = await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get&_dc=1515081239766', cookie, {
             [employee]:
                 ['DayList',
@@ -147,6 +151,8 @@ let showJobList = async (cookie, employee) => {
             Dock: ['Area.TrackingArea', 'Area.ProjectManagementArea']
         });
 
+/*        await fs.appendFile("answer.json", JSON.stringify(body), (err)=>{console.log(err)}); 
+ */
         /**
          * get name and NO. of Employee Job
          */
@@ -163,17 +169,21 @@ let showJobList = async (cookie, employee) => {
             let obj = {};
             obj.name = body["values"][joblist[i]][32]["v"]; //TODO: function to retrieve index of jobname and joblink
             obj.no = body["values"][joblist[i]][11]["v"];
+            obj.time = body["values"][joblist[i]][10]["v"]; 
             advJoblist.push(obj);
         }
-
+        exports.joblist= advJoblist;  
         return advJoblist;
-
-    } catch(error){
-        console.log(error);
-    }
-
 }
 
+/**
+ *
+ * @param method
+ * @param url
+ * @param cookie
+ * @param body
+ * @returns {Promise.<T>}
+ */
 function normalPostURL(method, url, cookie, body) {
     return new Promise((resolve, reject) => {
         let options = option(method, url, cookie, body);
@@ -182,10 +192,11 @@ function normalPostURL(method, url, cookie, body) {
             if (error){
                reject(error);
             }
-            else{ resolve(body);}
-
+            else{
+                resolve(body);}
         });
-    }).catch((error)=> console.log(error))
+    })
+    //.catch((error)=> {throw new Error(error)}); 
 }
 
 
@@ -193,7 +204,9 @@ function normalPostURL(method, url, cookie, body) {
  *
  * @param cookie
  * @returns {Promise} Employee
+ * # possible Error Case: wrong login data. 
  */
+
 exports.getEmployee = async (cookie) => {
             // Überprüfe ob Request in Ordnung ging
             let body = await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action&_dc=1515496876799', cookie, {
@@ -201,21 +214,20 @@ exports.getEmployee = async (cookie) => {
                 "name": "*",
                 "action": "TimeTracker1",
                 "Params": {}
-            });
+            });            
             try {
                 let EmplN = JSON.parse(body["values"]["Dock"][0]["v"][0])["a"];
                 let temp = EmplN.substr(1);
                 return temp;
             } catch (error){
-               console.log("Ungültige Login Daten. Bitte überprüfen.");
+               throw new Error("Ungültige Login Daten. Bitte überprüfen.");
             }
 }
 
 
 let saveEntry = async (cookie, employee, number, time, project, note) => {
     console.log(employee);
-
-
+    
     // let temp = await  normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get&_dc=1515081239766', cookie,{"Dock":["Area.TrackingArea"],[employee]:["DayList","JobList","Begin","Favorites","TrackingRestriction","FilterCustomer","FilterProject"]})
     let dayList = await getDayListToday(cookie, employee);
     let listEntry = dayList[number];
@@ -231,7 +243,8 @@ let saveEntry = async (cookie, employee, number, time, project, note) => {
                 "v": time
             }]
         }
-    });
+    })
+  
     // select Project
     await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit&_dc=1515080624305', cookie, {
         "values": {
@@ -240,7 +253,7 @@ let saveEntry = async (cookie, employee, number, time, project, note) => {
                 "v": project
             }]
         }
-    });
+    })
     // write note
     await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit&_dc=1515080659058', cookie, {
         "values": {
@@ -249,7 +262,8 @@ let saveEntry = async (cookie, employee, number, time, project, note) => {
                 "v": note
             }]
         }
-    });
+    })
+
     // save entry
     await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action&_dc=1515080819797', cookie, {
         "ref": employee,
@@ -257,9 +271,43 @@ let saveEntry = async (cookie, employee, number, time, project, note) => {
         "action": "Save",
         "Params": {}
     })
+
     // refresh
     await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=options&_dc=1515596886820', cookie, {[employee]: ["FilterCustomer", "FilterProject"]});
 
+    for ( let item of exports.joblist){ 
+        if( item["no"] == project){ 
+
+            item.time = Number(item.time) + Number(time); 
+            break; 
+        }
+    }
+    /* console.log("save" + JSON.stringify(TempJobTime.filter((item)=> {
+        return item["no"]== project; 
+    })[0] )); */
+    TempJobTime = exports.joblist;
+    console.log(TempJobTime);
+}
+
+async function checkForSuccessfulSave(project){ 
+    // get actual time of jobs listed. 
+    let NewJobList = await exports.fetchNewJobList(); 
+    // extract the item out of the list 
+    let entry2 = NewJobList.filter((item)=> {
+        return item["no"]== project; 
+    })
+/*     console.log(exports.TempJobTime);
+    console.log(JSON.stringify(entry2[0]));
+    console.log(exports.TempJobTime.filter((item)=> {
+        return item["no"]== project; 
+    })[0] );  */
+
+    // compare it to the old one 
+    if ((TempJobTime.filter((item)=> {
+        return item["no"]== project; 
+    }))[0].time !== entry2[0].time ) { 
+        throw new Error("couldnt save entry"); 
+    } else { console.log("success")}
 }
 
 async function deleteEntry(cookie, employee, number) {
@@ -322,17 +370,31 @@ async function Delete(listEntry) {
 //simplified for API use
 exports.jobList = async (cookie,employee) => {
     console.log('fetching data...');
-        return showJobList(cookie, employee).then((data) => {
-            return data;
-        });
+        return showJobList(cookie, employee); 
 };
 
+exports.fetchNewJobList = async () => { 
+    let cookie = await exports.login(); 
+    let employee = await exports.getEmployee(cookie); 
+    console.log('fetching data...');
+    let data =  await showJobList(cookie, employee); 
+    return data; 
+}
+
 // simplified for API Use
-exports.save = async (cookie, employee, date, listEntry, time, project, note) => {
+exports.save = async ( date, listEntry, time, project, note) => {
     console.log('saving data...');
+    let cookie = await exports.login();
+    let employee = await exports.getEmployee(cookie);
     await setCalendarDate(date, cookie, employee);
     await saveEntry(cookie, employee, listEntry, time, project, note);
-    await console.log('Finish');
+    try { 
+        await checkForSuccessfulSave(project); 
+    } catch(err){ 
+       console.log(err);
+    }
+ 
+    await console.log('Finish'+ "\n");
 }
 
 
