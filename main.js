@@ -1,4 +1,15 @@
 #!/usr/bin/env node
+
+function checkForNodeVersion(){
+    if(process.versions.node.split(".")[0] !== "8"){
+        throw new Error("Please update to latest node version.");
+    } else {
+        console.log("Latest node version installed..");
+    }
+}
+
+checkForNodeVersion();
+
 const index = require('./index.js');
 
 async function init() {
