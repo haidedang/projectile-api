@@ -151,7 +151,7 @@ let showJobList = async (cookie, employee) => {
             Dock: ['Area.TrackingArea', 'Area.ProjectManagementArea']
         });
 
-/*        await fs.appendFile("answer.json", JSON.stringify(body), (err)=>{console.log(err)});
+/*         fs.writeFile("answer.json", JSON.stringify(body), (err)=>{console.log(err)});
  */
         /**
          * get name and NO. of Employee Job
@@ -275,6 +275,11 @@ let saveEntry = async (cookie, employee, number, time, project, note) => {
     // refresh
     await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=options&_dc=1515596886820', cookie, {[employee]: ["FilterCustomer", "FilterProject"]});
 
+}
+
+// for checking if planaufwand limit is hit??
+async function checkForSuccessfulSave(project){
+
     for ( let item of exports.joblist){
         if( item["no"] == project){
 
@@ -288,11 +293,6 @@ let saveEntry = async (cookie, employee, number, time, project, note) => {
     // store an updated Joblist in a variable
     TempJobTime = exports.joblist;
 
-    console.log(TempJobTime);
-}
-
-// for checking if planaufwand limit is hit??
-async function checkForSuccessfulSave(project){
     // get actual Joblist
     let NewJobList = await exports.fetchNewJobList();
     // extract the item out of the list
@@ -392,12 +392,12 @@ exports.save = async ( date, listEntry, time, project, note) => {
     let employee = await exports.getEmployee(cookie);
     await setCalendarDate(date, cookie, employee);
     await saveEntry(cookie, employee, listEntry, time, project, note);
-    try {
+   /*  try {
         await checkForSuccessfulSave(project);
     } catch(err){
        console.log(err);
        //TODO: store packages which couldnt be saved in an external file
-    }
+    } */
 
     await console.log('Finish'+ "\n");
 }

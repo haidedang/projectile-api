@@ -6,9 +6,15 @@ let listentry = 0;
 let month = [];
 let monthCleaned = [];
 
-const csvFilePath = './report5-2.csv';
+const csvFilePath = './report1.csv';
 const csv = require('csvtojson');
-csv()
+
+async function init(){ 
+    /* const cookie = await index.login(); 
+    const employee = await index.getEmployee(cookie); 
+    const jobList = await index.jobList(cookie,employee);  */
+
+    csv()
     .fromFile(csvFilePath)
     .on('json',(jsonObj)=>{
         let day = {};
@@ -58,3 +64,7 @@ csv()
             // console.log(obj["StartDate"], obj["listEntry"], obj["Duration"],  obj["Activity"], obj["Note"]);
         })
     });
+
+}
+
+init();
