@@ -1,0 +1,3 @@
+Version,TimeEntryID,StartDate,StartTime,StartTimeOffset,EndDate,EndTime,EndTimeOffset,Duration,ActivityID,Activity,Username,Note
+"2","1183659","2018-01-29","09:00:00","+0100","2018-01-29","12:00:00","+0100","240","109208","bla [SEV18001-62]","christoph.bussenius+timeular@sevenval.com","Foo"
+"2","1183660","2018-01-29","14:00:00","+0100","2018-01-29","15:00:00","+0100","120","109208","bla [SEV18001-62]","christoph.bussenius+timeular@sevenval.com","Bar"

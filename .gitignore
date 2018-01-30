@@ -48,3 +48,7 @@ yarn-error.log
 v8-compile-cache-0
 yarn-error.lock
 package-lock.json
+
+# Login credentials #
+#####################
+user.txt
