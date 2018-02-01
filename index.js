@@ -226,7 +226,7 @@ exports.getEmployee = async (cookie) => {
 
 
 let saveEntry = async (cookie, employee, number, time, project, note) => {
-    console.log(employee);
+    console.log("employee: " + employee);
 
     // let temp = await  normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get&_dc=1515081239766', cookie,{"Dock":["Area.TrackingArea"],[employee]:["DayList","JobList","Begin","Favorites","TrackingRestriction","FilterCustomer","FilterProject"]})
     let dayList = await getDayListToday(cookie, employee);
@@ -279,10 +279,8 @@ let saveEntry = async (cookie, employee, number, time, project, note) => {
 
 // for checking if planaufwand limit is hit??
 async function checkForSuccessfulSave(project){
-
     for ( let item of exports.joblist){
         if( item["no"] == project){
-
             item.time = Number(item.time) + Number(time);
             break;
         }
@@ -315,24 +313,22 @@ async function checkForSuccessfulSave(project){
 }
 
 async function deleteEntry(cookie, employee, number) {
+    // mark entry for deletion, get popup response, extract ref and execute action to delete
     let dayList = await getDayListToday(cookie, employee);
     let listEntry = dayList[number];
-    await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action&_dc=1515678755483', cookie, {
+    let body = await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action', cookie, {
         "ref": employee,
         "name": "DayList",
         "action": "RowAction_Delete",
         "Params": {"ref": listEntry}
     });
-    await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action&_dc=1515679735908', cookie, {
-        "ref": "1515679733964-0",
+
+    await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action', cookie, {
+        "ref": body.dialog.ref,
         "name": "*",
         "action": "+0+1__null_",
         "Params": {"isDialog": true}
     });
-    /*// save entry
-    await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action&_dc=1515080819797', cookie,  {"ref":employee,"name":"*","action":"Save","Params":{}});*/
-    // refresh
-    await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=options&_dc=1515596886820', cookie, {[employee]: ["FilterCustomer", "FilterProject"]});
 }
 
 async function getDayListToday(cookie, employee) {
@@ -362,13 +358,13 @@ async function setCalendarDate(date, cookie, employee) {
     })
 }
 
-async function Delete(listEntry) {
-
-    let cookie = await login();
-    let employee = await getEmployee(cookie);
-    await setCalendarDate(cookie, employee);
+// e.g.: index.delete('2018-02-01', 0)
+exports.delete = async (date, listEntry) => {
+    let cookie = await exports.login();
+    let employee = await exports.getEmployee(cookie);
+    await setCalendarDate(date, cookie, employee);
     await deleteEntry(cookie, employee, listEntry);
-    console.log("Finished Deleting.")
+    console.log("Finished Deleting.");
 }
 
 //simplified for API use
@@ -392,8 +388,8 @@ exports.save = async ( date, listEntry, time, project, note) => {
     let employee = await exports.getEmployee(cookie);
     await setCalendarDate(date, cookie, employee);
     await saveEntry(cookie, employee, listEntry, time, project, note);
-   /*  try {
-        await checkForSuccessfulSave(project);
+    /* try {
+        await checkForSuccessfulSave(project, cookie, employee);
     } catch(err){
        console.log(err);
        //TODO: store packages which couldnt be saved in an external file
