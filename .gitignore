@@ -52,3 +52,4 @@ package-lock.json
 # Login credentials #
 #####################
 user.txt
+timeularToken.txt

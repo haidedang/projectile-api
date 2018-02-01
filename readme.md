@@ -7,7 +7,8 @@ This should become an API to send booking information directly to Projectile.
 ```
 yarn install
 LOGIN={your projectile login} PASSWORD={your projectile password} node userCred.js
-node main.js 
+apiKey=<key> apiSecret=<key> node getTimeularToken.js
+node main.js
 
 ```
 
@@ -23,7 +24,4 @@ node main.js
 * read vacation list
 * set default Employer ID for follwing calls
 * write bookings
-* simple CLI program interface 
-
-
-
+* simple CLI program interface
