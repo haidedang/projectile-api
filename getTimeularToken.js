@@ -16,7 +16,7 @@ request.post('https://api.timeular.com/api/v2/developer/sign-in',{
       'Content-Type': 'application/json',
       'Accept': 'application/json;charset=UTF-8'
   },
-  json: { 'apiKey': 'MTMzNjdfNjYzNzhkM2VmMGM5NGUzOTg5NTc4MWI2ZjI4NDg0ZGM=', 'apiSecret': 'NzE4OWYwN2EwMDc3NGU3NGJjZWJjYzMyNTA3MTZkYTM='
+  json: { 'apiKey': apiKey, 'apiSecret': apiSecret
   },
 
 }, (err, res, body) => {
