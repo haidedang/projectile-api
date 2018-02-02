@@ -281,7 +281,6 @@ let saveEntry = async (cookie, employee, number, time, project, note) => {
 }
 
 // for checking if planaufwand limit is hit??
-<<<<<<< HEAD
 async function checkForSuccessfulSave(project, time){
     //actual joblist before saving
     // get the item of old joblist with specific projectnr. and add the time booked.
