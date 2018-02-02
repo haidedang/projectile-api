@@ -174,7 +174,7 @@ let showJobList = async (cookie, employee) => {
             obj.Totaltime = body["values"][joblist[i]][10]["v"];
             advJoblist.push(obj);
         }
-        exports.joblist=[]; 
+        exports.joblist=[];
         // get an actual copy of the joblist fetched from server
         exports.joblist= advJoblist;
         return advJoblist;
@@ -230,13 +230,7 @@ exports.getEmployee = async (cookie) => {
 
 
 let saveEntry = async (cookie, employee, number, time, project, note) => {
-<<<<<<< HEAD
-    console.log(employee);
-    
-=======
     console.log("employee: " + employee);
-
->>>>>>> 7601ee4d47ee7bb4bde908a94615b9d311fa3f8c
     // let temp = await  normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get&_dc=1515081239766', cookie,{"Dock":["Area.TrackingArea"],[employee]:["DayList","JobList","Begin","Favorites","TrackingRestriction","FilterCustomer","FilterProject"]})
     let dayList = await getDayListToday(cookie, employee);
     let listEntry = dayList[6];
@@ -291,42 +285,36 @@ let saveEntry = async (cookie, employee, number, time, project, note) => {
 async function checkForSuccessfulSave(project, time){
     //actual joblist before saving
     // get the item of old joblist with specific projectnr. and add the time booked.
-    let updatedProjectItem = {}; 
+    let updatedProjectItem = {};
     oldProjectItem={};
 
    /*  for (let item of exports.joblist){
         if( item["no"] == project){
             item["time"] = parseFloat(item["time"]) +  parseFloat(time);
-            projectItem = item; 
-=======
-async function checkForSuccessfulSave(project){
-    for ( let item of exports.joblist){
-        if( item["no"] == project){
-            item.time = Number(item.time) + Number(time);
->>>>>>> 7601ee4d47ee7bb4bde908a94615b9d311fa3f8c
+            projectItem = item;
             break;
         }
     } */
-    
-     oldProjectItem = exports.joblist.filter((item)=>{
-       return item["no"]==project; 
-    })[0]; 
-    
-    updatedProjectItem.name= oldProjectItem.name; 
-    updatedProjectItem.no = oldProjectItem.no; 
-    updatedProjectItem.time = parseFloat(oldProjectItem["time"]) +  parseFloat(time); 
 
-    console.log(oldProjectItem); 
+     oldProjectItem = exports.joblist.filter((item)=>{
+       return item["no"]==project;
+    })[0];
+
+    updatedProjectItem.name= oldProjectItem.name;
+    updatedProjectItem.no = oldProjectItem.no;
+    updatedProjectItem.time = parseFloat(oldProjectItem["time"]) +  parseFloat(time);
+
+    console.log(oldProjectItem);
     console.log(updatedProjectItem);
 
-    /* TempJobTime = []; 
+    /* TempJobTime = [];
     TempJobTime = exports.joblist; */
     /* console.log("save" + JSON.stringify(TempJobTime.filter((item)=> {
         return item["no"]== project;
     })[0] )); */
-    // store the old Joblist with updated project hours 
-   
-    // get actual Joblist from server, when this function gets called, tempJobTime will get fucked again  
+    // store the old Joblist with updated project hours
+
+    // get actual Joblist from server, when this function gets called, tempJobTime will get fucked again
     /* let NewJobList = await exports.fetchNewJobList();
     // extract the item out of the list
     let entry2 = NewJobList.filter((item)=> {
@@ -347,25 +335,14 @@ async function deleteEntry(cookie, employee, number) {
     // mark entry for deletion, get popup response, extract ref and execute action to delete
     let dayList = await getDayListToday(cookie, employee);
     let listEntry = dayList[number];
-<<<<<<< HEAD
-   let answer =  await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action&_dc=1515678755483', cookie, {
-=======
     let body = await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action', cookie, {
->>>>>>> 7601ee4d47ee7bb4bde908a94615b9d311fa3f8c
         "ref": employee,
         "name": "DayList",
         "action": "RowAction_Delete",
         "Params": {"ref": listEntry}
     });
-<<<<<<< HEAD
-    console.log(answer);
-    await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action&_dc=1515679735908', cookie, {
-        "ref": "1515679733964-0",
-=======
-
     await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action', cookie, {
         "ref": body.dialog.ref,
->>>>>>> 7601ee4d47ee7bb4bde908a94615b9d311fa3f8c
         "name": "*",
         "action": "+0+1__null_",
         "Params": {"isDialog": true}
@@ -398,9 +375,9 @@ async function setCalendarDate(date, cookie, employee) {
         }
     })
 
-    return answer; 
+    return answer;
 
-/*     fs.writeFile('calendar.json', JSON.stringify(answer), (err)=>{}); 
+/*     fs.writeFile('calendar.json', JSON.stringify(answer), (err)=>{});
  */}
 async function setCalendarDate2(date, cookie, employee) {
     date = date + "T00:00:00";
@@ -419,7 +396,7 @@ async function setCalendarDate2(date, cookie, employee) {
         }
     })
 
-    fs.writeFile('calendar2.json', JSON.stringify(answer), (err)=>{}); 
+    fs.writeFile('calendar2.json', JSON.stringify(answer), (err)=>{});
 }
 
 // e.g.: index.delete('2018-02-01', 0)
@@ -450,19 +427,14 @@ exports.save = async ( date, listEntry, time, project, note) => {
     console.log('saving data...');
     let cookie = await exports.login();
     let employee = await exports.getEmployee(cookie);
-/*     let jobList = await exports.jobList(cookie, employee); // fetch the actual joblist. 
- */   
-    await setCalendarDate(date, cookie, employee); 
+/*     let jobList = await exports.jobList(cookie, employee); // fetch the actual joblist.
+ */
+    await setCalendarDate(date, cookie, employee);
     await saveEntry(cookie, employee, listEntry, time, project, note);
-<<<<<<< HEAD
     
 /*     await setCalendarDate2(data, cookie, employee);
  */    /* try {
         await checkForSuccessfulSave(project, time);
-=======
-    /* try {
-        await checkForSuccessfulSave(project, cookie, employee);
->>>>>>> 7601ee4d47ee7bb4bde908a94615b9d311fa3f8c
     } catch(err){
        console.log(err);
        //TODO: store packages which couldnt be saved in an external file
@@ -471,46 +443,46 @@ exports.save = async ( date, listEntry, time, project, note) => {
     await console.log('Finish'+ "\n");
 }
 
-exports.getDate = async ( date)=> { 
-    let cookie2 = await exports.login(); 
+exports.getDate = async ( date)=> {
+    let cookie2 = await exports.login();
     let employee2 = await exports.getEmployee(cookie2);
-    await setCalendarDate(date, cookie2, employee2); 
+    await setCalendarDate(date, cookie2, employee2);
 }
 
 // Split Joblist into one without limit and one array with packages with limit
-exports.joblistLimited = async (list, limitTime, callback) => { 
-   let limitedJobList = []; 
-   
-   //transform array to a bundle of property values
-   let temp = list.map((item)=> { 
-        return item[limitTime]; 
-    })
-    
-    // create copy 
-    let iterationArr = temp.slice(0); 
+exports.joblistLimited = async (list, limitTime, callback) => {
+   let limitedJobList = [];
 
-    iterationArr.forEach((item)=>{ 
-        if(callback(item) ){ 
-            let a = list.splice(temp.indexOf(item),1)[0]; 
-            limitedJobList.push(a); 
-            temp.splice(temp.indexOf(item),1); 
+   //transform array to a bundle of property values
+   let temp = list.map((item)=> {
+        return item[limitTime];
+    })
+
+    // create copy
+    let iterationArr = temp.slice(0);
+
+    iterationArr.forEach((item)=>{
+        if(callback(item) ){
+            let a = list.splice(temp.indexOf(item),1)[0];
+            limitedJobList.push(a);
+            temp.splice(temp.indexOf(item),1);
         }
     })
 
     // array of limited packages
-    return limitedJobList; 
-    /* console.log(list); 
+    return limitedJobList;
+    /* console.log(list);
     console.log(limitedJobList); */
 }
 
-exports.getDayListToday = async function (){ 
-    let cookie = await exports.login(); 
-    let employee = await exports.getEmployee(cookie); 
+exports.getDayListToday = async function (){
+    let cookie = await exports.login();
+    let employee = await exports.getEmployee(cookie);
     return getDayListToday(cookie, employee);
 }
 
-exports.setCalendarDate = async function(){ 
-    let cookie = await exports.login(); 
-    let employee = await exports.getEmployee(cookie); 
+exports.setCalendarDate = async function(){
+    let cookie = await exports.login();
+    let employee = await exports.getEmployee(cookie);
     return setCalendarDate(cookie, employee);
 }
