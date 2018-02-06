@@ -36,7 +36,7 @@ function getTimeList(startDate, endDate){
             */
             // debugging
             // console.log(timeList.timeEntries[i].duration);
-            day["Duration"] = (Date.parse(timeList.timeEntries[i].duration.stoppedAt.substring(0, timeList.timeEntries[i].duration.stoppedAt.lastIndexOf(":"))) - Date.parse(timeList.timeEntries[i].duration.startedAt.substring(0, timeList.timeEntries[i].duration.startedAt.lastIndexOf(":"))))/60000;
+            day["Duration"] = ((Date.parse(timeList.timeEntries[i].duration.stoppedAt.substring(0, timeList.timeEntries[i].duration.stoppedAt.lastIndexOf(":"))) - Date.parse(timeList.timeEntries[i].duration.startedAt.substring(0, timeList.timeEntries[i].duration.startedAt.lastIndexOf(":"))))/60000)/60;
             day["Activity"] = timeList.timeEntries[i].activity.name.substring(timeList.timeEntries[i].activity.name.lastIndexOf("[")+1,timeList.timeEntries[i].activity.name.lastIndexOf("]"));
             day["Note"] = timeList.timeEntries[i].note.text;
             // console.log(day);
@@ -71,13 +71,28 @@ function getTimeList(startDate, endDate){
               }
           }
           monthCleaned.forEach((obj)=>{
-              index.save(obj["StartDate"], obj["listEntry"], obj["Duration"],  obj["Activity"], obj["Note"]);
+              // index.save(obj["StartDate"], obj["listEntry"], obj["Duration"],  obj["Activity"], obj["Note"]);
               // for testing only
               // console.log(obj["StartDate"], obj["listEntry"], obj["Duration"],  obj["Activity"], obj["Note"]);
           })
-          return monthCleaned;
+          resolve(monthCleaned);
         })
     })
 }
 
-getTimeList('2018-02-06', '2018-02-06');
+function writeTimeList(monthCleaned){
+    return new Promise((resolve,reject)=>{
+          monthCleaned.forEach((obj)=>{
+              index.save(obj["StartDate"], obj["listEntry"], obj["Duration"],  obj["Activity"], obj["Note"]);
+              // for testing only
+              // console.log(obj["StartDate"], obj["listEntry"], obj["Duration"],  obj["Activity"], obj["Note"]);
+          })
+
+    })
+}
+
+getTimeList('2018-02-06', '2018-02-06').then(function(value) {
+  writeTimeList(value);
+}, function() {
+  console.log('writing timelist to projectile failed.');
+});

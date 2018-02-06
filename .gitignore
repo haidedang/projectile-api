@@ -53,3 +53,7 @@ package-lock.json
 #####################
 user.txt
 timeularToken.txt
+
+# temp working files #
+######################
+answer.json
