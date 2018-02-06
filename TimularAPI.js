@@ -1,19 +1,26 @@
 const request = require('request');
 const index = require('./index.js');
+const fs = require('fs');
 
-// TO DO:  API TOKEN CONFIG
+let token;
+try {
+  token = JSON.parse(fs.readFileSync('timeularToken.txt'));
+} catch (e) {
+  console.log('No token file seems to be available. Please run "node getTimularToken.js" to create a token file.');
+  process.exit();
+}
 
-let listentry = 0;
-let month = [];
-let monthCleaned = [];
 
-function getTimeList(){
+function getTimeList(startDate, endDate){
     return new Promise((resolve,reject)=>{
+        let listentry = 0;
+        let month = [];
+        let monthCleaned = [];
+        let timeperiod = startDate + 'T00:00:00.000/' + endDate + 'T23:59:59.999';
 
-         // request.get('https://api.timeular.com/api/v2/time-entries/2017-01-01T00:00:00.000/2018-01-31T00:00:00.000',{
-         request.get('https://api.timeular.com/api/v2/time-entries/2018-02-01T00:00:00.000/2018-02-01T23:59:59.000',{
+        request.get('https://api.timeular.com/api/v2/time-entries/' + timeperiod,{
            headers: {
-               Authorization:'Bearer eyJhbGciOiJIUzUxMiJ9.eyJ0eXBlIjoidXNlciIsInN1YiI6IjEzMzY3In0.uH9KRRnwKJlWtDo9BesixQG5UdIp-9TSzOUndPVbBuV0MyfXZwS0MN79AwKGqX4hX_sBBWoItVmaOIjVVXYRew',
+               Authorization:'Bearer ' + token.apiToken,
                Accept: 'application/json;charset=UTF-8'
            }
         }, (err, res)=> {
@@ -24,9 +31,11 @@ function getTimeList(){
             day["StartDate"] = timeList.timeEntries[i].duration.startedAt.substring(0, timeList.timeEntries[i].duration.startedAt.indexOf("T"));
             day["listEntry"] = 0;
             /*
-            timestamp is not accurate. sometimes 2h = 120min has a value thats != 120min. To solve that I cut the
-            seconds and milliseconds from the timestamp. Decreases precision --> alternative would be to round values
+            timestamp is inaccurate. sometimes 2h = 120min has a value thats != 120min. To solve that I cut the
+            seconds and milliseconds from the timestamp. Decreases accuracy --> alternative would be to round values
             */
+            // debugging
+            // console.log(timeList.timeEntries[i].duration);
             day["Duration"] = (Date.parse(timeList.timeEntries[i].duration.stoppedAt.substring(0, timeList.timeEntries[i].duration.stoppedAt.lastIndexOf(":"))) - Date.parse(timeList.timeEntries[i].duration.startedAt.substring(0, timeList.timeEntries[i].duration.startedAt.lastIndexOf(":"))))/60000;
             day["Activity"] = timeList.timeEntries[i].activity.name.substring(timeList.timeEntries[i].activity.name.lastIndexOf("[")+1,timeList.timeEntries[i].activity.name.lastIndexOf("]"));
             day["Note"] = timeList.timeEntries[i].note.text;
@@ -61,16 +70,14 @@ function getTimeList(){
                   }
               }
           }
-
           monthCleaned.forEach((obj)=>{
-               index.save(obj["StartDate"], obj["listEntry"], obj["Duration"],  obj["Activity"], obj["Note"]);
+              index.save(obj["StartDate"], obj["listEntry"], obj["Duration"],  obj["Activity"], obj["Note"]);
               // for testing only
               // console.log(obj["StartDate"], obj["listEntry"], obj["Duration"],  obj["Activity"], obj["Note"]);
           })
-
-
+          return monthCleaned;
         })
     })
 }
 
-getTimeList();
+getTimeList('2018-02-06', '2018-02-06');
