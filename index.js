@@ -233,7 +233,9 @@ let saveEntry = async (cookie, employee, number, time, project, note) => {
     console.log("employee: " + employee);
     // let temp = await  normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get&_dc=1515081239766', cookie,{"Dock":["Area.TrackingArea"],[employee]:["DayList","JobList","Begin","Favorites","TrackingRestriction","FilterCustomer","FilterProject"]})
     let dayList = await getDayListToday(cookie, employee);
+    console.log(dayList);
     let listEntry = dayList[6];
+
     /*    // Timetracker page
         await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get&_dc=1515597712965', cookie, {[employee]:["DayList","JobList","Begin","Favorites","TrackingRestriction","FilterCustomer","FilterProject"],"Dock":["Area.TrackingArea","Area.ProjectManagementArea"]} );
         // setToday
@@ -480,8 +482,20 @@ exports.getDayListToday = async function (){
     return getDayListToday(cookie, employee);
 }
 
-exports.setCalendarDate = async function(){
+exports.setCalendarDate = async function(date){
     let cookie = await exports.login();
     let employee = await exports.getEmployee(cookie);
-    return setCalendarDate(cookie, employee);
+    return setCalendarDate(date, cookie, employee);
+}
+
+exports.getallEntriesInTimeFrame= async (startDate, endDate)=> { 
+    startDate = startDate + "T00:00:00"; 
+    endDate = endDate + "T00:00:00"; 
+    let cookie = await exports.login(); 
+    let employee = await exports.getEmployee(cookie); 
+    await normalPostURL('POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit&_dc=1517935717291", cookie, {"values":{"Start":[{"n":"Field_TimeTrackerDate","v":startDate}]}}); 
+    await normalPostURL( 'POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit&_dc=1517935723730", cookie , {"values":{"Start":[{"n":"Field_TimeTrackerDate2","v":endDate}]}} );
+    let response = await normalPostURL( 'POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=action&_dc=1517935728282", cookie , {"ref":"Start","name":"*","action":"TimeTracker1","Params":{}}); 
+    fs.writeFile('daylist.json', JSON.stringify(response,null,2), (err)=>console.log()); 
+    return response ; 
 }
