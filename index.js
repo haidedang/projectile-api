@@ -499,3 +499,77 @@ exports.getallEntriesInTimeFrame= async (startDate, endDate)=> {
     fs.writeFile('daylist.json', JSON.stringify(response,null,2), (err)=>console.log()); 
     return response ; 
 }
+
+
+/**
+ * DEPRECEATED
+ * @param {*} startdate 
+ * return array containing all entry objects of specified date; 
+ */
+async function fetchDayList(startdate) {
+    let arr = [];
+
+    let dayList = await index.setCalendarDate(startdate);
+    // console.log("serverlist : "+ JSON.stringify(dayList,null,2));
+/*     console.log(JSON.stringify(dayList,null,2));
+ */     for (let i = 0; i < entryList.length; i++) {
+        let obj = {};
+        try {
+            obj["StartDate"] = dayList["values"][entryList[i]][31]["v"];
+            obj["Duration"] = dayList["values"][entryList[i]][5]["v"];
+            obj["Activity"] = dayList["values"][entryList[i]][8]["v"];
+            obj["Note"] = dayList["values"][entryList[i]][28]["v"];
+
+            /* obj["RemainingTime"] = dayList["values"][entryList[i]][4]["v"]; 
+            obj["Time"] = dayList["values"][entryList[i]][5]["v"]; 
+            obj["Activity"]= dayList["values"][entryList[i]][8]["v"];
+            obj["EntryIndex"]= dayList["values"][entryList[i]][10]["v"]; 
+            obj["Note"]= dayList["values"][entryList[i]][28]["v"]; 
+            obj["Date"]=dayList["values"][entryList[i]][31]["v"];   */
+        } catch (err) {
+            console.log(err);
+        }
+        arr.push(obj);
+        // needs to change 
+        /* if(obj["Time"]==null){ 
+            break;
+        }else { 
+            arr.push(obj); 
+        } */
+
+    }
+    //extract the objects
+
+    return arr;
+}
+
+// Depreceated 
+async function projectileList(startDate, endDate) {
+    let arr = [];
+    let dayList = await index.getallEntriesInTimeFrame(startDate, endDate);
+    for (let i = 0; i < entryList.length; i++) {
+        let obj = {};
+        try {
+            obj["StartDate"] = dayList["values"][entryList[i]][31]["v"];
+            obj["Duration"] = dayList["values"][entryList[i]][5]["v"];
+            obj["Activity"] = dayList["values"][entryList[i]][8]["v"];
+            obj["Note"] = dayList["values"][entryList[i]][28]["v"];
+
+            /*  obj["RemainingTime"] = dayList["values"][entryList[i]][4]["v"]; 
+             obj["EntryIndex"]= dayList["values"][entryList[i]][10]["v"];  */
+
+            arr.push(obj);
+        } catch (err) {
+            console.log(err);
+        }
+
+        /*  // needs to change 
+         if(obj["Time"]==null){ 
+             break;
+         }else { 
+             arr.push(obj); 
+         } */
+
+    }
+    return arr;
+}
