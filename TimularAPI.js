@@ -59,6 +59,7 @@ function main(startDate, endDate) {
             }
 
             // merging Duration time of dup Note lines for entries from same day
+            // TODO check for same project!!!
             for (var i = 0; i < month.length; i++) {
                 for (var j = i + 1; j < month.length; j++) { // j = i + 1 becuase .csv is sorted!
                     if ((month[i]["StartDate"] === month[j]["StartDate"]) && (month[i]["Note"] === month[j]["Note"])) {
@@ -156,7 +157,7 @@ async function saveToProjectile(monthArray) {
         });
 
         console.log("Saving entry with package limit:");
-        console.log("duration of entry: " + package.limit[i].Duration + " remainingTime in package: " + Number(projectileObject[0].remainingTime));
+        console.log("duration of entry: " + package.limit[i].Duration + " remainingTime in package before add: " + Number(projectileObject[0].remainingTime));
         // compare the timular project time with projectile instance
         if (package.limit[i].Duration < (Number(projectileObject[0].remainingTime))) {
             await index.save(package.limit[i]["StartDate"], package.limit[i]["listEntry"], package.limit[i]["Duration"], package.limit[i]["Activity"], package.limit[i]["Note"]);

@@ -1,6 +1,8 @@
 const fs = require('fs');
 let request = require("request");
 
+const util = require('util'); // for Debug only --> util.inspect()
+
 let user = JSON.parse(fs.readFileSync('user.txt'));
 request.defaults({jar: true});
 
@@ -176,7 +178,7 @@ let showJobList = async (cookie, employee) => {
         }
         exports.joblist=[];
         // get an actual copy of the joblist fetched from server
-        exports.joblist= advJoblist;
+        exports.joblist= advJoblist;  // why a copy?
         return advJoblist;
 }
 
@@ -230,16 +232,12 @@ exports.getEmployee = async (cookie) => {
 
 
 let saveEntry = async (cookie, employee, number, time, project, note) => {
-    console.log("employee: " + employee);
+    // console.log("employee: " + employee);
     // let temp = await  normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get&_dc=1515081239766', cookie,{"Dock":["Area.TrackingArea"],[employee]:["DayList","JobList","Begin","Favorites","TrackingRestriction","FilterCustomer","FilterProject"]})
     let dayList = await getDayListToday(cookie, employee);
-    console.log(dayList);
-    let listEntry = dayList[6];  // random? What happens if there is more than 6 entries
+    // console.log(dayList);
+    let listEntry = dayList[6];  // TODO random? What happens if there is more than 6 entries
 
-    /*    // Timetracker page
-        await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get&_dc=1515597712965', cookie, {[employee]:["DayList","JobList","Begin","Favorites","TrackingRestriction","FilterCustomer","FilterProject"],"Dock":["Area.TrackingArea","Area.ProjectManagementArea"]} );
-        // setToday
-        await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit&_dc=1515501823869', cookie, {"values":{[employee]:[{"n":"Begin","v":new Date()}]}})*/
     //time
     await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit&_dc=1515080248606', cookie, {
         "values": {
@@ -270,19 +268,38 @@ let saveEntry = async (cookie, employee, number, time, project, note) => {
     })
 
     // save entry
-    await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action&_dc=1515080819797', cookie, {
+    let body = await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action&_dc=1515080819797', cookie, {
         "ref": employee,
         "name": "*",
         "action": "Save",
         "Params": {}
     })
 
-    // refresh
-    await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=options&_dc=1515596886820', cookie, {[employee]: ["FilterCustomer", "FilterProject"]});
+    let bodyString = JSON.stringify(body);
+    let entries = [];
+    let re = new RegExp('\"v\"\:\"' + note + '\"\,\"d\"', 'g'); // avoid matches within a note! e.g.: 2 tesing vs testing vs. testing 2
 
+    // create Entries for "note" matches to check them further, ideally there is only one
+    let count = bodyString.match(re).length;
+    console.log("COUNT: " + count);
+    for (let i = 0; i < count; i++) {
+      let bodyStringEntry = bodyString.slice(0, bodyString.indexOf(note));
+      let bodyStringEntryCut = bodyString.slice(bodyStringEntry.lastIndexOf('"+.|DayList|'), bodyString.indexOf(note) + note.length + 20); // full note entry included
+      entries.push(bodyStringEntryCut); // collect resulting DayList entries
+      bodyString = bodyString.slice(bodyString.indexOf(note) + note.length + 20); // remove found DayList entry
+    }
+
+    // evaluate results for correct return value
+    let returnValue = false;
+    entries.forEach((item) => {
+        if (item.includes(time) && item.includes(project) && item.includes(note)) {
+          returnValue = true;
+        }
+    });
+    return returnValue;
 }
 
-// for checking if planaufwand limit is hit??
+// OBSOLETE?? TODO check if obsoelete
 async function checkForSuccessfulSave(project, time){
     //actual joblist before saving
     // get the item of old joblist with specific projectnr. and add the time booked.
@@ -342,12 +359,32 @@ async function deleteEntry(cookie, employee, number) {
         "action": "RowAction_Delete",
         "Params": {"ref": listEntry}
     });
-    await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action', cookie, {
+    let secondBody = await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action', cookie, {
         "ref": body.dialog.ref,
         "name": "*",
         "action": "+0+1__null_",
         "Params": {"isDialog": true}
     });
+
+    /*
+      {"n":"Time","v":null,"d":false,"e":true},
+      {"n":"What","v":null,"d":false,"e":true,"c":null,"options":"update"},
+      {"n":"Note","v":null,"d":false,"e":true},
+    */
+    // reduce bodyString to contain only the specified listEntry
+    let bodyString = JSON.stringify(secondBody);
+    bodyString = bodyString.slice(bodyString.indexOf(listEntry));
+    bodyString = bodyString.slice(0, bodyString.indexOf('update"}]'));
+    // extracting the values for Time, What and Note
+    let timeEmpty = bodyString.substr(bodyString.indexOf('{"n":"Time","v":') + 16, 4);
+    let projectEmpty = bodyString.substr(bodyString.indexOf('{"n":"What","v":') + 16, 4);
+    let noteEmpty = bodyString.substr(bodyString.indexOf('{"n":"Note","v":') + 16, 4);
+
+    if (timeEmpty === 'null' && projectEmpty === 'null' && noteEmpty === 'null') {
+      return true;
+    } else {
+      return false;
+    }
 }
 
 async function getDayListToday(cookie, employee) {
@@ -431,8 +468,8 @@ exports.save = async ( date, listEntry, time, project, note) => {
 /*     let jobList = await exports.jobList(cookie, employee); // fetch the actual joblist.
  */
     await setCalendarDate(date, cookie, employee);
-    await saveEntry(cookie, employee, listEntry, time, project, note);
-
+    let saveEntryResult = await saveEntry(cookie, employee, listEntry, time, project, note); // saveEntry returns true or false depending on save result
+    console.log("saveEntryResult --> " + saveEntryResult);
 /*     await setCalendarDate2(data, cookie, employee);
  */    /* try {
         await checkForSuccessfulSave(project, time);
@@ -441,7 +478,7 @@ exports.save = async ( date, listEntry, time, project, note) => {
        //TODO: store packages which couldnt be saved in an external file
     } */
 
-    await console.log('Finish'+ "\n");
+    await console.log('Finished saving entry.'+ "\n");
 }
 
 exports.getDate = async ( date)=> {
@@ -496,7 +533,7 @@ exports.getallEntriesInTimeFrame= async (startDate, endDate)=> {
     await normalPostURL('POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit&_dc=1517935717291", cookie, {"values":{"Start":[{"n":"Field_TimeTrackerDate","v":startDate}]}});
     await normalPostURL( 'POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit&_dc=1517935723730", cookie , {"values":{"Start":[{"n":"Field_TimeTrackerDate2","v":endDate}]}} );
     let response = await normalPostURL( 'POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=action&_dc=1517935728282", cookie , {"ref":"Start","name":"*","action":"TimeTracker1","Params":{}});
-    fs.writeFile('daylist.json', JSON.stringify(response,null,2), (err)=>console.log());
+    fs.writeFile('daylist.json', JSON.stringify(response,null,2), (err)=>console.log()); // necessary? obsolete?
     return response ;
 }
 
