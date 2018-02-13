@@ -2,6 +2,9 @@ const request = require('request');
 const index = require('./index.js');
 const fs = require('fs');
 
+const util = require('util'); // for Debug only --> util.inspect()
+
+
 let token;
 try {
   token = JSON.parse(fs.readFileSync('timeularToken.txt'));
@@ -85,7 +88,7 @@ function main(startDate, endDate) {
     })
 }
 
-init().then(() => { main("2018-02-01", "2018-02-25") });
+init().then(() => { main("2018-02-12", "2018-02-25") });
 
 
 
@@ -138,6 +141,7 @@ async function saveToProjectile(monthArray) {
     async function syncSaving(package) {
         for (var i = 0; i < package.limitless.length; i++) {
             await index.save(package.limitless[i]["StartDate"], package.limitless[i]["listEntry"], package.limitless[i]["Duration"], package.limitless[i]["Activity"], package.limitless[i]["Note"]);
+            console.log('saving w/o limit: ' + package.limitless[i]["StartDate"], package.limitless[i]["listEntry"], package.limitless[i]["Duration"], package.limitless[i]["Activity"], package.limitless[i]["Note"]);
         }
     }
 
@@ -151,11 +155,12 @@ async function saveToProjectile(monthArray) {
             return item === package.limit[i]["Activity"];
         });
 
-        console.log(package.limit[i].Duration);
-        console.log(Number(projectileObject[0].remainingTime));
+        console.log("Saving entry with package limit:");
+        console.log("duration of entry: " + package.limit[i].Duration + " remainingTime in package: " + Number(projectileObject[0].remainingTime));
         // compare the timular project time with projectile instance
         if (package.limit[i].Duration < (Number(projectileObject[0].remainingTime))) {
             await index.save(package.limit[i]["StartDate"], package.limit[i]["listEntry"], package.limit[i]["Duration"], package.limit[i]["Activity"], package.limit[i]["Note"]);
+            console.log('saving w/ limit: ' + package.limit[i]["StartDate"], package.limit[i]["listEntry"], package.limit[i]["Duration"], package.limit[i]["Activity"], package.limit[i]["Note"]);
         } else {
             throw new Error('Remaining Time exceeded.');
         }
@@ -174,7 +179,8 @@ async function getDistinctProjectileRange(startDate, endDate) {
         /*  let startDate = MonthCleaned[0].StartDate;
          let endDate = MonthCleaned[MonthCleaned.length-1].StartDate;
           */
-        console.log("endDate" + endDate);
+        console.log("startDate: " + startDate);
+        console.log("endDate: " + endDate);
 
         let TimeRangeArray = [];
         let List = await index.getallEntriesInTimeFrame(startDate, endDate);
@@ -218,9 +224,10 @@ async function getDistinctProjectileRange(startDate, endDate) {
  */
 async function normalizeUP(startDate, endDate, MonthCleaned) {
     let result = [];
-
+    // console.log("Unsorted MonthCleaned Array: " + util.inspect(MonthCleaned));
     // sort the MonthList with Timular Entries after ascending dates
-    MonthCleaned.sort(function (a, b) { return (a.StartDate > b.StartDate) ? 1 : ((b.StartDate > b.StartDate) ? -1 : 0); });
+    MonthCleaned.sort(function (a, b) { return (a.StartDate > b.StartDate) ? 1 : 0 }); //((b.StartDate > b.StartDate) ? -1 : 0); });
+    // console.log("Sorted MonthCleaned Array: " + util.inspect(MonthCleaned));
     // group Objects to Array with same Date
     let monthDay = splitintoSeperateDays(MonthCleaned);
     // get DateRange of Projectile  [ [Day1],[Day2] ]
@@ -341,11 +348,12 @@ async function deleteDepreceated(monthDay, dayList) {
 
 async function deleteProjectileEmptySlots(cleanProjectileList) {
     for (var i = 0; i < cleanProjectileList.length; i++) {
-        let temp = [];
+        let temp = [];  // obsolete?
         // get indexes of not null
         for (var j = 0; j < cleanProjectileList[i].length; j++) {
             if (cleanProjectileList[i][j].Duration !== null) {
-                console.log("Delete");
+                // DEBUG
+                console.log("Delete " + cleanProjectileList[i][j].Note );
                 await index.delete(cleanProjectileList[i][j].StartDate, j);
                 cleanProjectileList[i].splice(j, 1);
                 j = j - 1;
@@ -375,9 +383,7 @@ function prepareForSaveAndDeleting(serverDays, serverDaysInProjectile) {
     serverDaysInProjectile.forEach((item) => Overalllist[item] = true);
     // console.log(Overalllist);
 
-    obj.cleanProjectileList = [];
     // Push into Projectile List with same days as Timular List , if false push to List to delete out of Projectile
-
     for (var i = 0; i < Overalllist.length; i++) {
         if (Overalllist[i] == true) {
             obj.dayList.push(serverDays[i]);
