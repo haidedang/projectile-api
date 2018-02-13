@@ -58,3 +58,5 @@ timeularToken.txt
 ######################
 answer.json
 daylist.json
+
+yarn.lock
