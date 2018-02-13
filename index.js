@@ -233,7 +233,9 @@ let saveEntry = async (cookie, employee, number, time, project, note) => {
     console.log("employee: " + employee);
     // let temp = await  normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get&_dc=1515081239766', cookie,{"Dock":["Area.TrackingArea"],[employee]:["DayList","JobList","Begin","Favorites","TrackingRestriction","FilterCustomer","FilterProject"]})
     let dayList = await getDayListToday(cookie, employee);
+    console.log(dayList);
     let listEntry = dayList[6];
+
     /*    // Timetracker page
         await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get&_dc=1515597712965', cookie, {[employee]:["DayList","JobList","Begin","Favorites","TrackingRestriction","FilterCustomer","FilterProject"],"Dock":["Area.TrackingArea","Area.ProjectManagementArea"]} );
         // setToday
@@ -480,8 +482,94 @@ exports.getDayListToday = async function (){
     return getDayListToday(cookie, employee);
 }
 
-exports.setCalendarDate = async function(){
+exports.setCalendarDate = async function(date){
     let cookie = await exports.login();
     let employee = await exports.getEmployee(cookie);
-    return setCalendarDate(cookie, employee);
+    return setCalendarDate(date, cookie, employee);
+}
+
+exports.getallEntriesInTimeFrame= async (startDate, endDate)=> { 
+    startDate = startDate + "T00:00:00"; 
+    endDate = endDate + "T00:00:00"; 
+    let cookie = await exports.login(); 
+    let employee = await exports.getEmployee(cookie); 
+    await normalPostURL('POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit&_dc=1517935717291", cookie, {"values":{"Start":[{"n":"Field_TimeTrackerDate","v":startDate}]}}); 
+    await normalPostURL( 'POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit&_dc=1517935723730", cookie , {"values":{"Start":[{"n":"Field_TimeTrackerDate2","v":endDate}]}} );
+    let response = await normalPostURL( 'POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=action&_dc=1517935728282", cookie , {"ref":"Start","name":"*","action":"TimeTracker1","Params":{}}); 
+    fs.writeFile('daylist.json', JSON.stringify(response,null,2), (err)=>console.log()); 
+    return response ; 
+}
+
+
+/**
+ * DEPRECEATED
+ * @param {*} startdate 
+ * return array containing all entry objects of specified date; 
+ */
+async function fetchDayList(startdate) {
+    let arr = [];
+
+    let dayList = await index.setCalendarDate(startdate);
+    // console.log("serverlist : "+ JSON.stringify(dayList,null,2));
+/*     console.log(JSON.stringify(dayList,null,2));
+ */     for (let i = 0; i < entryList.length; i++) {
+        let obj = {};
+        try {
+            obj["StartDate"] = dayList["values"][entryList[i]][31]["v"];
+            obj["Duration"] = dayList["values"][entryList[i]][5]["v"];
+            obj["Activity"] = dayList["values"][entryList[i]][8]["v"];
+            obj["Note"] = dayList["values"][entryList[i]][28]["v"];
+
+            /* obj["RemainingTime"] = dayList["values"][entryList[i]][4]["v"]; 
+            obj["Time"] = dayList["values"][entryList[i]][5]["v"]; 
+            obj["Activity"]= dayList["values"][entryList[i]][8]["v"];
+            obj["EntryIndex"]= dayList["values"][entryList[i]][10]["v"]; 
+            obj["Note"]= dayList["values"][entryList[i]][28]["v"]; 
+            obj["Date"]=dayList["values"][entryList[i]][31]["v"];   */
+        } catch (err) {
+            console.log(err);
+        }
+        arr.push(obj);
+        // needs to change 
+        /* if(obj["Time"]==null){ 
+            break;
+        }else { 
+            arr.push(obj); 
+        } */
+
+    }
+    //extract the objects
+
+    return arr;
+}
+
+// Depreceated 
+async function projectileList(startDate, endDate) {
+    let arr = [];
+    let dayList = await index.getallEntriesInTimeFrame(startDate, endDate);
+    for (let i = 0; i < entryList.length; i++) {
+        let obj = {};
+        try {
+            obj["StartDate"] = dayList["values"][entryList[i]][31]["v"];
+            obj["Duration"] = dayList["values"][entryList[i]][5]["v"];
+            obj["Activity"] = dayList["values"][entryList[i]][8]["v"];
+            obj["Note"] = dayList["values"][entryList[i]][28]["v"];
+
+            /*  obj["RemainingTime"] = dayList["values"][entryList[i]][4]["v"]; 
+             obj["EntryIndex"]= dayList["values"][entryList[i]][10]["v"];  */
+
+            arr.push(obj);
+        } catch (err) {
+            console.log(err);
+        }
+
+        /*  // needs to change 
+         if(obj["Time"]==null){ 
+             break;
+         }else { 
+             arr.push(obj); 
+         } */
+
+    }
+    return arr;
 }

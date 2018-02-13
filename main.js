@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const fs = require('fs');
 function checkForNodeVersion(){
     if(process.versions.node.split(".")[0] !== "8"){
         throw new Error("Please update to latest node version.");
@@ -17,6 +18,7 @@ async function init() {
         const cookie = await index.login();
         const employee = await index.getEmployee(cookie);
         const jobList = await index.jobList(cookie, employee);
+       /*  const limitedJob = await index.joblistLimited(jobList); */
         function command(){
             console.log("(1) show JobList \n" + "(2) book working Time\n" + "(3) Exit");
             console.log("Enter Number:");
@@ -34,13 +36,17 @@ async function init() {
     
             if (chunk == 1){
                 console.log(jobList); 
-                command();
+/*                 console.log(limitedJob);
+ */                command();
             } else if(chunk ==2) {
                 console.log('Enter: {listEntry} {time} {project-nr.} {note}\n' + 'example: 0 6 2759-327 "Automatisierung Projectile" ');
             }
             else if (chunk == 3){
                 process.exit();
             } 
+            else if ( chunk == 4){
+
+            }
             else if (chunk !== null){
                 let result = chunk.toString().split(' ');
                 let temp = result.slice(4)
@@ -53,7 +59,6 @@ async function init() {
                 }
                 /*process.stdout.write('Saved! ');*/
             }
-    
         });
     } catch (err){ 
         console.log("CANNOT initialize Program", err); 
@@ -63,8 +68,19 @@ async function init() {
 }
 
 
-init();
+/* init(); */
 
+index.save('2018-02-03', 0, 1, '2759-327', 'testie56');
+
+
+/*   index.delete('2018-02-03',1);
+ */  /* index.delete('2018-02-03', 2); 
+  index.delete('2018-02-03', 4); */
+ 
+/* index.setCalendarDate('2018-02-03').then(()=>co) */
+ 
+/* index.setCalendarDate('2018-02-03').then((res)=>fs.writeFile('calendar.json', JSON.stringify(res))); 
+ */ 
 
 
 
