@@ -281,7 +281,7 @@ let saveEntry = async (cookie, employee, number, time, project, note) => {
 
     // create Entries for "note" matches to check them further, ideally there is only one
     let count = bodyString.match(re).length;
-    console.log("COUNT: " + count);
+    console.log("Occurence count of note: " + count);
     for (let i = 0; i < count; i++) {
       let bodyStringEntry = bodyString.slice(0, bodyString.indexOf(note));
       let bodyStringEntryCut = bodyString.slice(bodyStringEntry.lastIndexOf('"+.|DayList|'), bodyString.indexOf(note) + note.length + 20); // full note entry included

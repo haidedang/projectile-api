@@ -58,12 +58,18 @@ function main(startDate, endDate) {
                 month.push(day);
             }
 
+            // sort the MonthList with Timular Entries after ascending dates --> easier handling
+            month.sort(function (a, b) { return (a.StartDate > b.StartDate) ? 1 : 0 });
+
+            console.log("month before merge: " + JSON.stringify(month, null, 2));
+
             // merging Duration time of dup Note lines for entries from same day
-            // TODO check for same project!!!
             for (var i = 0; i < month.length; i++) {
-                for (var j = i + 1; j < month.length; j++) { // j = i + 1 becuase .csv is sorted!
-                    if ((month[i]["StartDate"] === month[j]["StartDate"]) && (month[i]["Note"] === month[j]["Note"])) {
+                for (var j = i + 1; j < month.length; j++) { // j = i + 1 because .csv is sorted!
+                  console.log( i + "#" + j);
+                    if ((month[i]["StartDate"] === month[j]["StartDate"]) && (month[i]["Note"] === month[j]["Note"]) && (month[i]["Activity"] === month[j]["Activity"])) {
                         month[i]["Duration"] = (month[i]["Duration"] * 60 + month[j]["Duration"] * 60) / 60;
+                        console.log("merging durations, compare activity: " + month[i]["Activity"] + " " + month[j]["Activity"] + " " + month[i]["Note"]);
                         month.splice(j, 1); // remove merged entry from original array, to avoid recounting them in next i increment
                         j--; // as one entry is spliced, the next candidate has the same j index number!
                     } else if (month[i]["StartDate"] !== month[j]["StartDate"]) {
@@ -225,10 +231,9 @@ async function getDistinctProjectileRange(startDate, endDate) {
  */
 async function normalizeUP(startDate, endDate, MonthCleaned) {
     let result = [];
-    // console.log("Unsorted MonthCleaned Array: " + util.inspect(MonthCleaned));
-    // sort the MonthList with Timular Entries after ascending dates
-    MonthCleaned.sort(function (a, b) { return (a.StartDate > b.StartDate) ? 1 : 0 }); //((b.StartDate > b.StartDate) ? -1 : 0); });
-    // console.log("Sorted MonthCleaned Array: " + util.inspect(MonthCleaned));
+
+    // sorting is done right after generating month array
+
     // group Objects to Array with same Date
     let monthDay = splitintoSeperateDays(MonthCleaned);
     // get DateRange of Projectile  [ [Day1],[Day2] ]
