@@ -95,7 +95,7 @@ function main(startDate, endDate) {
     })
 }
 
-init().then(() => { main("2018-02-12", "2018-02-25") });
+init().then(() => { main("2018-02-26", "2018-02-28") });
 
 
 

@@ -23,19 +23,19 @@ async function init() {
             console.log("(1) show JobList \n" + "(2) book working Time\n" + "(3) Exit");
             console.log("Enter Number:");
         }
-    
+
         async function initialize(){
             console.log('Initializing...');
             command();
         }
-    
+
         initialize();
-    
+
         process.stdin.on('readable',  () => {
             const chunk = process.stdin.read();
-    
+
             if (chunk == 1){
-                console.log(jobList); 
+                console.log(jobList);
 /*                 console.log(limitedJob);
  */                command();
             } else if(chunk ==2) {
@@ -43,7 +43,7 @@ async function init() {
             }
             else if (chunk == 3){
                 process.exit();
-            } 
+            }
             else if ( chunk == 4){
 
             }
@@ -60,32 +60,26 @@ async function init() {
                 /*process.stdout.write('Saved! ');*/
             }
         });
-    } catch (err){ 
-        console.log("CANNOT initialize Program", err); 
+    } catch (err){
+        console.log("CANNOT initialize Program", err);
         process.exit();
     }
-    
+
 }
 
 
 /* init(); */
 
-index.save('2018-02-03', 0, 1, '2759-327', 'testie56');
+init(); 
+
+// index.save('2018-02-03', 0, 1, '2759-327', 'testie56');
 
 
 /*   index.delete('2018-02-03',1);
- */  /* index.delete('2018-02-03', 2); 
+ */  /* index.delete('2018-02-03', 2);
   index.delete('2018-02-03', 4); */
- 
+
 /* index.setCalendarDate('2018-02-03').then(()=>co) */
- 
-/* index.setCalendarDate('2018-02-03').then((res)=>fs.writeFile('calendar.json', JSON.stringify(res))); 
- */ 
 
-
-
-
-
-
-
-
+/* index.setCalendarDate('2018-02-03').then((res)=>fs.writeFile('calendar.json', JSON.stringify(res)));
+ */
