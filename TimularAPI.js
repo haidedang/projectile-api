@@ -26,15 +26,8 @@ async function init() {
 
 function main(startDate, endDate) {
     return new Promise((resolve, reject) => {
-/*
-        let listentry = 0;
-        let month = [];
-        let monthCleaned = [];
-*/
+        // timeperiod structure --> 2017-01-01T00:00:00.000/2018-01-31T00:00:00.000
         let timeperiod = startDate + 'T00:00:00.000/' + endDate + 'T23:59:59.999';
-
-        // request.get('https://api.timeular.com/api/v2/time-entries/2017-01-01T00:00:00.000/2018-01-31T00:00:00.000',{
-        // request.get(`https://api.timeular.com/api/v2/time-entries/${startDate}T00%3A00%3A00.000/${endDate}T00%3A00%3A00.000`, {
         request.get('https://api.timeular.com/api/v2/time-entries/' + timeperiod,{
             headers: {
                 Authorization:'Bearer ' + token.apiToken,
@@ -48,17 +41,16 @@ function main(startDate, endDate) {
                 day["StartDate"] = timeList.timeEntries[i].duration.startedAt.substring(0, timeList.timeEntries[i].duration.startedAt.indexOf("T"));
                 // day["listEntry"] = 0;
                 /*
-                timestamp is not accurate. sometimes 2h = 120min has a value thats != 120min. To solve that I cut the
+                timestamp from timeular is not accurate. sometimes 2h = 120min has a value thats != 120min. To solve that I cut the
                 seconds and milliseconds from the timestamp. Decreases precision --> alternative would be to round values
                 */
                 day["Duration"] = ((Date.parse(timeList.timeEntries[i].duration.stoppedAt.substring(0, timeList.timeEntries[i].duration.stoppedAt.lastIndexOf(":"))) - Date.parse(timeList.timeEntries[i].duration.startedAt.substring(0, timeList.timeEntries[i].duration.startedAt.lastIndexOf(":")))) / 60000) / 60;
                 day["Activity"] = timeList.timeEntries[i].activity.name.substring(timeList.timeEntries[i].activity.name.lastIndexOf("[") + 1, timeList.timeEntries[i].activity.name.lastIndexOf("]"));
                 day["Note"] = timeList.timeEntries[i].note.text;
-                // console.log(day);
                 month.push(day);
             }
 
-            // sort the MonthList with Timular Entries after ascending dates --> easier handling
+            // sort the MonthList with Timular Entries after ascending dates --> easier handling from now on
             month.sort(function (a, b) { return (a.StartDate > b.StartDate) ? 1 : 0 });
 
             console.log("month before merge: " + JSON.stringify(month, null, 2));
@@ -81,7 +73,11 @@ function main(startDate, endDate) {
 
             //   saveToProjectile(monthCleaned);
             /*  normalize().then((result)=> {console.log(result); saveToProjectile()});  */
-            normalizeUP(startDate, endDate, monthCleaned).then((result) => { console.log(result); saveToProjectile(result) });
+            normalizeUP(startDate, endDate, monthCleaned).then((result) => {
+              console.log('normalizeUP: ');
+              console.log(result);
+              saveToProjectile(result)
+            });
 
             /*             projectileList('2018-02-01', '2018-02-07').then((item)=>console.log(item));
              */
@@ -95,6 +91,7 @@ function main(startDate, endDate) {
     })
 }
 
+// ALWAYS SET THIS BEFORE RUNNING TIMEULARAPI OR YOU MAY LOSE DATA IN PROJECTILE THATS NOT YET SET IN TIMEULAR APP!
 init().then(() => { main("2018-02-26", "2018-02-28") });
 
 
