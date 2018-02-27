@@ -1,5 +1,5 @@
 const fs = require('fs');
-let request = require("request");
+const request = require('request');
 
 const util = require('util'); // for Debug only --> util.inspect()
 
