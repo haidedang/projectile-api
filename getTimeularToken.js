@@ -7,7 +7,7 @@ let apiKey = process.env.apiKey;
 let apiSecret = process.env.apiSecret;
 
 if (!apiKey || !apiSecret) {
-  console.log('Please visit: https://profile.timeular.com/#/app/ and create an API key and API Secret.');
+  console.log('Please visit: https://profile.timeular.com/#/app/ and create an API key and API Secret and provide it here as an environment variable.');
   process.exit();
 }
 
@@ -16,12 +16,13 @@ request.post('https://api.timeular.com/api/v2/developer/sign-in',{
       'Content-Type': 'application/json',
       'Accept': 'application/json;charset=UTF-8'
   },
-  json: { 'apiKey': apiKey, 'apiSecret': apiSecret
+  json: {
+    'apiKey': apiKey,
+    'apiSecret': apiSecret
   },
 
 }, (err, res, body) => {
   let apiToken = res.body.token;
-
   let timeularApi = {
       apiToken: apiToken
   }
