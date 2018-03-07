@@ -60,3 +60,6 @@ answer.json
 daylist.json
 
 yarn.lock
+
+## foobar only
+test.js
