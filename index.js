@@ -20,7 +20,6 @@ let TempJobTime=[];
 //When initializing, this variable stores the total hours of a specific project after saving each entry
 
 function createLogin() {
-
     let j = request.jar();
 
     // Using request
@@ -148,7 +147,6 @@ function option(method, url, cookie, body) {
 }
 
 let showJobList = async (cookie, employee) => {
-
         let body = await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get', cookie, {
             [employee]:
                 ['DayList',
@@ -161,7 +159,7 @@ let showJobList = async (cookie, employee) => {
             Dock: ['Area.TrackingArea', 'Area.ProjectManagementArea']
         });
 
-        fs.writeFile("answer.json", JSON.stringify(body), (err)=>{console.log()});
+        fs.writeFile("answer.json", JSON.stringify(body), (err)=>{console.log()});  // TODO TO CHECK necessary?
 
         /**
          * get name and NO. of Employee Job
@@ -186,7 +184,7 @@ let showJobList = async (cookie, employee) => {
         }
         exports.joblist=[];
         // get an actual copy of the joblist fetched from server
-        exports.joblist= advJoblist;  // why a copy?
+        exports.joblist= advJoblist;  // TODO why a copy?
         return advJoblist;
 }
 
@@ -213,7 +211,6 @@ function normalPostURL(method, url, cookie, body) {
     //.catch((error)=> {throw new Error(error)});
 }
 
-
 /**
  *
  * @param cookie
@@ -238,16 +235,43 @@ exports.getEmployee = async (cookie) => {
             }
 }
 
+/**
+ * normalize the duration value
+ * @param {duration} duration value
+ * @returns {duration} duration value that is cleaned to x.xx
+ *
+ */
+exports.normalizetime = async (time) => {
+  if (time.includes(':')) {
+    let tmp = time.split(":");
+    let tmp2 = (parseInt(tmp[1])/60)*100;
+    time = tmp[0] + '.' + tmp2;
+  } else if (time.includes(',')) {
+    time = time.replace(',', '.');
+  }
+  return time;
+}
 
-let saveEntry = async (cookie, employee, number, time, project, note) => {
-    // console.log("employee: " + employee);
-    // let temp = await  normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get', cookie,{"Dock":["Area.TrackingArea"],[employee]:["DayList","JobList","Begin","Favorites","TrackingRestriction","FilterCustomer","FilterProject"]})
+
+function escapeRegExp(str) {
+  return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+}
+
+let saveEntry = async (cookie, employee, time, project, note) => {
     let dayList = await getDayListToday(cookie, employee);
-    // console.log(dayList);
-    let listEntry = dayList[6];  // TODO random? What happens if there is more than 6 entries
+    /*
+    extend the "lines" range of originally 6 depending on amount of existing entries in dayList! else insertion of larger lists
+    than 7 entries per day fail to save successfully.
+    */
+    lineSelector = dayList.length -1;
+    // let lineSelector = dayList.length - 43; // case that 7 days are in dayList
+    /* if (dayList && dayList.length < 49) { // case that 1 day is in dayList
+      lineSelector = dayList.length -1;
+    } */
+    let listEntry = dayList[lineSelector];
 
-    //time
-    await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit', cookie, {
+    // set time
+    let debug = await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit', cookie, {
         "values": {
             [listEntry]: [{
                 "n": "Time",
@@ -265,6 +289,7 @@ let saveEntry = async (cookie, employee, number, time, project, note) => {
             }]
         }
     })
+
     // write note
     await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit', cookie, {
         "values": {
@@ -282,14 +307,18 @@ let saveEntry = async (cookie, employee, number, time, project, note) => {
         "action": "Save",
         "Params": {}
     })
-
     let bodyString = JSON.stringify(body);
     let entries = [];
+
+    // check for successfull saving
     // pattern to matches within a note! e.g.: 2 tesing vs. testing vs. testing 2
-    let re = new RegExp('\"v\"\:\"' + note + '\"\,\"d\"', 'g');
+    // " gets stored as \" in projectile json
+    let re = new RegExp('\"v\"\:\"' + escapeRegExp(note).replace(/[\"]/g, "\\\\$&") + '\"\,\"d\"', 'g'); // TODO enough to check for notes?! :( must be another way if there is note present!)
+    // console.log('RegEx Debug: ' + escapeRegExp(note).replace(/[\"]/g, "\\\\$&"));
+    // console.log(note.replace(/[\"]/g, "\\\$&"));
 
     // from server reply create list of entries of "note" matches to check them further, ideally there is only one
-    let count = bodyString.match(re).length;
+    let count = bodyString.match(re).length;   // "api * ! \" ' url1" zu matchen!
     console.log("Occurence count of note text: " + count);
     for (let i = 0; i < count; i++) {
       // find the note
@@ -302,17 +331,21 @@ let saveEntry = async (cookie, employee, number, time, project, note) => {
       let indexOfEnd = bodyStringEntryCut.indexOf('"options":"update"}],'); // find the end of that block
       bodyStringEntryCut = bodyStringEntryCut.slice(0, indexOfEnd + 21); // 21 = length of search pattern, extract only the block we are interested in
 
-      entries.push(bodyStringEntryCut); // collect found block entry
+      entries.push('{' + bodyStringEntryCut + '}'); // collect found block entry
 
       bodyString = bodyString.slice(indexOfEnd + 21); // cut the processed block out of the bodyString and keep searching
     }
 
     // evaluate results for correct return value
     let returnValue = false;
-    entries.forEach((item) => {
-        if (item.includes(time) && item.includes(project) && item.includes(note)) {
-          returnValue = true;
-        }
+
+    entries.forEach((item) => { // time has to be noramlized. Projectile ALWAYS returns x.xx though x,xx or x:xx may have been sent before
+      // console.log('Länge Response TimeTracker: ' + body.values['TimeTracker!^.|Default|Employee|1|357'].length);
+      if (body.values['TimeTracker!^.|Default|Employee|1|357'].length >= 5 && item.includes('"Time","v":' + time + ',"d"') && item.includes('"What","v":"' + project + '","d"') && item.includes('"Note","v":"' + note.replace(/[\"]/g, "\\\$&") + '","d"')) {
+        returnValue = true; // created a new entry
+      } else if (item.includes('"What","v":"' + project + '","d"') && item.includes('"Note","v":"' + note.replace(/[\"]/g, "\\\$&") + '","d"')) {
+        returnValue = true; // added to an existing entry
+      }
     });
     return returnValue;
 }
@@ -335,22 +368,19 @@ async function deleteEntry(cookie, employee, number) {
     });
 
     /*
-      {"n":"Time","v":null,"d":false,"e":true},
-      {"n":"What","v":null,"d":false,"e":true,"c":null,"options":"update"},
-      {"n":"Note","v":null,"d":false,"e":true},
+    expected behaviour: after successfull deletion of a listEntry, the secondBody contains the line:
+    "close":["1519808571525-0"],"clearProblems":["1519808571525-0"]} containing the ref value from first request twice
     */
-    // reduce bodyString to contain only the specified listEntry
     let bodyString = JSON.stringify(secondBody);
-    bodyString = bodyString.slice(bodyString.indexOf(listEntry));
-    bodyString = bodyString.slice(0, bodyString.indexOf('update"}]'));
-    // extracting the values for Time, What and Note
-    let timeEmpty = bodyString.substr(bodyString.indexOf('{"n":"Time","v":') + 16, 4);
-    let projectEmpty = bodyString.substr(bodyString.indexOf('{"n":"What","v":') + 16, 4);
-    let noteEmpty = bodyString.substr(bodyString.indexOf('{"n":"Note","v":') + 16, 4);
-
-    if (timeEmpty === 'null' && projectEmpty === 'null' && noteEmpty === 'null') {
+    let confirmDeletion = bodyString.slice(bodyString.indexOf('"close":["'));
+    let re = new RegExp(body.dialog.ref, 'g');
+    let count = confirmDeletion.match(re).length;
+    // DEBUG
+    // console.log(count + ' DELETE FCT ' + body.dialog.ref);
+    if (count === 2) {
       return true;
     } else {
+      console.log('There might be an issue while deleting a listEntry: count: ' + count + ' ref: ' + body.dialog.ref);
       return false;
     }
 }
@@ -365,91 +395,94 @@ async function getDayListToday(cookie, employee) {
 }
 
 async function setCalendarDate(date, cookie, employee) {
-    date = date + "T00:00:00";
+    dateComplete = date + "T00:00:00";
     // Timetracker page
+    // OBSOLETE??
     await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get', cookie, {
         [employee]: ["DayList", "JobList", "Begin", "Favorites", "TrackingRestriction", "FilterCustomer", "FilterProject"],
         "Dock": ["Area.TrackingArea", "Area.ProjectManagementArea"]
     });
     // setToday
-   let answer= await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit', cookie, {
+   let answer = await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit', cookie, {
         "values": {
             [employee]: [{
                 "n": "Begin",
-                "v": date
+                "v": dateComplete
             }]
         }
     })
+    // reduce bodyString to contain only the first listEntry
+    // BE AWARE returned value depends on currently set date, ONLY if a date change happens the expected returned body is received, else its just a "true" value within a smaller json
+    let bodyString = JSON.stringify(answer);
 
-    return answer;
-
-/*     fs.writeFile('calendar.json', JSON.stringify(answer), (err)=>{});
- */}
-async function setCalendarDate2(date, cookie, employee) {
-    date = date + "T00:00:00";
-    // Timetracker page
-    await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get', cookie, {
-        [employee]: ["DayList", "JobList", "Begin", "Favorites", "TrackingRestriction", "FilterCustomer", "FilterProject"],
-        "Dock": ["Area.TrackingArea", "Area.ProjectManagementArea"]
-    });
-    // setToday
-   let answer= await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit', cookie, {
-        "values": {
-            [employee]: [{
-                "n": "Begin",
-                "v": date
-            }]
-        }
-    })
-
-    fs.writeFile('calendar2.json', JSON.stringify(answer), (err)=>{});
+    if (bodyString.includes('update"}]')) {
+      bodyString = bodyString.slice(0, bodyString.indexOf('update"}]') + 9);
+      return bodyString.includes(date); // standard behaviour - date gets changed
+    } else {
+      if (!bodyString.includes('[{"n":"Begin","d":true}]}')) {
+        console.log('Function setCalenderDate returns false, something may be wrong.');
+      }
+      return bodyString.includes('[{"n":"Begin","d":true}]}'); // behaviour/returned json if date doesn't had to be changed
+    }
+    // return bodyString.includes(date);
+    // fs.writeFile('calendar.json', JSON.stringify(answer), (err)=>{});  // obsolete?
 }
+
 
 // e.g.: index.delete('2018-02-01', 0)
 exports.delete = async (date, listEntry) => {
     let cookie = await exports.login();
     let employee = await exports.getEmployee(cookie);
-    await setCalendarDate(date, cookie, employee);
-    await deleteEntry(cookie, employee, listEntry);
-    console.log("Finished Deleting.");
+    if(await setCalendarDate(date, cookie, employee)) {
+        console.log('setCalenderDate was successful in delete function.');
+        if (await deleteEntry(cookie, employee, listEntry)) {
+            console.log("Finished deleting entry " + listEntry + ' for date ' + date);
+        } else {
+            console.log("Error while deleting entry " + listEntry + ' for date ' + date);
+        }
+    }
 }
 
 //simplified for API use
 exports.jobList = async (cookie,employee) => {
-    console.log('fetching data...');
+    console.log('fetching data for jobList.');
         return showJobList(cookie, employee);
 };
 
 exports.fetchNewJobList = async () => {
     let cookie = await exports.login();
     let employee = await exports.getEmployee(cookie);
-    console.log('fetching data...');
+    console.log('fetching new data for jobList...');
     let data =  await showJobList(cookie, employee);
     return data;
 }
 
 // simplified for API Use
-exports.save = async ( date, listEntry, time, project, note) => {
+exports.save = async (date, time, project, note) => {
     console.log('saving data...');
     let cookie = await exports.login();
     let employee = await exports.getEmployee(cookie);
-/*     let jobList = await exports.jobList(cookie, employee); // fetch the actual joblist.
- */
-    await setCalendarDate(date, cookie, employee);
-    let saveEntryResult = await saveEntry(cookie, employee, listEntry, time, project, note); // saveEntry returns true or false depending on save result
-    console.log("saveEntryResult --> " + saveEntryResult);
-/*     await setCalendarDate2(data, cookie, employee);
- */    /* try {
-        await checkForSuccessfulSave(project, time);
-    } catch(err){
-       console.log(err);
-       //TODO: store packages which couldnt be saved in an external file
-    } */
-
-    await console.log('Finished saving entry.'+ "\n");
+    // let jobList = await exports.jobList(cookie, employee); // fetch the actual joblist.
+    if (await setCalendarDate(date, cookie, employee)) {
+        let saveEntryResult = await saveEntry(cookie, employee, time, project, note); // saveEntry returns true or false depending on save result
+        console.log("saveEntryResult --> " + saveEntryResult);
+        // TODO: store packages which couldnt be saved in an external file
+        if (saveEntryResult) {
+            console.log('Finished saving entry.'+ "\n");
+        }
+    }
 }
+/*
+async function blubb () {
+  await exports.save('2018-03-05', '2', '2759-62', 'note');
+  await exports.delete('2018-03-05', '0');
+}
+blubb();
+*/
 
-exports.getDate = async ( date)=> {
+
+
+exports.getDate = async (date) => {
     let cookie2 = await exports.login();
     let employee2 = await exports.getEmployee(cookie2);
     await setCalendarDate(date, cookie2, employee2);
@@ -467,33 +500,32 @@ exports.joblistLimited = async (list, limitTime, callback) => {
     // create copy
     let iterationArr = temp.slice(0);
 
-    iterationArr.forEach((item)=>{
+    iterationArr.forEach((item) => {
         if(callback(item) ){
             let a = list.splice(temp.indexOf(item),1)[0];
             limitedJobList.push(a);
             temp.splice(temp.indexOf(item),1);
         }
     })
-
     // array of limited packages
     return limitedJobList;
     /* console.log(list);
     console.log(limitedJobList); */
 }
 
-exports.getDayListToday = async function (){
+exports.getDayListToday = async function () {
     let cookie = await exports.login();
     let employee = await exports.getEmployee(cookie);
     return getDayListToday(cookie, employee);
 }
 
-exports.setCalendarDate = async function(date){
+exports.setCalendarDate = async function(date) {
     let cookie = await exports.login();
     let employee = await exports.getEmployee(cookie);
     return setCalendarDate(date, cookie, employee);
 }
 
-exports.getallEntriesInTimeFrame= async (startDate, endDate)=> {
+exports.getallEntriesInTimeFrame = async (startDate, endDate) => {
     startDate = startDate + "T00:00:00";
     endDate = endDate + "T00:00:00";
     let cookie = await exports.login();
@@ -501,80 +533,6 @@ exports.getallEntriesInTimeFrame= async (startDate, endDate)=> {
     await normalPostURL('POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit", cookie, {"values":{"Start":[{"n":"Field_TimeTrackerDate","v":startDate}]}});
     await normalPostURL( 'POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit", cookie , {"values":{"Start":[{"n":"Field_TimeTrackerDate2","v":endDate}]}} );
     let response = await normalPostURL( 'POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=action", cookie , {"ref":"Start","name":"*","action":"TimeTracker1","Params":{}});
-    fs.writeFile('daylist.json', JSON.stringify(response,null,2), (err)=>console.log()); // necessary? obsolete?
+    fs.writeFile('daylist.json', JSON.stringify(response,null,2), (err)=>console.log()); // TODO necessary? obsolete?
     return response ;
-}
-
-
-/**
- * DEPRECEATED
- * @param {*} startdate
- * return array containing all entry objects of specified date;
- */
-async function fetchDayList(startdate) {
-    let arr = [];
-
-    let dayList = await index.setCalendarDate(startdate);
-    // console.log("serverlist : "+ JSON.stringify(dayList,null,2));
-/*     console.log(JSON.stringify(dayList,null,2));
- */     for (let i = 0; i < entryList.length; i++) {
-        let obj = {};
-        try {
-            obj["StartDate"] = dayList["values"][entryList[i]][31]["v"];
-            obj["Duration"] = dayList["values"][entryList[i]][5]["v"];
-            obj["Activity"] = dayList["values"][entryList[i]][8]["v"];
-            obj["Note"] = dayList["values"][entryList[i]][28]["v"];
-
-            /* obj["RemainingTime"] = dayList["values"][entryList[i]][4]["v"];
-            obj["Time"] = dayList["values"][entryList[i]][5]["v"];
-            obj["Activity"]= dayList["values"][entryList[i]][8]["v"];
-            obj["EntryIndex"]= dayList["values"][entryList[i]][10]["v"];
-            obj["Note"]= dayList["values"][entryList[i]][28]["v"];
-            obj["Date"]=dayList["values"][entryList[i]][31]["v"];   */
-        } catch (err) {
-            console.log(err);
-        }
-        arr.push(obj);
-        // needs to change
-        /* if(obj["Time"]==null){
-            break;
-        }else {
-            arr.push(obj);
-        } */
-
-    }
-    //extract the objects
-
-    return arr;
-}
-
-// Depreceated
-async function projectileList(startDate, endDate) {
-    let arr = [];
-    let dayList = await index.getallEntriesInTimeFrame(startDate, endDate);
-    for (let i = 0; i < entryList.length; i++) {
-        let obj = {};
-        try {
-            obj["StartDate"] = dayList["values"][entryList[i]][31]["v"];
-            obj["Duration"] = dayList["values"][entryList[i]][5]["v"];
-            obj["Activity"] = dayList["values"][entryList[i]][8]["v"];
-            obj["Note"] = dayList["values"][entryList[i]][28]["v"];
-
-            /*  obj["RemainingTime"] = dayList["values"][entryList[i]][4]["v"];
-             obj["EntryIndex"]= dayList["values"][entryList[i]][10]["v"];  */
-
-            arr.push(obj);
-        } catch (err) {
-            console.log(err);
-        }
-
-        /*  // needs to change
-         if(obj["Time"]==null){
-             break;
-         }else {
-             arr.push(obj);
-         } */
-
-    }
-    return arr;
 }

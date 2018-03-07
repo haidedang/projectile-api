@@ -55,7 +55,7 @@ async function init() {
                 if (result.length < 5){
                     throw new Error("invalid parameter");
                 } else {
-                       index.save( result[0], result[1], result[2], result[3], newArr).then( () => command());
+                       index.save( result[0], result[2], result[3], newArr).then( () => command());  // listEntry removed from signature
                 }
                 /*process.stdout.write('Saved! ');*/
             }
@@ -70,7 +70,7 @@ async function init() {
 
 /* init(); */
 
-init(); 
+init();
 
 // index.save('2018-02-03', 0, 1, '2759-327', 'testie56');
 

@@ -7,7 +7,7 @@ let apiKey = process.env.apiKey;
 let apiSecret = process.env.apiSecret;
 
 if (!apiKey || !apiSecret) {
-  console.log('Please visit: https://profile.timeular.com/#/app/ and create an API key and API Secret and provide it here as an environment variable.');
+  console.log('Please visit: https://profile.timeular.com/ and create an API key and API Secret and provide it here as an environment variable.');
   process.exit();
 }
 
