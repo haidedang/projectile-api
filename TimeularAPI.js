@@ -439,7 +439,7 @@ exports.bookActivityNG = async (date, duration, activityId, note) => {
 
 
 
-// renaming? to exports.merge?
+// exports.merge  = successor!, main --> oboslete
 exports.main = async (startDate, endDate) => {
     let listentry = 0;
     let month = [];
@@ -507,7 +507,7 @@ exports.main = async (startDate, endDate) => {
     });
 }
 
-// refactoring
+// refactoring of exports.main
 exports.merge = async (startDate, endDate) => {
     let listentry = 0;
     let month = [];
@@ -550,7 +550,7 @@ exports.merge = async (startDate, endDate) => {
             // console.log( i + "#" + j);
               if ((month[i]["StartDate"] === month[j]["StartDate"]) && (month[i]["Note"] === month[j]["Note"]) && (month[i]["Activity"] === month[j]["Activity"])) {
                   month[i]["Duration"] = (month[i]["Duration"] * 60 + month[j]["Duration"] * 60) / 60;
-                  console.log("merging durations, compare activity: " + month[i]["Activity"] + " " + month[j]["Activity"] + " " + month[i]["Note"]);
+                  // console.log("merging durations, compare activity: " + month[i]["Activity"] + " " + month[j]["Activity"] + " " + month[i]["Note"]);
                   month.splice(j, 1); // remove merged entry from original array, to avoid recounting them in next i increment
                   j--; // as one entry is spliced, the next candidate has the same j index number!
               } else if (month[i]["StartDate"] !== month[j]["StartDate"]) {
@@ -648,7 +648,7 @@ async function saveToProjectile(monthArray) {
     //synchronous saving of packages without limit
     async function syncSaving(package) {
         for (var i = 0; i < package.limitless.length; i++) {
-            await index.save(package.limitless[i]["StartDate"], package.limitless[i]["Duration"], package.limitless[i]["Activity"], package.limitless[i]["Note"]);
+            let response = await index.save(package.limitless[i]["StartDate"], package.limitless[i]["Duration"], package.limitless[i]["Activity"], package.limitless[i]["Note"]);
             console.log('saving w/o limit: ' + package.limitless[i]["StartDate"], package.limitless[i]["Duration"], package.limitless[i]["Activity"], package.limitless[i]["Note"]);
         }
         return true;
@@ -816,7 +816,6 @@ function compareV2(clientArray, serverArray) {
     } catch (err) {
         console.log(err);
     }
-
 }
 
 
@@ -855,7 +854,6 @@ async function deleteDepreceated(monthDay, dayList) {
 
         }
         // -------DEBUG-------
-        console.log(finalresult);
         return [].concat.apply([], finalresult);
     } catch (Err) {
         console.log(Err);

@@ -258,12 +258,17 @@ function escapeRegExp(str) {
 }
 
 let saveEntry = async (cookie, employee, time, project, note) => {
-    let dayList = await getDayListToday(cookie, employee);
+    let dayList = await getDayListToday(cookie, employee); // ? TODO possible reason for day range issue?!
     /*
     extend the "lines" range of originally 6 depending on amount of existing entries in dayList! else insertion of larger lists
     than 7 entries per day fail to save successfully.
     */
-    lineSelector = dayList.length -1;
+    lineSelector = dayList.length - 1;
+    if (dayList.length >= 49) {
+      lineSelector = dayList.length - 43;
+    }
+
+    console.log('lineSelector DEBUG: ' + lineSelector);
     // let lineSelector = dayList.length - 43; // case that 7 days are in dayList
     /* if (dayList && dayList.length < 49) { // case that 1 day is in dayList
       lineSelector = dayList.length -1;
@@ -318,7 +323,11 @@ let saveEntry = async (cookie, employee, time, project, note) => {
     // console.log(note.replace(/[\"]/g, "\\\$&"));
 
     // from server reply create list of entries of "note" matches to check them further, ideally there is only one
-    let count = bodyString.match(re).length;   // "api * ! \" ' url1" zu matchen!
+    let count = 0;
+    let bodyStringMatch = bodyString.match(re);
+    if (bodyStringMatch){
+      count = bodyStringMatch.length;   // "api * ! \" ' url1" zu matchen!
+    }
     console.log("Occurence count of note text: " + count);
     for (let i = 0; i < count; i++) {
       // find the note
@@ -391,8 +400,10 @@ async function getDayListToday(cookie, employee) {
         [employee]: ["DayList", "JobList", "Begin", "Favorites", "TrackingRestriction", "FilterCustomer", "FilterProject"]
     })
     let dayList = await temp["values"][employee][2]["v"];
+
     return dayList;
 }
+
 
 async function setCalendarDate(date, cookie, employee) {
     dateComplete = date + "T00:00:00";
@@ -469,8 +480,10 @@ exports.save = async (date, time, project, note) => {
         // TODO: store packages which couldnt be saved in an external file
         if (saveEntryResult) {
             console.log('Finished saving entry.'+ "\n");
+            return true;
         }
     }
+    return false;
 }
 /*
 async function blubb () {

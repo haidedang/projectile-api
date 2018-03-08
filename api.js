@@ -8,33 +8,6 @@ const index = require('./index.js');
 const timeularapi = require('./TimeularAPI.js');
 
 const app = express();
-//  app.use(bodyParser.json()) // support json encoded bodies
-//  app.use(bodyParser.urlencoded({ extended: true })) // support encoded bodies
-/*
-log.configure(config.get('logConfig'))
-const logger = log.logger
-
-const basePath = config.get('basePath')
-*/
-// const upload = multer()
-/*
-process.on('uncaughtException', (err: any) => {
-  logger.error(`uncaught Exception: ${err}`)
-  // this is the default behaviour of upcoming node versions
-  // when we do have unhandled errors and exceptions, that we didn't foresee the server shall stop entirely
-  process.exit(1)
-})
-process.on('unhandledRejection', (reason, p) => {
-  logger.error(`uncaught Rejection at Promise: ${inspect(p)}; reason: ${reason}`)
-  // this is the default behaviour of upcoming node versions
-  // when we do have unhandled errors and exceptions, that we didn't foresee the server shall stop entirely
-  process.exit(1)
-})
-*/
-// app.use(cors())
-
-// promisify
-//  const fileReaderAsync = promisify(fs.readFile)
 
 // get user creds and timeular API token
 let user;
@@ -82,12 +55,10 @@ app.get(basePath + '/healthStatus', (req, res) => {
  *  route for syncing timeular with dates within a certain date range
  */
 app.get(basePath + '/syncbookings/:startDate/:endDate', (req, res) => {
-  let startDate = req.params.startDate + 'T00:00:00.000';
-  let endDate = req.params.endDate + 'T23:59:59.999';
-
-  // ENTSCHÄRFT timeularapi.main(startDate, endDate);
-  console.log('Range ' + req.params.startDate + ' to ' + req.params.endDate);
-  res.status(200).send('Sync done for ' + req.params.startDate + ' to ' + req.params.endDate);
+    timeularapi.merge(req.params.startDate, req.params.endDate).then((result) => {
+    console.log('Range ' + req.params.startDate + ' to ' + req.params.endDate);
+    res.status(200).send('Sync done for ' + req.params.startDate + ' to ' + req.params.endDate);
+  });
 })
 
 /**
@@ -99,7 +70,7 @@ app.get(basePath + '/syncbookings/:choice', (req, res) => {
 
   switch (req.params.choice) {
     case 'today':
-        timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then(() => {
+      timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then(() => {
         res.status(200).send('Sync done for "today".');
       });
       // timeularapi.main(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
@@ -107,13 +78,16 @@ app.get(basePath + '/syncbookings/:choice', (req, res) => {
       break;
     case 'week':
       startDay.setDate(today.getDate() - 6);
-      // ENTSCHÄRFT timeularapi.main(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
-      console.log('week ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
-      res.status(200).send('Sync done for last 7 days.');
+      timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then(() => {
+        res.status(200).send('Sync done for last 7 days.');
+        console.log('week ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
+      });
+      // console.log('week ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
+      // res.status(200).send('Sync done for last 7 days.');
       break;
     case 'month':
       startDay.setMonth(today.getMonth() - 1);
-      // ENTSCHÄRFT timeularapi.main(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
+      // ENTSCHÄRFT timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
       console.log('month ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
       res.status(200).send('Sync done for last month.');
       break;
