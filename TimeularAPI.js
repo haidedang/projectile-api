@@ -439,7 +439,7 @@ exports.bookActivityNG = async (date, duration, activityId, note) => {
 
 
 // ehemals exports.main
-// synchronize timeular bookings to projectile withing a date range. date -> YYYY-MM-DD
+// synchronize/merge timeular bookings to projectile withing a date range. date -> YYYY-MM-DD
 exports.merge = async (startDate, endDate) => {
     let listentry = 0;
     let month = [];
