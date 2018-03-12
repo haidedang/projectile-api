@@ -142,7 +142,7 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
      console.log('Debug packageActivity result: ' + packageActivity.Package, packageActivity.Activity);
 
      // book in TIMEULAR
-     // ENTSCHÄRFT timeularapi.bookActivity(req.params.date, req.params.duration, req.params.activity, req.params.note);
+     // OBOSLETE??  ENTSCHÄRFT timeularapi.bookActivity(req.params.date, req.params.duration, req.params.activity, req.params.note);
      let response = await timeularapi.bookActivityNG(req.params.date, req.params.duration, packageActivity.Activity, req.params.note).then((response) => {
        if(response) {
          console.log('bookActivity for timeular successfull');
@@ -174,25 +174,32 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
       // so far books in projectile only, PROBABLY NEEDS TO BOOK TIMEULAR AS WELL TO AVOID BOOKINGS BEING WIPED
       // WHEN SYNCING TIMEULAR WITH PROJECTILE
 
-      // TODO book in TIMEULAR
-      // ENTSCHÄRFT timeularapi.bookActivity(today, req.params.duration, req.params.activity, req.params.note);
+      // TODO check validity of duration, activitiy and note?
+      // create package/activity table
+      // analyse the provided "activity" parameter and find the fitting package or activity id pair
+      let packageActivity = await timeularapi.packageActivityList(req.params.activity);
+      console.log('Debug packageActivity result: ' + packageActivity.Package, packageActivity.Activity);
 
-      // normalizing time if necessary (to x.xx and parse as float to avoid weird duration lengths)
-      let time = req.params.duration;
-      if (time.includes(':')) {
-        let tmp = time.split(":");
-        let tmp2 = (parseInt(tmp[1])/60)*100;
-        time = tmp[0] + '.' + tmp2;
-      } else if (time.includes(',')) {
-        time = time.replace(',', '.');
-      }
+      // book in TIMEULAR
+      // OBOSLETE??  ENTSCHÄRFT timeularapi.bookActivity(req.params.date, req.params.duration, req.params.activity, req.params.note);
+      let response = await timeularapi.bookActivityNG(today, req.params.duration, packageActivity.Activity, req.params.note).then((response) => {
+        if(response) {
+          console.log('bookActivity for timeular successfull');
+        }
+        return response;
+      });
+
+      // normalizing duration time if necessary (to x.xx and parse as float to avoid weird duration lengths)
+      let time = await index.normalizetime(req.params.duration);
+      time = parseFloat(time);
       // book in projectile
-      index.save(today, parseFloat(time), req.params.activity, req.params.note).then( () =>
+      index.save(today, time, packageActivity.Package, req.params.note).then(() => {
+        console.log('save for projectile successfull');
         res.status(200).send(today + ' ' +  req.params.duration + ' ' +  req.params.activity + ' ' +  req.params.note)
-      );
-    } catch (e) {
+      });
+      } catch (e) {
       res.status(400).send('Something went wrong - /book/:duration/:activity/:note');
-    }
+      }
   })
 
   // SYNC ACTIVITIES
