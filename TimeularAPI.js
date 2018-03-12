@@ -438,76 +438,8 @@ exports.bookActivityNG = async (date, duration, activityId, note) => {
 }
 
 
-
-// exports.merge  = successor!, main --> oboslete
-exports.main = async (startDate, endDate) => {
-    let listentry = 0;
-    let month = [];
-    let monthCleaned = [];
-    // timeperiod structure --> 2017-01-01T00:00:00.000/2018-01-31T00:00:00.000
-    let timeperiod = startDate + 'T00:00:00.000/' + endDate + 'T23:59:59.999';
-
-    let result = rp({
-      method: 'GET',
-      uri: 'https://api.timeular.com/api/v2/time-entries/' + timeperiod,
-      resolveWithFullResponse: true,
-      headers: {
-          Authorization:'Bearer ' + token.apiToken,
-          Accept: 'application/json;charset=UTF-8'
-      }
-    }).then(function (res) {
-      let timeList = JSON.parse(res.body);
-
-      for (let i = 0; i < timeList.timeEntries.length; i++) {
-          let day = {};
-          day["StartDate"] = timeList.timeEntries[i].duration.startedAt.substring(0, timeList.timeEntries[i].duration.startedAt.indexOf("T"));
-          /*
-          timestamp from timeular is not accurate. sometimes 2h = 120min has a value thats != 120min. To solve that I cut the
-          seconds and milliseconds from the timestamp. Decreases precision --> alternative would be to round values
-          */
-          day["Duration"] = ((Date.parse(timeList.timeEntries[i].duration.stoppedAt.substring(0, timeList.timeEntries[i].duration.stoppedAt.lastIndexOf(":"))) - Date.parse(timeList.timeEntries[i].duration.startedAt.substring(0, timeList.timeEntries[i].duration.startedAt.lastIndexOf(":")))) / 60000) / 60;
-          day["Activity"] = timeList.timeEntries[i].activity.name.substring(timeList.timeEntries[i].activity.name.lastIndexOf("[") + 1, timeList.timeEntries[i].activity.name.lastIndexOf("]"));
-          day["Note"] = timeList.timeEntries[i].note.text;
-          month.push(day);
-      }
-
-      // sort the MonthList with Timular Entries after ascending dates --> easier handling from now on
-      month.sort(function (a, b) { return (a.StartDate > b.StartDate) ? 1 : 0 });
-
-      console.log("month before merge: " + JSON.stringify(month, null, 2));
-
-      // merging Duration time of dup Note lines for entries from same day
-      for (var i = 0; i < month.length; i++) {
-          for (var j = i + 1; j < month.length; j++) { // j = i + 1 because .csv is sorted!
-            // console.log( i + "#" + j);
-              if ((month[i]["StartDate"] === month[j]["StartDate"]) && (month[i]["Note"] === month[j]["Note"]) && (month[i]["Activity"] === month[j]["Activity"])) {
-                  month[i]["Duration"] = (month[i]["Duration"] * 60 + month[j]["Duration"] * 60) / 60;
-                  console.log("merging durations, compare activity: " + month[i]["Activity"] + " " + month[j]["Activity"] + " " + month[i]["Note"]);
-                  month.splice(j, 1); // remove merged entry from original array, to avoid recounting them in next i increment
-                  j--; // as one entry is spliced, the next candidate has the same j index number!
-              } else if (month[i]["StartDate"] !== month[j]["StartDate"]) {
-                  break; // Date matches no longer? input is sorted, break the comparison loop
-              }
-          }
-          monthCleaned.push(month[i]); // output the merged day entry to clean array
-      }
-
-      normalizeUP(startDate, endDate, monthCleaned).then((result) => {
-        console.log('normalizeUP: ');
-        console.log(result);
-        if (result && result.length <= 0) { // nothing to do, no need to call saveToProjectile
-          console.log('normalized list empty - nothing to do.');
-          return ('nothing to do.');
-        }
-        saveToProjectile(result);
-      });
-      return ('foobar exports.main done.');
-    }).catch(function (err) {
-      return false; // Crawling failed...
-    });
-}
-
-// refactoring of exports.main
+// ehemals exports.main
+// synchronize timeular bookings to projectile withing a date range. date -> YYYY-MM-DD
 exports.merge = async (startDate, endDate) => {
     let listentry = 0;
     let month = [];
@@ -574,30 +506,6 @@ exports.merge = async (startDate, endDate) => {
     });
     return ('foobar exports.merge done.');
 }
-
-
-// Debugging and testing
-
-// ALWAYS SET THIS BEFORE RUNNING TIMEULAR API OR YOU MAY LOSE DATA IN PROJECTILE THATS NOT SET IN / MATCHED BY TIMEULAR APP!
-// init().then(() => { main("2018-02-27", "2018-02-28") });
-
-// DEACTIVATED IN FAVOUR FOR CLI.JS and API.JS
-// inteded to provide timeular specific functions, not intended to run independendly
-// main("2018-03-01", "2018-03-01");
-// exports.main("2018-03-05", "2018-03-05");
-// exports.compareActivities();
-// exports.createActivity('foo', '0987-6');
-// exports.archiveActivity('126905');
-/*
-exports.compareActivities().then((result) => {
-  updateActivities(result.projectileHasTimeularNot, result.timeularHasProjectileNot);
-});
-*/
-
-// WORKS!
-// exports.updateActivities();
-// exports.bookActivity('2018-03-01', '9', '109208', 'Projectile CLI/API - synchronisieren der Activities/projectile packages, Aktivität buchen in timeular, Kleinigkeiten');
-
 
 
 // after that function , monthcleaned contains only limitless packages
