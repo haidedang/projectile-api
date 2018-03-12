@@ -196,7 +196,7 @@ async function createActivity(name, no) {
     headers: {
       Authorization:'Bearer ' + token.apiToken,
       Accept: 'application/json;charset=UTF-8',
-      'content-type': 'application/json'
+      'content-type': 'application/json;charset=UTF-8'
     },
     json: {
         "name": activityName,
@@ -318,7 +318,7 @@ exports.bookActivity = async (date, duration, activityId, note) => {
       headers: {
         Authorization:'Bearer ' + token.apiToken,
         Accept: 'application/json;charset=UTF-8',
-        'content-type': 'application/json'
+        'content-type': 'tmpNote'
       },
       json: timeEntry
     }, (err, res) => {
@@ -351,7 +351,7 @@ exports.bookActivityNG = async (date, duration, activityId, note) => {
       headers: {
         Authorization:'Bearer ' + token.apiToken,
         Accept: 'application/json;charset=UTF-8',
-        'content-type': 'application/json'
+        'content-type': 'application/json;charset=UTF-8'
       },
       json: timeEntry
     }).then(function (res) {
@@ -767,8 +767,8 @@ async function normalizeUP(startDate, endDate, MonthCleaned) {
 
     // delete changedayentries from projectile with same day as in timeluar
     // returns all new Entries from Timular, which havent been saved yet
-  /*   console.log(monthDay)
-    console.log(obj.dayList); */
+    // console.log(monthDay);
+    // console.log(obj.dayList);
     result = await deleteDepreceated(monthDay, obj.dayList);
     return result;
 }

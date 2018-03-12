@@ -199,7 +199,6 @@ let showJobList = async (cookie, employee) => {
 function normalPostURL(method, url, cookie, body) {
     return new Promise((resolve, reject) => {
         let options = option(method, url, cookie, body);
-
         request(options, function (error, response, body) {
             if (error){
                reject(error);
@@ -258,13 +257,13 @@ function escapeRegExp(str) {
 }
 
 let saveEntry = async (cookie, employee, time, project, note) => {
-    let dayList = await getDayListToday(cookie, employee); // ? TODO possible reason for day range issue?!
+    let dayList = await getDayListToday(cookie, employee);
     /*
     extend the "lines" range of originally 6 depending on amount of existing entries in dayList! else insertion of larger lists
     than 7 entries per day fail to save successfully.
     */
     lineSelector = dayList.length - 1;
-    if (dayList.length >= 49) {
+    if (dayList.length >= 49) { // depends if one day or whole weeks is returned from projectile - when what gets returned is still weird
       lineSelector = dayList.length - 43;
     }
 
@@ -304,6 +303,7 @@ let saveEntry = async (cookie, employee, time, project, note) => {
             }]
         }
     })
+    // console.log('DEBUGGING: ' + unescape(encodeURIComponent(note)));
 
     // save entry
     let body = await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action', cookie, {
@@ -369,6 +369,7 @@ async function deleteEntry(cookie, employee, number) {
         "action": "RowAction_Delete",
         "Params": {"ref": listEntry}
     });
+  // console.log(body.dialog.structure[""][""]["0"][1].v); --> contains "Nicht erlaubt: Krank löschen" in special case
     let secondBody = await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action', cookie, {
         "ref": body.dialog.ref,
         "name": "*",
@@ -383,7 +384,11 @@ async function deleteEntry(cookie, employee, number) {
     let bodyString = JSON.stringify(secondBody);
     let confirmDeletion = bodyString.slice(bodyString.indexOf('"close":["'));
     let re = new RegExp(body.dialog.ref, 'g');
-    let count = confirmDeletion.match(re).length;
+    let delMatch = confirmDeletion.match(re);
+    let count = 0;
+    if (delMatch) {
+      count = delMatch.length;
+    }
     // DEBUG
     // console.log(count + ' DELETE FCT ' + body.dialog.ref);
     if (count === 2) {
