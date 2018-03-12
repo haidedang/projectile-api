@@ -274,36 +274,21 @@ let saveEntry = async (cookie, employee, time, project, note) => {
     } */
     let listEntry = dayList[lineSelector];
 
-    // set time
+    // set time, select Project, write note -> all in one request now.
     let debug = await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit', cookie, {
         "values": {
             [listEntry]: [{
                 "n": "Time",
                 "v": time
-            }]
-        }
-    })
-
-    // select Project
-    await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit', cookie, {
-        "values": {
-            [listEntry]: [{
+            },{
                 "n": "What",
                 "v": project
-            }]
-        }
-    })
-
-    // write note
-    await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit', cookie, {
-        "values": {
-            [listEntry]: [{
+            },{
                 "n": "Note",
                 "v": note
             }]
         }
     })
-    // console.log('DEBUGGING: ' + unescape(encodeURIComponent(note)));
 
     // save entry
     let body = await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action', cookie, {
@@ -548,8 +533,8 @@ exports.getallEntriesInTimeFrame = async (startDate, endDate) => {
     endDate = endDate + "T00:00:00";
     let cookie = await exports.login();
     let employee = await exports.getEmployee(cookie);
-    await normalPostURL('POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit", cookie, {"values":{"Start":[{"n":"Field_TimeTrackerDate","v":startDate}]}});
-    await normalPostURL( 'POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit", cookie , {"values":{"Start":[{"n":"Field_TimeTrackerDate2","v":endDate}]}} );
+    await normalPostURL('POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit", cookie, {"values":{"Start":[{"n":"Field_TimeTrackerDate","v":startDate}, {"n":"Field_TimeTrackerDate2","v":endDate}]}});
+  // handled with above normalPostURL request --> await normalPostURL('POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit", cookie , {"values":{"Start":[{"n":"Field_TimeTrackerDate2","v":endDate}]}} );
     let response = await normalPostURL( 'POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=action", cookie , {"ref":"Start","name":"*","action":"TimeTracker1","Params":{}});
     fs.writeFile('daylist.json', JSON.stringify(response,null,2), (err)=>console.log()); // TODO necessary? obsolete?
     return response ;
