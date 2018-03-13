@@ -543,6 +543,6 @@ exports.getallEntriesInTimeFrame = async (startDate, endDate) => {
     await normalPostURL('POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit", cookie, {"values":{"Start":[{"n":"Field_TimeTrackerDate","v":startDate}, {"n":"Field_TimeTrackerDate2","v":endDate}]}});
   // handled with above normalPostURL request --> await normalPostURL('POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit", cookie , {"values":{"Start":[{"n":"Field_TimeTrackerDate2","v":endDate}]}} );
     let response = await normalPostURL( 'POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=action", cookie , {"ref":"Start","name":"*","action":"TimeTracker1","Params":{}});
-    fs.writeFile('daylist.json', JSON.stringify(response,null,2), (err) => winston.error(err)); // TODO necessary? obsolete?
+    // OBOSLETE? fs.writeFile('daylist.json', JSON.stringify(response,null,2), (err) => winston.error(err)); // TODO necessary? obsolete? // error got triggered, whats wrong there?!
     return response ;
 }
