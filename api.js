@@ -63,6 +63,7 @@ app.get(basePath + '/syncbookings/:startDate/:endDate', (req, res) => {
     winston.debug('Range ' + req.params.startDate + ' to ' + req.params.endDate);
     res.status(200).send('Sync done for ' + req.params.startDate + ' to ' + req.params.endDate);
   });
+  winston.debug('/syncbookings/:startDate/:endDate done');
 })
 
 /**
@@ -99,6 +100,7 @@ app.get(basePath + '/syncbookings/:choice', (req, res) => {
       res.status(400).send('Something went wrong - /synctimeular/:choice');
   }
   // res.status(200).send(' ' + req.params.choice )
+  winston.debug('/syncbookings/:choice done');
 })
 
 // SHOW
@@ -112,6 +114,7 @@ app.get(basePath + '/showListProjectile', async (req, res, next) => {
   } catch (err) {
      res.status(400).send('Something went wrong - /showListProjectile');
   }
+  winston.debug('/showListProjectile done');
 })
 
 /**
@@ -127,6 +130,7 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
   } catch (err) {
      res.status(400).send('Something went wrong - /showListProjectile');
   }
+  winston.debug('/showListTimeular done');
 })
 
 // BOOK
@@ -165,6 +169,7 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
    } catch (e) {
      res.status(400).send('Something went wrong - /book/:date/:duration/:activity/:note');
    }
+   winston.debug('/book/:date/:duration/:activity/:note done');
  })
 
 // eg: http://localhost:3000/book/1/2788-3/testing    WORKS :)
@@ -205,6 +210,7 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
       } catch (e) {
       res.status(400).send('Something went wrong - /book/:duration/:activity/:note');
       }
+      winston.debug('/book/:duration/:activity/:note done');
   })
 
   // SYNC ACTIVITIES
@@ -220,11 +226,13 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
      } catch (e) {
        res.status(400).send('Something went wrong - /syncactivities');
      }
+     winston.debug('/syncactivities done');
    })
 
 // new default? old one acted weird
 app.use(function(req, res, next){
      res.status(404);
+     winston.debug('default route done');
 })
 
 /**
