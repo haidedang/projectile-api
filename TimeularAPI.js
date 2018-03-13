@@ -5,11 +5,15 @@ const fs = require('fs');
 
 const util = require('util'); // for Debug only --> util.inspect()
 
+const winston = require('winston');
+// winston.level = 'debug';
+// error > warn > info > verbose > debug > silly
+
 let token;
 try {
   token = JSON.parse(fs.readFileSync('timeularToken.txt'));
 } catch (e) {
-  console.log('No token file seems to be available. Please run "node getTimularToken.js" to create a token file.');
+  winston.error('No token file seems to be available. Please run "node getTimularToken.js" to create a token file.');
   process.exit();
 }
 
@@ -60,7 +64,7 @@ async function compareActivities() {
   let projectileHasTimeularNot = []; // List what activities to create in timeular
 
   // to archive
-  console.log('starting comparing.....');
+  winston.debug('starting comparing.....');
   let activityList = await exports.getActivities();
   activityList.activities.forEach((item) => {
     let matchChecker = false;
@@ -68,17 +72,17 @@ async function compareActivities() {
     projectileJobList.forEach((item2) => {
       let timeularActivityID = item.name.substring(item.name.lastIndexOf("[") + 1, item.name.lastIndexOf("]"));
       let projectilePackageID = item2.no;
-      // console.log('testing: ' + timeularActivityID, projectilePackageID);
+      // winston.debug('testing: ' + timeularActivityID, projectilePackageID);
       if (timeularActivityID === projectilePackageID) {
         matchChecker = true;
-        // console.log('match: ' + timeularActivityID, projectilePackageID);
+        // winston.debug('match: ' + timeularActivityID, projectilePackageID);
       }
     })
     if (!matchChecker) {
       timeularHasProjectileNot.push(item);  // to archive!!
     }
   })
-  // console.log('to archive: ' + util.inspect(timeularHasProjectileNot));
+  // winston.debug('to archive: ' + util.inspect(timeularHasProjectileNot));
 
   // to create
   projectileJobList.forEach((item) => {
@@ -87,17 +91,17 @@ async function compareActivities() {
     activityList.activities.forEach((item2) => {
       let timeularActivityID = item2.name.substring(item2.name.lastIndexOf("[") + 1, item2.name.lastIndexOf("]"));
       let projectilePackageID = item.no;
-      // console.log('testing: ' + timeularActivityID, projectilePackageID);
+      // winston.debug('testing: ' + timeularActivityID, projectilePackageID);
       if (timeularActivityID === projectilePackageID) {
         missingChecker = false;
-        // console.log('match: ' + timeularActivityID, projectilePackageID);
+        // winston.debug('match: ' + timeularActivityID, projectilePackageID);
       }
     })
     if (missingChecker) {
       projectileHasTimeularNot.push(item);  // to archive!!
     }
   })
-  // console.log('to create: ' + util.inspect(projectileHasTimeularNot));
+  // winston.debug('to create: ' + util.inspect(projectileHasTimeularNot));
   let result = {
     projectileHasTimeularNot: projectileHasTimeularNot,
     timeularHasProjectileNot: timeularHasProjectileNot
@@ -159,17 +163,17 @@ exports.updateActivities = async () => {
   let result = await compareActivities();
   // create - contains projectile objects -> convert and create
   result.projectileHasTimeularNot.forEach((item) => {
-    // console.log(item.name, item.no);
+    // winston.debug(item.name, item.no);
     if (!createActivity(item.name, item.no)) {
-      console.log('Error: Creating ' + item.name, item.no + ' failed.');
+      winston.error('Error: Creating ' + item.name, item.no + ' failed.');
       resultState = false;
     }
   });
   // archive - contains timeular objects -> archive those
   result.timeularHasProjectileNot.forEach((item) => {
-    // console.log(item.name, item.id);
+    // winston.debug(item.name, item.id);
     if (!archiveActivity(item.id)) {
-      console.log('Error: Archiving ' + item.name, item.id + ' failed.');
+      winston.error('Error: Archiving ' + item.name, item.id + ' failed.');
       resultState = false;
     }
   });
@@ -268,7 +272,7 @@ exports.bookActivity = async (date, duration, activityId, note) => {
     if (timeEntries && timeEntries.length > 0) {
       timeEntries.forEach((item) => {
         if (new Date(item.duration.stoppedAt + 'Z') > latestStoppedAt) {
-          console.log('Debug bookActivity -> lastestStoppedAt -> neuer gefunden!');
+          winston.debug('Debug bookActivity -> lastestStoppedAt -> neuer gefunden!');
           latestStoppedAt = new Date(item.duration.stoppedAt + 'Z');
         }
       });
@@ -301,7 +305,7 @@ exports.bookActivity = async (date, duration, activityId, note) => {
     // latestStoppedAt = new Date(latestStoppedAt.setMinutes(latestStoppedAt.getMinutes() + 60)); // NOTE +60 due to timezone issues, in timeluar then offset of 60mins... weird!
     let newStoppedAt = new Date(latestStoppedAt);
     newStoppedAt = new Date(newStoppedAt.setMinutes(newStoppedAt.getMinutes() + sumMinutes));
-    console.log(latestStoppedAt.toISOString().substr(0,23), newStoppedAt.toISOString().substr(0,23) );
+    winston.debug(latestStoppedAt.toISOString().substr(0,23), newStoppedAt.toISOString().substr(0,23) );
     // remove z from end of date string!
     let timeEntry = {
       "activityId": activityId, // id of activity to book on.
@@ -322,7 +326,7 @@ exports.bookActivity = async (date, duration, activityId, note) => {
       },
       json: timeEntry
     }, (err, res) => {
-      console.log(res.body, res.statusCode);
+      winston.debug(res.body, res.statusCode);
       if (err) {
         throw new Error("An error occured. ", err);
         return false;
@@ -384,7 +388,7 @@ exports.bookActivityNG = async (date, duration, activityId, note) => {
   if (timeEntries && timeEntries.length > 0) {
     timeEntries.forEach((item) => {
       if (new Date(item.duration.stoppedAt + 'Z') > latestStoppedAt) {
-        console.log('Debug bookActivity -> lastestStoppedAt -> neuer gefunden!');
+        winston.debug('Debug bookActivity -> lastestStoppedAt -> neuer gefunden!');
         latestStoppedAt = new Date(item.duration.stoppedAt + 'Z');
       }
     });
@@ -417,7 +421,7 @@ exports.bookActivityNG = async (date, duration, activityId, note) => {
   // latestStoppedAt = new Date(latestStoppedAt.setMinutes(latestStoppedAt.getMinutes() + 60)); // NOTE +60 due to timezone issues, in timeluar then offset of 60mins... weird!
   let newStoppedAt = new Date(latestStoppedAt);
   newStoppedAt = new Date(newStoppedAt.setMinutes(newStoppedAt.getMinutes() + sumMinutes));
-  console.log(latestStoppedAt.toISOString().substr(0,23), newStoppedAt.toISOString().substr(0,23) );
+  winston.debug(latestStoppedAt.toISOString().substr(0,23), newStoppedAt.toISOString().substr(0,23) );
   // remove z from end of date string!
   let timeEntry = {
     "activityId": activityId, // id of activity to book on.
@@ -473,22 +477,22 @@ exports.merge = async (startDate, endDate) => {
           // !!! TODO CHECK - final clean Solution in saveEntry necessary!
           day["Note"] = day["Note"].replace(/ä/g, "ae").replace(/Ä/g, "Ae").replace(/ü/g, "ue").replace(/Ü/g, "Ue").replace(/ö/g, "oe").replace(/Ö/g, "Oe").replace(/ß/g, "ss");
           // end
-          
+
           month.push(day);
       }
 
       // sort the MonthList with Timular Entries after ascending dates --> easier handling from now on
       month.sort(function (a, b) { return (a.StartDate > b.StartDate) ? 1 : 0 });
 
-      console.log("month before merge: " + JSON.stringify(month, null, 2));
+      winston.debug("month before merge: " + JSON.stringify(month, null, 2));
 
       // merging Duration time of dup Note lines for entries from same day
       for (var i = 0; i < month.length; i++) {
           for (var j = i + 1; j < month.length; j++) { // j = i + 1 because .csv is sorted!
-            // console.log( i + "#" + j);
+            // winston.debug( i + "#" + j);
               if ((month[i]["StartDate"] === month[j]["StartDate"]) && (month[i]["Note"] === month[j]["Note"]) && (month[i]["Activity"] === month[j]["Activity"])) {
                   month[i]["Duration"] = (month[i]["Duration"] * 60 + month[j]["Duration"] * 60) / 60;
-                  // console.log("merging durations, compare activity: " + month[i]["Activity"] + " " + month[j]["Activity"] + " " + month[i]["Note"]);
+                  // winston.debug("merging durations, compare activity: " + month[i]["Activity"] + " " + month[j]["Activity"] + " " + month[i]["Note"]);
                   month.splice(j, 1); // remove merged entry from original array, to avoid recounting them in next i increment
                   j--; // as one entry is spliced, the next candidate has the same j index number!
               } else if (month[i]["StartDate"] !== month[j]["StartDate"]) {
@@ -502,10 +506,10 @@ exports.merge = async (startDate, endDate) => {
     });
 
     await normalizeUP(startDate, endDate, monthCleaned).then(async (result) => {
-      console.log('normalizeUP: ');
-      console.log(result);
+      winston.debug('normalizeUP: ');
+      winston.debug(result);
       if (result && result.length <= 0) { // nothing to do, no need to call saveToProjectile
-        console.log('normalized list empty - nothing to do.');
+        winston.debug('normalized list empty - nothing to do.');
         return ('nothing to do.');
       }
       await saveToProjectile(result);
@@ -563,7 +567,7 @@ async function saveToProjectile(monthArray) {
     async function syncSaving(package) {
         for (var i = 0; i < package.limitless.length; i++) {
             let response = await index.save(package.limitless[i]["StartDate"], package.limitless[i]["Duration"], package.limitless[i]["Activity"], package.limitless[i]["Note"]);
-            console.log('saving w/o limit: ' + package.limitless[i]["StartDate"], package.limitless[i]["Duration"], package.limitless[i]["Activity"], package.limitless[i]["Note"]);
+            winston.debug('saving w/o limit: ' + package.limitless[i]["StartDate"], package.limitless[i]["Duration"], package.limitless[i]["Activity"], package.limitless[i]["Note"]);
         }
         return true;
     }
@@ -579,15 +583,15 @@ async function saveToProjectile(monthArray) {
                 return item === package.limit[i]["Activity"];
             });
 
-            console.log("Saving entry with package limit.");
-            console.log("duration of new entry: " + package.limit[i].Duration + " remainingTime in package before add: " + Number(projectileObject[0].remainingTime));
+            winston.debug("Saving entry with package limit.");
+            winston.debug("duration of new entry: " + package.limit[i].Duration + " remainingTime in package before add: " + Number(projectileObject[0].remainingTime));
             // compare the timular project time with projectile instance
             // attention: toFixed(5) to avoid comparision issues with rounding errors
             if (parseFloat(package.limit[i].Duration.toFixed(5)) <= parseFloat(Number(projectileObject[0].remainingTime.toFixed(5)))) {
                 await index.save(package.limit[i]["StartDate"], parseFloat(package.limit[i]["Duration"].toFixed(5)), package.limit[i]["Activity"], package.limit[i]["Note"]);
-                console.log('saving w/ limit: ' + package.limit[i]["StartDate"], package.limit[i]["Duration"], package.limit[i]["Activity"], package.limit[i]["Note"]);
+                winston.debug('saving w/ limit: ' + package.limit[i]["StartDate"], package.limit[i]["Duration"], package.limit[i]["Activity"], package.limit[i]["Note"]);
             } else {
-                console.log('Saving package with limit failed! ' + package.limit[i]["StartDate"], package.limit[i]["Duration"], package.limit[i]["Activity"], package.limit[i]["Note"] + ' with remaining time of: ' + Number(projectileObject[0].remainingTime));
+                winston.debug('Saving package with limit failed! ' + package.limit[i]["StartDate"], package.limit[i]["Duration"], package.limit[i]["Activity"], package.limit[i]["Note"] + ' with remaining time of: ' + Number(projectileObject[0].remainingTime));
                 throw new Error('Remaining Time exceeded.');
             }
         }
@@ -614,8 +618,8 @@ async function getDistinctProjectileRange(startDate, endDate) {
         /*  let startDate = MonthCleaned[0].StartDate;
          let endDate = MonthCleaned[MonthCleaned.length-1].StartDate;
           */
-        console.log("startDate: " + startDate);
-        console.log("endDate: " + endDate);
+        winston.debug("startDate: " + startDate);
+        winston.debug("endDate: " + endDate);
 
         let TimeRangeArray = [];
         let List = await index.getallEntriesInTimeFrame(startDate, endDate);
@@ -641,10 +645,10 @@ async function getDistinctProjectileRange(startDate, endDate) {
         return serverDays;
 
     } catch (err) {
-        console.log(err);
+        winston.error(err);
     }
 
-    // console.log(TimeRangeArray);
+    // winston.debug(TimeRangeArray);
 
 }
 
@@ -681,8 +685,8 @@ async function normalizeUP(startDate, endDate, MonthCleaned) {
 
     // delete changedayentries from projectile with same day as in timeluar
     // returns all new Entries from Timular, which havent been saved yet
-    // console.log(monthDay);
-    // console.log(obj.dayList);
+    // winston.debug(monthDay);
+    // winston.debug(obj.dayList);
     result = await deleteDepreceated(monthDay, obj.dayList);
     return result;
 }
@@ -699,7 +703,7 @@ function splitintoSeperateDays(array) {
         unique.forEach((item) => final.push(array.filter((obj) => obj["StartDate"] == item)));
         return final;
     } catch (err) {
-        console.log(err);
+        winston.error(err);
     }
 
 }
@@ -710,8 +714,8 @@ function compareV2(clientArray, serverArray) {
         arr.push(false);
     }
     // --------DEBUG ----------------
-    /* console.log("Client" + JSON.stringify(clientArray, null, 2));
-    console.log("Server" + JSON.stringify(serverArray, null, 2)); */
+    /* winston.debug("Client" + JSON.stringify(clientArray, null, 2));
+    winston.debug("Server" + JSON.stringify(serverArray, null, 2)); */
 
     try {
         for (var i = 0; i < serverArray.length; i++) {
@@ -728,7 +732,7 @@ function compareV2(clientArray, serverArray) {
         }
         return arr;
     } catch (err) {
-        console.log(err);
+        winston.error(err);
     }
 }
 
@@ -753,7 +757,7 @@ async function deleteDepreceated(monthDay, dayList) {
         for (let i = 0; i < monthDay.length; i++) {
             let res = compareV2(monthDay[i], dayList[i]);
             // ----------DEBUG --------------
-            // console.log("result COMPARE: " + JSON.stringify(res, null, 2));
+            // winston.debug("result COMPARE: " + JSON.stringify(res, null, 2));
             finalresult.push(monthDay[i]);
             // after one iteration , a day is compared. I need then to delete that shit , get the date
             // delete, when entry exists but is FALSE.
@@ -769,8 +773,8 @@ async function deleteDepreceated(monthDay, dayList) {
         }
         // -------DEBUG-------
         return [].concat.apply([], finalresult);
-    } catch (Err) {
-        console.log(Err);
+    } catch (err) {
+        winston.error(err);
     }
 
 }
@@ -782,7 +786,7 @@ async function deleteProjectileEmptySlots(cleanProjectileList) {
         for (var j = 0; j < cleanProjectileList[i].length; j++) {
             if (cleanProjectileList[i][j].Duration !== null) {
                 // DEBUG
-                console.log("Delete " + cleanProjectileList[i][j].Note );
+                winston.debug("Delete " + cleanProjectileList[i][j].Note );
                 await index.delete(cleanProjectileList[i][j].StartDate, j);
                 cleanProjectileList[i].splice(j, 1);  // isn't it enough to just run through the list and deleting the entries without splice?
                 j = j - 1;
@@ -810,7 +814,7 @@ function prepareForSaveAndDeleting(serverDays, serverDaysInProjectile) {
     // set Overall list index , where serverDay exists in timular to true !
     //serverDaysInProjectile contains all Indices to Day Arrays which exists in Timular
     serverDaysInProjectile.forEach((item) => Overalllist[item] = true);
-    // console.log(Overalllist);
+    // winston.debug(Overalllist);
 
     // Push into Projectile List with same days as Timular List , if false push to List to delete out of Projectile
     for (var i = 0; i < Overalllist.length; i++) {

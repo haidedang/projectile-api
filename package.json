@@ -20,9 +20,9 @@
     "commander": "^2.13.0",
     "csvtojson": "^1.1.9",
     "express": "^4.16.2",
-    "logger": "^0.0.1",
     "request": "^2.83.0",
     "request-promise": "^4.2.2",
-    "request-promise-native": "^1.0.5"
+    "request-promise-native": "^1.0.5",
+    "winston": "^2.4.1"
   }
 }

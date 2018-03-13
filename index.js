@@ -3,12 +3,15 @@ const request = require('request');
 
 const util = require('util'); // for Debug only --> util.inspect()
 
+const winston = require('winston');
+// winston.level = 'debug';
+// error > warn > info > verbose > debug > silly
 
 let user;
 try {
   user = JSON.parse(fs.readFileSync('user.txt'));
 } catch (e) {
-  console.log('No usercredential file seems to be available. Please run "node userCred.js" to create a credential file.');
+  winston.error('No usercredential file seems to be available. Please run "node userCred.js" to create a credential file.' + e);
   process.exit();
 }
 
@@ -39,7 +42,7 @@ function createLogin() {
     }, function (error, response, body) {
         if (!error) {
 
-            console.log(response.headers['set-cookie'])
+            winston.debug(response.headers['set-cookie'])
             let cookie = '';
             response.headers['set-cookie'].forEach((item) => {
                 //
@@ -49,7 +52,7 @@ function createLogin() {
                 }
             })
 
-            // console.log(body, response);
+            // winston.debug(body, response);
             request({
                 method: 'POST',
                 url: 'https://projectile.office.sevenval.de/projectile/gui5ajax',
@@ -75,11 +78,11 @@ function createLogin() {
                                     dates += data[9] + ' '
                                 }
                             } catch (e) {
-                                // console.log(item.v);
-                                console.log(calendEntry);
+                                // winston.debug(item.v);
+                                winston.error(e, calendEntry);
                             }
                         })
-                        console.log(`Name ${item.c} -- ${dates}`);
+                        winston.debug(`Name ${item.c} -- ${dates}`);
                     }
 
                 })
@@ -159,7 +162,7 @@ let showJobList = async (cookie, employee) => {
             Dock: ['Area.TrackingArea', 'Area.ProjectManagementArea']
         });
 
-        fs.writeFile("answer.json", JSON.stringify(body), (err)=>{console.log()});  // TODO TO CHECK necessary?
+        fs.writeFile("answer.json", JSON.stringify(body), (err)=>{winston.debug()});  // TODO TO CHECK necessary?
 
         /**
          * get name and NO. of Employee Job
@@ -268,7 +271,7 @@ let saveEntry = async (cookie, employee, time, project, note) => {
       lineSelector = dayList.length - 43;
     }
 
-    console.log('lineSelector DEBUG: ' + lineSelector);
+    winston.debug('lineSelector DEBUG: ' + lineSelector);
     // let lineSelector = dayList.length - 43; // case that 7 days are in dayList
     /* if (dayList && dayList.length < 49) { // case that 1 day is in dayList
       lineSelector = dayList.length -1;
@@ -276,7 +279,7 @@ let saveEntry = async (cookie, employee, time, project, note) => {
     let listEntry = dayList[lineSelector];
 
     // "normalize" note - Q'n'D fix, until final solution found
-    // CHECK: Q'n'D fix in TimeularAPI -> merge
+    // !!! TODO CHECK - final clean Solution necessary: Q'n'D fix in TimeularAPI -> merge
 
     // set time, select Project, write note -> all in one request now.
     let debug = await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit', cookie, {
@@ -308,8 +311,8 @@ let saveEntry = async (cookie, employee, time, project, note) => {
     // pattern to matches within a note! e.g.: 2 tesing vs. testing vs. testing 2
     // " gets stored as \" in projectile json
     let re = new RegExp('\"v\"\:\"' + escapeRegExp(note).replace(/[\"]/g, "\\\\$&") + '\"\,\"d\"', 'g'); // TODO enough to check for notes?! :( must be another way if there is note present!)
-    // console.log('RegEx Debug: ' + escapeRegExp(note).replace(/[\"]/g, "\\\\$&"));
-    // console.log(note.replace(/[\"]/g, "\\\$&"));
+    // winston.debug('RegEx Debug: ' + escapeRegExp(note).replace(/[\"]/g, "\\\\$&"));
+    // winston.debug(note.replace(/[\"]/g, "\\\$&"));
 
     // from server reply create list of entries of "note" matches to check them further, ideally there is only one
     let count = 0;
@@ -317,7 +320,7 @@ let saveEntry = async (cookie, employee, time, project, note) => {
     if (bodyStringMatch){
       count = bodyStringMatch.length;   // "api * ! \" ' url1" zu matchen!
     }
-    console.log("Occurence count of note text: " + count);
+    winston.debug("Occurence count of note text: " + count);
     for (let i = 0; i < count; i++) {
       // find the note
       let indexOfNote = bodyString.search(re);
@@ -338,7 +341,7 @@ let saveEntry = async (cookie, employee, time, project, note) => {
     let returnValue = false;
 
     entries.forEach((item) => { // time has to be noramlized. Projectile ALWAYS returns x.xx though x,xx or x:xx may have been sent before
-      // console.log('Länge Response TimeTracker: ' + body.values['TimeTracker!^.|Default|Employee|1|357'].length);
+      // winston.debug('Länge Response TimeTracker: ' + body.values['TimeTracker!^.|Default|Employee|1|357'].length);
       if (body.values['TimeTracker!^.|Default|Employee|1|357'].length >= 5 && item.includes('"Time","v":' + time + ',"d"') && item.includes('"What","v":"' + project + '","d"') && item.includes('"Note","v":"' + note.replace(/[\"]/g, "\\\$&") + '","d"')) {
         returnValue = true; // created a new entry
       } else if (item.includes('"What","v":"' + project + '","d"') && item.includes('"Note","v":"' + note.replace(/[\"]/g, "\\\$&") + '","d"')) {
@@ -358,7 +361,7 @@ async function deleteEntry(cookie, employee, number) {
         "action": "RowAction_Delete",
         "Params": {"ref": listEntry}
     });
-  // console.log(body.dialog.structure[""][""]["0"][1].v); --> contains "Nicht erlaubt: Krank löschen" in special case
+  // winston.debug(body.dialog.structure[""][""]["0"][1].v); --> contains "Nicht erlaubt: Krank löschen" in special case
     let secondBody = await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action', cookie, {
         "ref": body.dialog.ref,
         "name": "*",
@@ -379,11 +382,11 @@ async function deleteEntry(cookie, employee, number) {
       count = delMatch.length;
     }
     // DEBUG
-    // console.log(count + ' DELETE FCT ' + body.dialog.ref);
+    // winston.debug(count + ' DELETE FCT ' + body.dialog.ref);
     if (count === 2) {
       return true;
     } else {
-      console.log('There might be an issue while deleting a listEntry: count: ' + count + ' ref: ' + body.dialog.ref);
+      winston.warn('There might be an issue while deleting a listEntry: count: ' + count + ' ref: ' + body.dialog.ref);
       return false;
     }
 }
@@ -425,7 +428,7 @@ async function setCalendarDate(date, cookie, employee) {
       return bodyString.includes(date); // standard behaviour - date gets changed
     } else {
       if (!bodyString.includes('[{"n":"Begin","d":true}]}')) {
-        console.log('Function setCalenderDate returns false, something may be wrong.');
+        winston.warn('Function setCalenderDate returns false, something may be wrong.');
       }
       return bodyString.includes('[{"n":"Begin","d":true}]}'); // behaviour/returned json if date doesn't had to be changed
     }
@@ -439,41 +442,41 @@ exports.delete = async (date, listEntry) => {
     let cookie = await exports.login();
     let employee = await exports.getEmployee(cookie);
     if(await setCalendarDate(date, cookie, employee)) {
-        console.log('setCalenderDate was successful in delete function.');
+        winston.debug('setCalenderDate was successful in delete function.');
         if (await deleteEntry(cookie, employee, listEntry)) {
-            console.log("Finished deleting entry " + listEntry + ' for date ' + date);
+            winston.debug("Finished deleting entry " + listEntry + ' for date ' + date);
         } else {
-            console.log("Error while deleting entry " + listEntry + ' for date ' + date);
+            winston.error("Error while deleting entry " + listEntry + ' for date ' + date);
         }
     }
 }
 
 //simplified for API use
 exports.jobList = async (cookie,employee) => {
-    console.log('fetching data for jobList.');
+    winston.debug('fetching data for jobList.');
         return showJobList(cookie, employee);
 };
 
 exports.fetchNewJobList = async () => {
     let cookie = await exports.login();
     let employee = await exports.getEmployee(cookie);
-    console.log('fetching new data for jobList...');
+    winston.debug('fetching new data for jobList...');
     let data =  await showJobList(cookie, employee);
     return data;
 }
 
 // simplified for API Use
 exports.save = async (date, time, project, note) => {
-    console.log('saving data...');
+    winston.debug('saving data...');
     let cookie = await exports.login();
     let employee = await exports.getEmployee(cookie);
     // let jobList = await exports.jobList(cookie, employee); // fetch the actual joblist.
     if (await setCalendarDate(date, cookie, employee)) {
         let saveEntryResult = await saveEntry(cookie, employee, time, project, note); // saveEntry returns true or false depending on save result
-        console.log("saveEntryResult --> " + saveEntryResult);
+        winston.debug("saveEntryResult --> " + saveEntryResult);
         // TODO: store packages which couldnt be saved in an external file
         if (saveEntryResult) {
-            console.log('Finished saving entry.'+ "\n");
+            winston.debug('Finished saving entry.'+ "\n");
             return true;
         }
     }
@@ -516,8 +519,8 @@ exports.joblistLimited = async (list, limitTime, callback) => {
     })
     // array of limited packages
     return limitedJobList;
-    /* console.log(list);
-    console.log(limitedJobList); */
+    /* winston.debug(list);
+    winston.debug(limitedJobList); */
 }
 
 exports.getDayListToday = async function () {
@@ -540,6 +543,6 @@ exports.getallEntriesInTimeFrame = async (startDate, endDate) => {
     await normalPostURL('POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit", cookie, {"values":{"Start":[{"n":"Field_TimeTrackerDate","v":startDate}, {"n":"Field_TimeTrackerDate2","v":endDate}]}});
   // handled with above normalPostURL request --> await normalPostURL('POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit", cookie , {"values":{"Start":[{"n":"Field_TimeTrackerDate2","v":endDate}]}} );
     let response = await normalPostURL( 'POST', "https://projectile.office.sevenval.de/projectile/gui5ajax?action=action", cookie , {"ref":"Start","name":"*","action":"TimeTracker1","Params":{}});
-    fs.writeFile('daylist.json', JSON.stringify(response,null,2), (err)=>console.log()); // TODO necessary? obsolete?
+    fs.writeFile('daylist.json', JSON.stringify(response,null,2), (err) => winston.error(err)); // TODO necessary? obsolete?
     return response ;
 }

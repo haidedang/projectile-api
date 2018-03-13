@@ -9,12 +9,16 @@ const timeularapi = require('./TimeularAPI.js');
 
 const app = express();
 
+const winston = require('winston');
+winston.level = 'debug';
+// error > warn > info > verbose > debug > silly
+
 // get user creds and timeular API token
 let user;
 try {
   user = JSON.parse(fs.readFileSync('user.txt'));
 } catch (e) {
-  console.log('No usercredential file seems to be available. Please run "node userCred.js" to create a credential file.');
+  winston.error('No usercredential file seems to be available. Please run "node userCred.js" to create a credential file.');
   process.exit();
 }
 
@@ -22,7 +26,7 @@ let token;
 try {
   token = JSON.parse(fs.readFileSync('timeularToken.txt'));
 } catch (e) {
-  console.log('No token file seems to be available. Please run "node getTimularToken.js" to create a token file.');
+  winston.error('No token file seems to be available. Please run "node getTimularToken.js" to create a token file.');
   process.exit();
 }
 
@@ -36,7 +40,7 @@ async function init() {
     employee = await index.getEmployee(cookie);
     jobList = await index.jobList(cookie, employee);
   } catch (e) {
-    console.log('Initialization failed. ' + e);
+    winston.error('Initialization failed. ' + e);
   }
 }
 init();
@@ -56,7 +60,7 @@ app.get(basePath + '/healthStatus', (req, res) => {
  */
 app.get(basePath + '/syncbookings/:startDate/:endDate', (req, res) => {
     timeularapi.merge(req.params.startDate, req.params.endDate).then((result) => {
-    console.log('Range ' + req.params.startDate + ' to ' + req.params.endDate);
+    winston.debug('Range ' + req.params.startDate + ' to ' + req.params.endDate);
     res.status(200).send('Sync done for ' + req.params.startDate + ' to ' + req.params.endDate);
   });
 })
@@ -80,15 +84,15 @@ app.get(basePath + '/syncbookings/:choice', (req, res) => {
       startDay.setDate(today.getDate() - 6);
       timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then(() => {
         res.status(200).send('Sync done for last 7 days.');
-        console.log('week ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
+        winston.debug('week ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
       });
-      // console.log('week ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
+      // winston.debug('week ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
       // res.status(200).send('Sync done for last 7 days.');
       break;
     case 'month':
       startDay.setMonth(today.getMonth() - 1);
       // ENTSCHÄRFT timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
-      console.log('month ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
+      winston.debug('month ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
       res.status(200).send('Sync done for last month.');
       break;
     default:
@@ -116,8 +120,8 @@ app.get(basePath + '/showListProjectile', async (req, res, next) => {
 app.get(basePath + '/showListTimeular', async (req, res, next) => {
   try {
     let timeularActivities = await timeularapi.getActivities();
-    console.log(timeularActivities);
-    // console.log(timeularapi.activityList);
+    winston.debug(timeularActivities);
+    // winston.debug(timeularapi.activityList);
     // res.status(200).send(JSON.stringify(timeularapi.activityList));
     res.status(200).send(JSON.stringify(timeularActivities));
   } catch (err) {
@@ -139,13 +143,13 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
      // create package/activity table
      // analyse the provided "activity" parameter and find the fitting package or activity id pair
      let packageActivity = await timeularapi.packageActivityList(req.params.activity);
-     console.log('Debug packageActivity result: ' + packageActivity.Package, packageActivity.Activity);
+     winston.debug('Debug packageActivity result: ' + packageActivity.Package, packageActivity.Activity);
 
      // book in TIMEULAR
      // OBOSLETE??  ENTSCHÄRFT timeularapi.bookActivity(req.params.date, req.params.duration, req.params.activity, req.params.note);
      let response = await timeularapi.bookActivityNG(req.params.date, req.params.duration, packageActivity.Activity, req.params.note).then((response) => {
        if(response) {
-         console.log('bookActivity for timeular successfull');
+         winston.debug('bookActivity for timeular successfull');
        }
        return response;
      });
@@ -155,7 +159,7 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
      time = parseFloat(time);
      // book in projectile
      index.save(req.params.date, time, packageActivity.Package, req.params.note).then(() => {
-       console.log('save for projectile successfull');
+       winston.debug('save for projectile successfull');
        res.status(200).send(req.params.date + ' ' +  req.params.duration + ' ' +  req.params.activity + ' ' +  req.params.note)
      });
    } catch (e) {
@@ -175,16 +179,17 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
       // WHEN SYNCING TIMEULAR WITH PROJECTILE
 
       // TODO check validity of duration, activitiy and note?
+
       // create package/activity table
       // analyse the provided "activity" parameter and find the fitting package or activity id pair
       let packageActivity = await timeularapi.packageActivityList(req.params.activity);
-      console.log('Debug packageActivity result: ' + packageActivity.Package, packageActivity.Activity);
+      winston.debug('Debug packageActivity result: ' + packageActivity.Package, packageActivity.Activity);
 
       // book in TIMEULAR
       // OBOSLETE??  ENTSCHÄRFT timeularapi.bookActivity(req.params.date, req.params.duration, req.params.activity, req.params.note);
       let response = await timeularapi.bookActivityNG(today, req.params.duration, packageActivity.Activity, req.params.note).then((response) => {
         if(response) {
-          console.log('bookActivity for timeular successfull');
+          winston.debug('bookActivity for timeular successfull');
         }
         return response;
       });
@@ -194,7 +199,7 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
       time = parseFloat(time);
       // book in projectile
       index.save(today, time, packageActivity.Package, req.params.note).then(() => {
-        console.log('save for projectile successfull');
+        winston.debug('save for projectile successfull');
         res.status(200).send(today + ' ' +  req.params.duration + ' ' +  req.params.activity + ' ' +  req.params.note)
       });
       } catch (e) {
@@ -208,9 +213,9 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
    */
    app.get(basePath + '/syncactivities', async (req, res) => {
      try {
-       console.log('trying to sync activities and projectile packages...');
+       winston.debug('trying to sync activities and projectile packages...');
        let result = await timeularapi.updateActivities();
-       console.log('synactivities synchronized: ' + result);
+       winston.debug('synactivities synchronized: ' + result);
        await res.status(200).send(result);
      } catch (e) {
        res.status(400).send('Something went wrong - /syncactivities');
@@ -226,7 +231,7 @@ app.use(function(req, res, next){
  *  get default reaction to undefined routes
  */
 app.get('*', (req, res) => {
-  console.log(`Error: default routing error - invalid request.`)
+  winston.error(`Error: default routing error - invalid request.`)
   res.sendStatus(500)
 })
 
