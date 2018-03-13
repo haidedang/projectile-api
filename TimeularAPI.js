@@ -249,7 +249,7 @@ async function archiveActivity(activityId) {
  * @param {activity} activity to use for booking
  * @param {note} note to use for booking
  *
- *   // currently not used! bookActivityNG is used!
+ *   // OBSOLETE? currently not used! bookActivityNG is used!
  */  // WIP!!! Alternative with time like 9:00 as minimum start time?!
 exports.bookActivity = async (date, duration, activityId, note) => {
   // get all entries for date
@@ -318,7 +318,7 @@ exports.bookActivity = async (date, duration, activityId, note) => {
       headers: {
         Authorization:'Bearer ' + token.apiToken,
         Accept: 'application/json;charset=UTF-8',
-        'content-type': 'tmpNote'
+        'content-type': 'application/json;charset=UTF-8'
       },
       json: timeEntry
     }, (err, res) => {
@@ -438,7 +438,7 @@ exports.bookActivityNG = async (date, duration, activityId, note) => {
 }
 
 
-// ehemals exports.main
+// ehemals exports.main //  better naming of funct?
 // synchronize/merge timeular bookings to projectile withing a date range. date -> YYYY-MM-DD
 exports.merge = async (startDate, endDate) => {
     let listentry = 0;
@@ -468,6 +468,12 @@ exports.merge = async (startDate, endDate) => {
           day["Duration"] = ((Date.parse(timeList.timeEntries[i].duration.stoppedAt.substring(0, timeList.timeEntries[i].duration.stoppedAt.lastIndexOf(":"))) - Date.parse(timeList.timeEntries[i].duration.startedAt.substring(0, timeList.timeEntries[i].duration.startedAt.lastIndexOf(":")))) / 60000) / 60;
           day["Activity"] = timeList.timeEntries[i].activity.name.substring(timeList.timeEntries[i].activity.name.lastIndexOf("[") + 1, timeList.timeEntries[i].activity.name.lastIndexOf("]"));
           day["Note"] = timeList.timeEntries[i].note.text;
+
+          // "normalize" note - Q'n'D fix for index.js to avoid malformed characters in projectile
+          // !!! TODO CHECK - final clean Solution in saveEntry necessary!
+          day["Note"] = day["Note"].replace(/ä/g, "ae").replace(/Ä/g, "Ae").replace(/ü/g, "ue").replace(/Ü/g, "Ue").replace(/ö/g, "oe").replace(/Ö/g, "Oe").replace(/ß/g, "ss");
+          // end
+          
           month.push(day);
       }
 

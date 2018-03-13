@@ -251,10 +251,11 @@ exports.normalizetime = async (time) => {
   return time;
 }
 
-
+// helperfunction
 function escapeRegExp(str) {
   return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 }
+
 
 let saveEntry = async (cookie, employee, time, project, note) => {
     let dayList = await getDayListToday(cookie, employee);
@@ -273,6 +274,9 @@ let saveEntry = async (cookie, employee, time, project, note) => {
       lineSelector = dayList.length -1;
     } */
     let listEntry = dayList[lineSelector];
+
+    // "normalize" note - Q'n'D fix, until final solution found
+    // CHECK: Q'n'D fix in TimeularAPI -> merge
 
     // set time, select Project, write note -> all in one request now.
     let debug = await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit', cookie, {
