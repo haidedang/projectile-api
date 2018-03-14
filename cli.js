@@ -1,6 +1,6 @@
 const request = require('request');
-const index = require('./index.js');
-const timeularapi = require('./TimeularAPI.js');
+const projectile = require('./projectileAPI.js');
+const timeularapi = require('./timeularAPI.js');
 const fs = require('fs');
 
 const readline = require('readline');
@@ -44,9 +44,9 @@ async function syncTimeular(startDate, endDate){
 
 async function init() {
   try {
-      const cookie = await index.login();
-      const employee = await index.getEmployee(cookie);
-      const jobList = await index.jobList(cookie, employee);
+      const cookie = await projectile.login();
+      const employee = await projectile.getEmployee(cookie);
+      const jobList = await projectile.jobList(cookie, employee);
 
       function command(){
           console.log(`\n(show) show job package list \n` +
@@ -100,11 +100,11 @@ async function init() {
                       // signature: save(date, time, project, note)
                 if (count >= 1) {
                     console.log(result[1], result[2], result[3], newArr);
-                    // ENTSCHÄRFT index.save(result[1], result[2], result[3], newArr).then( () => command());  // listEntry removed from signature
+                    // ENTSCHÄRFT projectile.save(result[1], result[2], result[3], newArr).then( () => command());  // listEntry removed from signature
                 } else {
                     let today = new Date().toISOString().substr(0, 10);
                     console.log(today, result[1], result[2], newArr);
-                    // ENTSCHÄRFT index.save(today, result[1], result[2], newArr).then( () => command());  // listEntry removed from signature
+                    // ENTSCHÄRFT projectile.save(today, result[1], result[2], newArr).then( () => command());  // listEntry removed from signature
                 }
                 // command();
                 break;
@@ -144,11 +144,11 @@ async function init() {
                       // signature: save(date, time, project, note)
                       if (count2 >= 1) {
                           console.log(result[1], result[2], selectedJob, newArr2);
-                          //index.save(result[1], result[2], result[3], newArr).then( () => command());  // listEntry removed from signature
+                          //projectile.save(result[1], result[2], result[3], newArr).then( () => command());  // listEntry removed from signature
                       } else {
                           let today = new Date().toISOString().substr(0, 10);
                           console.log(today, result[1], selectedJob, newArr2);
-                          //index.save(today, result[1], result[2], newArr).then( () => command());  // listEntry removed from signature
+                          //projectile.save(today, result[1], result[2], newArr).then( () => command());  // listEntry removed from signature
                       }
                   });
                   // command();

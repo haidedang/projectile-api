@@ -1,6 +1,6 @@
 const request = require('request');
 const rp = require('request-promise');
-const index = require('./index.js');
+const projectile = require('./projectileAPI.js');
 const fs = require('fs');
 
 const util = require('util'); // for Debug only --> util.inspect()
@@ -59,7 +59,7 @@ exports.getActivities = async () => {
  */
 async function compareActivities() {
   let timeularActivities = await exports.getActivities();
-  let projectileJobList = await index.fetchNewJobList();
+  let projectileJobList = await projectile.fetchNewJobList();
   let timeularHasProjectileNot = []; // List what activities to archive in timeular
   let projectileHasTimeularNot = []; // List what activities to create in timeular
 
@@ -170,13 +170,15 @@ exports.updateActivities = async () => {
     }
   });
   // archive - contains timeular objects -> archive those
+  // DEACTIVATED FOR NOW, requested by Jan
+/*
   result.timeularHasProjectileNot.forEach((item) => {
     // winston.debug(item.name, item.id);
     if (!archiveActivity(item.id)) {
       winston.error('Error: Archiving ' + item.name, item.id + ' failed.');
       resultState = false;
     }
-  });
+  }); */
   return (resultState);
 }
 
@@ -445,6 +447,7 @@ exports.bookActivityNG = async (date, duration, activityId, note) => {
 // ehemals exports.main //  better naming of funct?
 // synchronize/merge timeular bookings to projectile withing a date range. date -> YYYY-MM-DD
 exports.merge = async (startDate, endDate) => {
+    let returnResponse = '';
     let listentry = 0;
     let month = [];
     let monthCleaned = [];
@@ -461,6 +464,7 @@ exports.merge = async (startDate, endDate) => {
       }
     }).then(function (res) {
       let timeList = JSON.parse(res.body);
+      winston.silly('Retrieved bookinglist from range: ' + JSON.stringify( timeList, null, 2 ));
 
       for (let i = 0; i < timeList.timeEntries.length; i++) {
           let day = {};
@@ -471,15 +475,20 @@ exports.merge = async (startDate, endDate) => {
           */
           day["Duration"] = ((Date.parse(timeList.timeEntries[i].duration.stoppedAt.substring(0, timeList.timeEntries[i].duration.stoppedAt.lastIndexOf(":"))) - Date.parse(timeList.timeEntries[i].duration.startedAt.substring(0, timeList.timeEntries[i].duration.startedAt.lastIndexOf(":")))) / 60000) / 60;
           day["Activity"] = timeList.timeEntries[i].activity.name.substring(timeList.timeEntries[i].activity.name.lastIndexOf("[") + 1, timeList.timeEntries[i].activity.name.lastIndexOf("]"));
-          day["Note"] = timeList.timeEntries[i].note.text;
+          if (timeList.timeEntries[i].note.text !== null) {
+            day["Note"] = timeList.timeEntries[i].note.text;
+          } else {
+            day["Note"] = '';
+          }
 
-          // "normalize" note - Q'n'D fix for index.js to avoid malformed characters in projectile
+          // "normalize" note - Q'n'D fix for projectile.js to avoid malformed characters in projectile
           // !!! TODO CHECK - final clean Solution in saveEntry necessary!
           day["Note"] = day["Note"].replace(/ä/g, "ae").replace(/Ä/g, "Ae").replace(/ü/g, "ue").replace(/Ü/g, "Ue").replace(/ö/g, "oe").replace(/Ö/g, "Oe").replace(/ß/g, "ss");
           // end
 
           month.push(day);
       }
+      winston.debug('month size: ' + month.length);
 
       // sort the MonthList with Timular Entries after ascending dates --> easier handling from now on
       month.sort(function (a, b) { return (a.StartDate > b.StartDate) ? 1 : 0 });
@@ -501,20 +510,22 @@ exports.merge = async (startDate, endDate) => {
           }
           monthCleaned.push(month[i]); // output the merged day entry to clean array
       }
+      winston.debug('monthCleaned size: ' + monthCleaned.length);
     }).catch(function (err) {
       return false; // Crawling failed...
     });
 
     await normalizeUP(startDate, endDate, monthCleaned).then(async (result) => {
+      winston.debug('monthCleaned size in normalizeUP: ' + monthCleaned.length);
       winston.debug('normalizeUP: ');
-      winston.debug(result);
+      winston.debug('Input: ' + util.inspect(result));
       if (result && result.length <= 0) { // nothing to do, no need to call saveToProjectile
         winston.debug('normalized list empty - nothing to do.');
-        return ('nothing to do.');
+        return ('Nothing to do.');
       }
-      await saveToProjectile(result);
+      returnResponse = await saveToProjectile(result);
     });
-    return ('foobar exports.merge done.');
+    return (returnResponse); // pos und neg results
 }
 
 
@@ -531,7 +542,7 @@ async function timularClient(monthArray, limitPackageArrayFromServer) {
     let monthLimitPackage = [];
     // Check every element of Timular list for the packages and split them into a seperate array.
     for (var i = 0; i < limitPackageArrayFromServer.length; i++) {
-        await index.joblistLimited(monthArray, "Activity", (item) => {
+        await projectile.joblistLimited(monthArray, "Activity", (item) => {
             return item == limitPackageArrayFromServer[i]["no"];
         }).then((result) => { result.forEach((result) => monthLimitPackage.push(result)) });
     }
@@ -549,10 +560,13 @@ async function timularClient(monthArray, limitPackageArrayFromServer) {
  * synchronous saving of limit packages with checking
  */
 async function saveToProjectile(monthArray) {
+    // output to frontend
+    let posResult = [];
+    let negResult = [];
     // Fetch an actual Joblist from the server
-    let data = await index.fetchNewJobList();
+    let data = await projectile.fetchNewJobList();
     // return an Array which contains every element with Limited Time
-    let limitPackageArrayFromServer = await index.joblistLimited(data, "limitTime", (item) => {
+    let limitPackageArrayFromServer = await projectile.joblistLimited(data, "limitTime", (item) => {
         return item > 0;
     });
     // split Timular list into List with limitless and packages with limit
@@ -560,14 +574,20 @@ async function saveToProjectile(monthArray) {
 
     //async saving of packages without limit
     /*  package.limitless.forEach((obj)=>{
-         index.save(obj["StartDate"], obj["Duration"],  obj["Activity"], obj["Note"]);
+         projectile.save(obj["StartDate"], obj["Duration"],  obj["Activity"], obj["Note"]);
      }) */
 
     //synchronous saving of packages without limit
     async function syncSaving(package) {
         for (var i = 0; i < package.limitless.length; i++) {
-            let response = await index.save(package.limitless[i]["StartDate"], package.limitless[i]["Duration"], package.limitless[i]["Activity"], package.limitless[i]["Note"]);
+            let response = await projectile.save(package.limitless[i]["StartDate"], package.limitless[i]["Duration"], package.limitless[i]["Activity"], package.limitless[i]["Note"]);
             winston.debug('saving w/o limit: ' + package.limitless[i]["StartDate"], package.limitless[i]["Duration"], package.limitless[i]["Activity"], package.limitless[i]["Note"]);
+            winston.debug('response: ' + response);
+            if (response) {
+              posResult.push(package.limitless[i]);
+            } else {
+              negResult.push(package.limitless[i]);
+            }
         }
         return true;
     }
@@ -578,8 +598,8 @@ async function saveToProjectile(monthArray) {
     async function syncSavingWithLimit(package) {
         for (var i = 0; i < package.limit.length; i++) {
             // fetch projectile instance of the current project and get the remaining time
-            let data = await index.fetchNewJobList();
-            let projectileObject = await index.joblistLimited(data, "no", (item) => {
+            let data = await projectile.fetchNewJobList();
+            let projectileObject = await projectile.joblistLimited(data, "no", (item) => {
                 return item === package.limit[i]["Activity"];
             });
 
@@ -588,8 +608,14 @@ async function saveToProjectile(monthArray) {
             // compare the timular project time with projectile instance
             // attention: toFixed(5) to avoid comparision issues with rounding errors
             if (parseFloat(package.limit[i].Duration.toFixed(5)) <= parseFloat(Number(projectileObject[0].remainingTime.toFixed(5)))) {
-                await index.save(package.limit[i]["StartDate"], parseFloat(package.limit[i]["Duration"].toFixed(5)), package.limit[i]["Activity"], package.limit[i]["Note"]);
+                let response = await projectile.save(package.limit[i]["StartDate"], parseFloat(package.limit[i]["Duration"].toFixed(5)), package.limit[i]["Activity"], package.limit[i]["Note"]);
                 winston.debug('saving w/ limit: ' + package.limit[i]["StartDate"], package.limit[i]["Duration"], package.limit[i]["Activity"], package.limit[i]["Note"]);
+                winston.debug('response: ' + response);
+                if (response) {
+                  posResult.push(package.limit[i]);
+                } else {
+                  negResult.push(package.limit[i]);
+                }
             } else {
                 winston.debug('Saving package with limit failed! ' + package.limit[i]["StartDate"], package.limit[i]["Duration"], package.limit[i]["Activity"], package.limit[i]["Note"] + ' with remaining time of: ' + Number(projectileObject[0].remainingTime));
                 throw new Error('Remaining Time exceeded.');
@@ -604,7 +630,11 @@ async function saveToProjectile(monthArray) {
     });
 
     // await syncSavingWithLimit(package);
-    return true;
+    // return true;
+    return ({
+      posResult: posResult,
+      negResult: negResult
+    });
 }
 
 /**
@@ -622,7 +652,7 @@ async function getDistinctProjectileRange(startDate, endDate) {
         winston.debug("endDate: " + endDate);
 
         let TimeRangeArray = [];
-        let List = await index.getallEntriesInTimeFrame(startDate, endDate);
+        let List = await projectile.getallEntriesInTimeFrame(startDate, endDate);
         let obj = List["values"];
 
         for (key in obj) {
@@ -763,7 +793,7 @@ async function deleteDepreceated(monthDay, dayList) {
             // delete, when entry exists but is FALSE.
             for (var j = 0; j < res.length; j++) {
                 if (res[j] == false && dayList[i][j].Duration !== null) {
-                    await index.delete(dayList[i][j].StartDate, j);
+                    await projectile.delete(dayList[i][j].StartDate, j);
                     res.splice(j, 1);
                     dayList[i].splice(j, 1);
                     j = j - 1;
@@ -787,7 +817,7 @@ async function deleteProjectileEmptySlots(cleanProjectileList) {
             if (cleanProjectileList[i][j].Duration !== null) {
                 // DEBUG
                 winston.debug("Delete " + cleanProjectileList[i][j].Note );
-                await index.delete(cleanProjectileList[i][j].StartDate, j);
+                await projectile.delete(cleanProjectileList[i][j].StartDate, j);
                 cleanProjectileList[i].splice(j, 1);  // isn't it enough to just run through the list and deleting the entries without splice?
                 j = j - 1;
             }

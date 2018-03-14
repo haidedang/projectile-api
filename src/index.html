@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <title>Sync timeular 2 projectile</title>
+</head>
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="col">
+        <h2>projectile - timeular - api</h2>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- sync choice -->
+    <div class="row">
+      <div class="col">
+        <div class="btn-group" role="group" aria-label="Basic example">
+          <button type="button" id="buttonSyncToday" data-target="today" class="btn btn-secondary">Sync today</button>
+          <button type="button" id="buttonSyncWeek" data-target="week" class="btn btn-secondary">Sync week</button>
+          <button type="button" id="buttonSyncMonth" data-target="month" class="btn btn-secondary">Sync month</button>
+        </div>
+      </div>
+    </div>
+    <div>
+
+    <hr>
+
+    <!-- sync range -->
+    <div class="row">
+      <div class="col">
+        <div class="input-group mb-3">
+          <div class="input-group-prepend">
+            <span class="input-group-text" id="basic-addon1">start date</span>
+          </div>
+          <input type="date" class="form-control" id="startDate">
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <div class="input-group mb-3">
+          <div class="input-group-prepend">
+            <span class="input-group-text" id="basic-addon1">end date</span>
+          </div>
+          <input type="date" class="form-control" id="endDate">
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-6">
+        <button type="button" id="buttonSyncRange" class="btn btn-secondary">Sync in range</button>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- sync activities / packages -->
+    <div class="row">
+      <div class="col">
+        <button type="button" id="buttonSyncActivities" class="btn btn-secondary">Sync activities/packages</button>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- output results -->
+    <div>
+      <h4>Sync results:</h4>
+      <ul class="list-group">
+        <div id="results"> <!-- insert results here at end -->
+          <li class="list-group-item">
+            <div class="row">
+              <div class="col-2">
+                <h5>StartDate</h5>
+              </div>
+              <div class="col-2">
+                <h5>Duration</h5>
+              </div>
+              <div class="col-2">
+                <h5>Package</h5>
+              </div>
+              <div class="col">
+                <h5>Note</h5>
+              </div>
+            <!-- <textarea id="results" name="htmlContent" rows="5" cols="100">RESULTS</textarea> -->
+            </div>
+          </li>
+        </div>
+      </ul>
+    </div>
+
+<!-- <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script> -->
+<script src="//localhost:3000/src/index.js"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<script src="//localhost:3000/src/index.js"></script>
+</body>
+</html>

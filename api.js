@@ -4,8 +4,8 @@ const rp = require('request-promise');
 const fs = require('fs');
 const util = require('util');
 
-const index = require('./index.js');
-const timeularapi = require('./TimeularAPI.js');
+const projectile = require('./projectileAPI.js');
+const timeularapi = require('./timeularAPI.js');
 
 const app = express();
 
@@ -36,9 +36,9 @@ let jobList = '';
 
 async function init() {
   try {
-    cookie = await index.login();
-    employee = await index.getEmployee(cookie);
-    jobList = await index.jobList(cookie, employee);
+    cookie = await projectile.login();
+    employee = await projectile.getEmployee(cookie);
+    jobList = await projectile.jobList(cookie, employee);
   } catch (e) {
     winston.error('Initialization failed. ' + e);
   }
@@ -54,6 +54,33 @@ app.get(basePath + '/healthStatus', (req, res) => {
   res.status(200).send({ healthy: true })
 })
 
+/**
+ *  route for base website
+ */
+app.get(basePath + '/', (req, res) => {
+    winston.debug('Base website entered.');
+    // delivering website with options
+    res.sendFile(__dirname + '/src/index.html');
+    winston.debug('/ base website done');
+})
+
+app.get(basePath + '/src/:file', (req, res) => {
+    winston.debug('Base website entered, file requested.');
+    // delivering website with options
+    res.sendFile(__dirname + '/src/' + req.params.file);
+    winston.debug('/ base website file request done');
+})
+
+/**
+ *  route for base website post request
+ */
+app.post(basePath + '/', (req, res) => {
+    winston.debug('Base website post request entered.');
+    // receiving post requests for base website
+
+    winston.debug('/ base website post request done');
+})
+
 // SYNC BOOKINGS
 /**
  *  route for syncing timeular with dates within a certain date range
@@ -61,7 +88,7 @@ app.get(basePath + '/healthStatus', (req, res) => {
 app.get(basePath + '/syncbookings/:startDate/:endDate', (req, res) => {
     timeularapi.merge(req.params.startDate, req.params.endDate).then((result) => {
     winston.debug('Range ' + req.params.startDate + ' to ' + req.params.endDate);
-    res.status(200).send('Sync done for ' + req.params.startDate + ' to ' + req.params.endDate);
+    res.status(200).send(JSON.stringify(result));
   });
   winston.debug('/syncbookings/:startDate/:endDate done');
 })
@@ -75,8 +102,10 @@ app.get(basePath + '/syncbookings/:choice', (req, res) => {
 
   switch (req.params.choice) {
     case 'today':
-      timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then(() => {
-        res.status(200).send('Sync done for "today".');
+      timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then((result) => {
+        winston.debug('(api) Sync result: ' + util.inspect(result));
+        res.status(200).send(JSON.stringify(result)); // 'Sync done for "today".'
+        winston.debug('today ' + startDay.toISOString().substr(0, 10));
       });
       // timeularapi.main(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
       // res.status(200).send('Sync done for today.');
@@ -109,7 +138,7 @@ app.get(basePath + '/syncbookings/:choice', (req, res) => {
  */
 app.get(basePath + '/showListProjectile', async (req, res, next) => {
   try {
-    jobList = await index.fetchNewJobList();
+    jobList = await projectile.fetchNewJobList();
     res.status(200).send(JSON.stringify(jobList));
   } catch (err) {
      res.status(400).send('Something went wrong - /showListProjectile');
@@ -159,10 +188,10 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
      });
 
      // normalizing duration time if necessary (to x.xx and parse as float to avoid weird duration lengths)
-     let time = await index.normalizetime(req.params.duration);
+     let time = await projectile.normalizetime(req.params.duration);
      time = parseFloat(time);
      // book in projectile
-     index.save(req.params.date, time, packageActivity.Package, req.params.note).then(() => {
+     projectile.save(req.params.date, time, packageActivity.Package, req.params.note).then(() => {
        winston.debug('save for projectile successfull');
        res.status(200).send(req.params.date + ' ' +  req.params.duration + ' ' +  req.params.activity + ' ' +  req.params.note)
      });
@@ -200,10 +229,10 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
       });
 
       // normalizing duration time if necessary (to x.xx and parse as float to avoid weird duration lengths)
-      let time = await index.normalizetime(req.params.duration);
+      let time = await projectile.normalizetime(req.params.duration);
       time = parseFloat(time);
       // book in projectile
-      index.save(today, time, packageActivity.Package, req.params.note).then(() => {
+      projectile.save(today, time, packageActivity.Package, req.params.note).then(() => {
         winston.debug('save for projectile successfull');
         res.status(200).send(today + ' ' +  req.params.duration + ' ' +  req.params.activity + ' ' +  req.params.note)
       });
