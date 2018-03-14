@@ -58,7 +58,7 @@ $(document).ready(function() {
         let responseJSON = JSON.parse(response);
 
         // output to results div table
-        $('#tmp').remove();
+        $('#tmp').remove(); // working with duplicate ids is bad practise
 
         if (response !== '""') {  // change that weird response!
           $.each(responseJSON.negResult, function(key, value) {
@@ -67,7 +67,7 @@ $(document).ready(function() {
             $('#results').append('<li class="list-group-item list-group-item-warning" id="tmp"><div class="row"><div class="col-2">' + value.StartDate + '</div>' +
             '<div class="col-2">' + value.Duration + '</div>' +
             '<div class="col-2">' + value.Activity + '</div>' +
-            '<div class="col"><span class="badge badge-warning">Note missing</span></div></div></li>');
+            '<div class="col"><span class="badge badge-warning">Note missing - cannot be synchronized</span></div></div></li>');
           });
           $.each(responseJSON.posResult, function(key, value) {
             console.log(key, JSON.stringify( value, null, 2 ));
@@ -109,7 +109,7 @@ $(document).ready(function() {
         let responseJSON = JSON.parse(response);
 
         // output to results div table
-        $('#tmp').remove();
+        $('#tmp').remove(); // working with duplicate ids is bad practise
 
         if (response !== '""') {  // change that weird response!
           $.each(responseJSON.negResult, function(key, value) {
@@ -118,7 +118,7 @@ $(document).ready(function() {
             $('#results').append('<li class="list-group-item list-group-item-warning" id="tmp"><div class="row"><div class="col-2">' + value.StartDate + '</div>' +
             '<div class="col-2">' + value.Duration + '</div>' +
             '<div class="col-2">' + value.Activity + '</div>' +
-            '<div class="col"><span class="badge badge-secondary">Note missing</span></div></div></li>');
+            '<div class="col"><span class="badge badge-secondary">Note missing - cannot be synchronized</span></div></div></li>');
           });
           $.each(responseJSON.posResult, function(key, value) {
             console.log(key, JSON.stringify( value, null, 2 ));
