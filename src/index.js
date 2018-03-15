@@ -12,7 +12,6 @@ $(document).ready(function() {
    */
   function outputResults(response) {
     let responseJSON = JSON.parse(response);
-    cleanResults();
 
     if (response !== '""') {  // change that weird response!
       $.each(responseJSON.negResult, function(key, value) {
@@ -47,6 +46,7 @@ $(document).ready(function() {
     var target = $('#' + this.id).data("target");
     console.log('DEBUG: Sync ' + target);
     //check if target valid?
+    cleanResults();
 
     $.ajax({
       url: '//localhost:3000/syncbookings/' + target,
@@ -74,7 +74,8 @@ $(document).ready(function() {
 
     console.log('Sync ' + startDate + ' to ' + endDate);
     //check if target valid?
-
+    cleanResults();
+    
     $.ajax({
       url: '//localhost:3000/syncbookings/' + startDate + '/' + endDate,
       cache: false,
