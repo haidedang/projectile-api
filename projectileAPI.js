@@ -8,12 +8,21 @@ const winston = require('winston');
 // error > warn > info > verbose > debug > silly
 
 let user;
+exports.initializeUser = async (userApi) => {
+  try {
+    user = userApi;
+  } catch (e) {
+    winston.error('projectileAPI No usercredential file seems to be available. Please run "node userCred.js" to create a credential file.', e);
+    // process.exit();
+  }
+}
+/*
 try {
   user = JSON.parse(fs.readFileSync('user.txt'));
 } catch (e) {
-  winston.error('No usercredential file seems to be available. Please run "node userCred.js" to create a credential file.' + e);
-  process.exit();
-}
+  winston.error('projectileAPI No usercredential file seems to be available. Please run "node userCred.js" to create a credential file.', e);
+  // process.exit();
+}*/
 
 request.defaults({jar: true});
 

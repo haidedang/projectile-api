@@ -1,41 +1,43 @@
 'use strict';
 
 $(document).ready(function() {
-  // var $jsonGetInfo;
-
-  /**
-   *  create initial mandator list for #mandatorList
-   */
-  function initialList() {
-    $.getJSON( "//{{host}}{{basePath}}/editor/getinfo", function( data ) {
-      var $selectMandator = $('#mandatorList');
-      $selectMandator.find('option').remove();
-      $('<option>').val(-1).text('please select').appendTo($selectMandator);
-      $.each(data, function(key, value) {
-        $('<option>').val(key).text(value.mandator).appendTo($selectMandator);
-      });
-      var $selectFileList = $('#fileList');
-      $selectFileList.find('option').remove();
-      $('<option>').val(-1).text('not available').appendTo($('#fileList'));
-      $('<option>').val(-1).text('not available').appendTo($('#assetFileList'));
-      $jsonGetInfo = data;
-    });
+  // clean results in general
+  function cleanResults() {
+    $('#tmp').remove(); // working with duplicate ids is bad practise
+    $('#syncInfo').html('');
   }
 
-  // run initial List when page is loaded
-//  initialList();
+  /**
+   *  sync process the results from syncing
+   */
+  function outputResults(response) {
+    let responseJSON = JSON.parse(response);
+    cleanResults();
 
+    if (response !== '""') {  // change that weird response!
+      $.each(responseJSON.negResult, function(key, value) {
+        console.log(key, JSON.stringify( value, null, 2 ));
+        // $('#results').val(key + ' ' + value);
+        $('#results').append('<li class="list-group-item list-group-item-warning" id="tmp"><div class="row"><div class="col-md-3">' + value.StartDate + '</div>' +
+          '<div class="col-md-2">' + value.Duration.toString().substring(0, 6) + '</div>' +
+          '<div class="col-md-2">' + value.Activity + '</div>' +
+          '<div class="col-md">' + (value.Note === ""?"<span class=\"badge badge-warning\">Note missing - not synchronized</span>": value.Note) + (value.LimitHit === "yes"?"<span class=\"badge badge-warning\">Package limit hit - not synchronized</span>":"") +'</div></div></li>');
+        });
 
-/*
-{ posResult:
-   [ { StartDate: '2018-03-14',
-       Duration: 3,
-       Activity: '2759-62',
-       Note: 'TESTING' } ],
-  negResult: [] }
-*/
-
-
+      $.each(responseJSON.posResult, function(key, value) {
+        console.log(key, JSON.stringify( value, null, 2 ));
+        // $('#results').val(key + ' ' + value);
+        $('#results').append('<li class="list-group-item list-group-item-success" id="tmp"><div class="row"><div class="col-md-3">' + value.StartDate + '</div>' +
+          '<div class="col-md-2">' + value.Duration.toString().substring(0, 6) + '</div>' +
+          '<div class="col-md-2">' + value.Activity + '</div>' +
+          '<div class="col-md">' + value.Note + '</div></div></li>');
+        });
+    } else {
+      console.log("nothing to do");
+      $('#results').append('<li class="list-group-item list-group-item-success" id="tmp"><div class="row"><div class="col">nothing to do' +
+      '</div></div></li>');
+    }
+  }
 
 
   /**
@@ -54,34 +56,10 @@ $(document).ready(function() {
       //data: form_data,
       type: 'get',
       success: function(response, status){
-        console.log('DEBUG: Rsponse: ' + response + ' status: ' + status);
-        let responseJSON = JSON.parse(response);
+        console.log('DEBUG: Response: ' + response + ' status: ' + status);
 
         // output to results div table
-        $('#tmp').remove(); // working with duplicate ids is bad practise
-
-        if (response !== '""') {  // change that weird response!
-          $.each(responseJSON.negResult, function(key, value) {
-            console.log(key, JSON.stringify( value, null, 2 ));
-            // $('#results').val(key + ' ' + value);
-            $('#results').append('<li class="list-group-item list-group-item-warning" id="tmp"><div class="row"><div class="col-2">' + value.StartDate + '</div>' +
-            '<div class="col-2">' + value.Duration + '</div>' +
-            '<div class="col-2">' + value.Activity + '</div>' +
-            '<div class="col"><span class="badge badge-warning">Note missing - cannot be synchronized</span></div></div></li>');
-          });
-          $.each(responseJSON.posResult, function(key, value) {
-            console.log(key, JSON.stringify( value, null, 2 ));
-            // $('#results').val(key + ' ' + value);
-            $('#results').append('<li class="list-group-item list-group-item-success" id="tmp"><div class="row"><div class="col-2">' + value.StartDate + '</div>' +
-            '<div class="col-2">' + value.Duration + '</div>' +
-            '<div class="col-2">' + value.Activity + '</div>' +
-            '<div class="col">' + value.Note + '</div></div></li>');
-          });
-        } else {
-          console.log("nothing to do");
-          $('#results').append('<li class="list-group-item list-group-item-success" id="tmp"><div class="row"><div class="col">nothing to do' +
-          '</div></div></li>');
-        }
+        outputResults(response);
 
       }
     });
@@ -106,33 +84,9 @@ $(document).ready(function() {
       type: 'get',
       success: function(response, status){
         console.log('Sync bookings with range: ' + response, status);
-        let responseJSON = JSON.parse(response);
 
         // output to results div table
-        $('#tmp').remove(); // working with duplicate ids is bad practise
-
-        if (response !== '""') {  // change that weird response!
-          $.each(responseJSON.negResult, function(key, value) {
-            console.log(key, JSON.stringify( value, null, 2 ));
-            // $('#results').val(key + ' ' + value);
-            $('#results').append('<li class="list-group-item list-group-item-warning" id="tmp"><div class="row"><div class="col-2">' + value.StartDate + '</div>' +
-            '<div class="col-2">' + value.Duration + '</div>' +
-            '<div class="col-2">' + value.Activity + '</div>' +
-            '<div class="col"><span class="badge badge-secondary">Note missing - cannot be synchronized</span></div></div></li>');
-          });
-          $.each(responseJSON.posResult, function(key, value) {
-            console.log(key, JSON.stringify( value, null, 2 ));
-            // $('#results').val(key + ' ' + value);
-            $('#results').append('<li class="list-group-item list-group-item-success" id="tmp"><div class="row"><div class="col-2">' + value.StartDate + '</div>' +
-            '<div class="col-2">' + value.Duration + '</div>' +
-            '<div class="col-2">' + value.Activity + '</div>' +
-            '<div class="col">' + value.Note + '</div></div></li>');
-          });
-        } else {
-          console.log("nothing to do");
-          $('#results').append('<li class="list-group-item list-group-item-success" id="tmp"><div class="row"><div class="col">nothing to do' +
-          '</div></div></li>');
-        }
+        outputResults(response);
 
       }
     });
@@ -142,6 +96,8 @@ $(document).ready(function() {
    *  sync activities
    */
   $('#buttonSyncActivities').click(function () {
+    cleanResults();
+
     $.ajax({
       url: '//localhost:3000/syncactivities',
       cache: false,
@@ -151,13 +107,20 @@ $(document).ready(function() {
       type: 'get',
       success: function(response, status){
         console.log(response, status);
-/*
-        if(status) {
-          $('#syncResponse').val('SUCCESS').text('SUCCESS');
-        } else {
-          $('#syncResponse').val('FAILED').text('FAILED');
-        }
-*/
+        $('#syncInfo').html('<span class="badge badge-success">Projectile packages sychronized with Timeular activities.</span>').delay(5000).fadeOut(function() {
+          $(this).html('');
+        });
+        /*
+        .delay(3000).fadeOut(function() {
+          $(this).remove();
+        }); */
+      },
+      error : function(error) {
+        //show error here
+        console.log(error);
+        $('#syncInfo').html('<span class="badge badge-warning">Projectile packages not sychronized with Timeular activities. An Error occured</span>').delay(5000).fadeOut(function() {
+          $(this).html('');
+        });
       }
     });
   });

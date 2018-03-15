@@ -8,15 +8,24 @@ const util = require('util'); // for Debug only --> util.inspect()
 const winston = require('winston');
 // winston.level = 'debug';
 // error > warn > info > verbose > debug > silly
-
+let token;
+exports.initializeToken = async (tokenApi) => {
+  try {
+    token = tokenApi;
+  } catch (e) {
+    winston.error('timeularAPI No token file seems to be available. Please run "node getTimularToken.js" to create a token file.');
+    // process.exit();
+  }
+}
+/*
 let token;
 try {
   token = JSON.parse(fs.readFileSync('timeularToken.txt'));
 } catch (e) {
-  winston.error('No token file seems to be available. Please run "node getTimularToken.js" to create a token file.');
-  process.exit();
+  winston.error('timeularAPI No token file seems to be available. Please run "node getTimularToken.js" to create a token file.');
+  // process.exit();
 }
-
+*/
 /*
 let listentry = 0;
 let month = [];
@@ -563,6 +572,7 @@ async function saveToProjectile(monthArray) {
     // output to frontend
     let posResult = [];
     let negResult = [];
+    let gesResult = [];
     // Fetch an actual Joblist from the server
     let data = await projectile.fetchNewJobList();
     // return an Array which contains every element with Limited Time
@@ -583,11 +593,17 @@ async function saveToProjectile(monthArray) {
             let response = await projectile.save(package.limitless[i]["StartDate"], package.limitless[i]["Duration"], package.limitless[i]["Activity"], package.limitless[i]["Note"]);
             winston.debug('saving w/o limit: ' + package.limitless[i]["StartDate"], package.limitless[i]["Duration"], package.limitless[i]["Activity"], package.limitless[i]["Note"]);
             winston.debug('response: ' + response);
+            let obj = {};
+            obj['LimitHit'] = 'noLimit';
+            obj = package.limitless[i];
             if (response) {
+              obj['Result'] = 'positive';
               posResult.push(package.limitless[i]);
             } else {
+              obj['Result'] = 'negative';
               negResult.push(package.limitless[i]);
             }
+            gesResult.push(obj);
         }
         return true;
     }
@@ -607,19 +623,30 @@ async function saveToProjectile(monthArray) {
             winston.debug("duration of new entry: " + package.limit[i].Duration + " remainingTime in package before add: " + Number(projectileObject[0].remainingTime));
             // compare the timular project time with projectile instance
             // attention: toFixed(5) to avoid comparision issues with rounding errors
+            let obj = {};
+            obj = package.limit[i];
+            obj['LimitHit'] = 'no';
+
             if (parseFloat(package.limit[i].Duration.toFixed(5)) <= parseFloat(Number(projectileObject[0].remainingTime.toFixed(5)))) {
                 let response = await projectile.save(package.limit[i]["StartDate"], parseFloat(package.limit[i]["Duration"].toFixed(5)), package.limit[i]["Activity"], package.limit[i]["Note"]);
                 winston.debug('saving w/ limit: ' + package.limit[i]["StartDate"], package.limit[i]["Duration"], package.limit[i]["Activity"], package.limit[i]["Note"]);
                 winston.debug('response: ' + response);
                 if (response) {
-                  posResult.push(package.limit[i]);
+                  obj['Result'] = 'positive';
+                  posResult.push(obj);
                 } else {
-                  negResult.push(package.limit[i]);
+                  obj['Result'] = 'negative';
+                  negResult.push(obj); // package.limit[i]
                 }
             } else {
+                obj['LimitHit'] = 'yes';
+                obj['Result'] = 'negative';
                 winston.debug('Saving package with limit failed! ' + package.limit[i]["StartDate"], package.limit[i]["Duration"], package.limit[i]["Activity"], package.limit[i]["Note"] + ' with remaining time of: ' + Number(projectileObject[0].remainingTime));
-                throw new Error('Remaining Time exceeded.');
+                // throw new Error('Remaining Time exceeded.');
+                winston.warn('Remaining Time exceeded.');
+                negResult.push(obj);
             }
+            gesResult.push(obj);
         }
         return true;
     }
@@ -631,6 +658,8 @@ async function saveToProjectile(monthArray) {
 
     // await syncSavingWithLimit(package);
     // return true;
+// TEST THIS RESULT!!! better INFO LimitHit und Result
+// return geResult;
     return ({
       posResult: posResult,
       negResult: negResult

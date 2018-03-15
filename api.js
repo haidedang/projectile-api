@@ -1,4 +1,3 @@
-
 const express = require('express');
 const rp = require('request-promise');
 const fs = require('fs');
@@ -9,26 +8,19 @@ const timeularapi = require('./timeularAPI.js');
 
 const app = express();
 
+const bodyParser = require('body-parser');
+
 const winston = require('winston');
 winston.level = 'debug';
 // error > warn > info > verbose > debug > silly
 
-// get user creds and timeular API token
-let user;
-try {
-  user = JSON.parse(fs.readFileSync('user.txt'));
-} catch (e) {
-  winston.error('No usercredential file seems to be available. Please run "node userCred.js" to create a credential file.');
-  process.exit();
-}
+app.use(bodyParser.json()); // support json encoded bodies
+app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
+const writeFileAsync = util.promisify(fs.writeFile);
+
+let user;
 let token;
-try {
-  token = JSON.parse(fs.readFileSync('timeularToken.txt'));
-} catch (e) {
-  winston.error('No token file seems to be available. Please run "node getTimularToken.js" to create a token file.');
-  process.exit();
-}
 
 let cookie = '';
 let employee = '';
@@ -36,13 +28,36 @@ let jobList = '';
 
 async function init() {
   try {
-    cookie = await projectile.login();
-    employee = await projectile.getEmployee(cookie);
-    jobList = await projectile.jobList(cookie, employee);
+    // get user creds and timeular API token
+    try {
+      user = JSON.parse(fs.readFileSync('user.txt'));
+    } catch (e) {
+      winston.error('API No usercredential file seems to be available. Please run "node userCred.js" to create a credential file.');
+      // process.exit();
+    }
+
+    try {
+      token = JSON.parse(fs.readFileSync('timeularToken.txt'));
+    } catch (e) {
+      winston.error('API No token file seems to be available. Please run "node getTimularToken.js" to create a token file.');
+      // process.exit();
+    }
+
+    // get cookie, employee and jobList
+    if (token && user) {
+      await projectile.initializeUser(user);
+      await timeularapi.initializeToken(token);
+      cookie = await projectile.login();
+      employee = await projectile.getEmployee(cookie);
+      jobList = await projectile.jobList(cookie, employee);
+    } else {
+      winston.warn('Initialization failed. token and/or user missing.');
+    }
   } catch (e) {
-    winston.error('Initialization failed. ' + e);
+    winston.error('Initialization failed. ', e);
   }
 }
+
 init();
 
 let basePath = '';
@@ -64,6 +79,9 @@ app.get(basePath + '/', (req, res) => {
     winston.debug('/ base website done');
 })
 
+/**
+ *  route for to retrieve files for base website
+ */
 app.get(basePath + '/src/:file', (req, res) => {
     winston.debug('Base website entered, file requested.');
     // delivering website with options
@@ -72,14 +90,92 @@ app.get(basePath + '/src/:file', (req, res) => {
 })
 
 /**
- *  route for base website post request
+ *  route for start website
  */
-app.post(basePath + '/', (req, res) => {
-    winston.debug('Base website post request entered.');
-    // receiving post requests for base website
-
-    winston.debug('/ base website post request done');
+app.get(basePath + '/start', (req, res) => {
+    winston.debug('start website entered.');
+    // delivering website with options
+    res.sendFile(__dirname + '/src/start.html');
+    winston.debug('/ start website done');
 })
+
+/**
+ *  route for start website post request
+ */
+app.post(basePath + '/start', (req, res) => {
+    winston.debug('Post request to /start');
+    // receiving post requests for base website
+    // winston.debug(req.body); // shows credentials!
+    let json = req.body;
+
+    // set projectile creds
+    let user = {login: json.projectileUser,
+        password: json.projectilePassword
+    }
+    fs.writeFile('user.txt', JSON.stringify(user), (err) => {
+        if (err) throw err;
+        console.log("Projectile User credentials have been saved.");
+
+        rp.post('https://api.timeular.com/api/v2/developer/sign-in',{
+          headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json;charset=UTF-8'
+          },
+          json: {
+            'apiKey': json.timeularApiKey,
+            'apiSecret': json.timeularApiSecret
+          },
+        }, (err, res, body) => {
+          let apiToken = res.body.token;
+          let timeularApi = {
+              apiToken: apiToken
+          }
+          fs.writeFile('timeularToken.txt', JSON.stringify(timeularApi), (err) => {
+              if (err) throw err;
+              console.log("Timeular token has been saved.");
+              winston.debug('/ base website post request done');
+              init(); // fetch joblist, get cookie , employee
+
+          });
+        });
+        res.status(200).send(true);
+    });
+/*
+    // set timeular creds
+    rp.post('https://api.timeular.com/api/v2/developer/sign-in',{
+      headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json;charset=UTF-8'
+      },
+      json: {
+        'apiKey': json.timeularApiKey,
+        'apiSecret': json.timeularApiSecret
+      },
+    }, (err, res, body) => {
+      let apiToken = res.body.token;
+      let timeularApi = {
+          apiToken: apiToken
+      }
+      fs.writeFile('timeularToken.txt', JSON.stringify(timeularApi), (err) => {
+          if (err) throw err;
+          console.log("Timeular token has been saved.");
+      });
+    });
+    winston.debug('/ base website post request done');
+    init(); // fetch joblist, get cookie , employee
+    res.status(200).send(true);
+*/
+    /*
+    if (responseTimeularCred && responseProjectileCred) {
+      // .then(() => {
+      winston.debug('/ base website post request done');
+      init(); // fetch joblist, get cookie , employee
+      res.status(200).send(true);
+    } */
+    // });
+
+    // init();
+});
 
 // SYNC BOOKINGS
 /**
@@ -113,7 +209,7 @@ app.get(basePath + '/syncbookings/:choice', (req, res) => {
     case 'week':
       startDay.setDate(today.getDate() - 6);
       timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then(() => {
-        res.status(200).send('Sync done for last 7 days.');
+        res.status(200).send(JSON.stringify(result));
         winston.debug('week ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
       });
       // winston.debug('week ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
@@ -121,9 +217,10 @@ app.get(basePath + '/syncbookings/:choice', (req, res) => {
       break;
     case 'month':
       startDay.setMonth(today.getMonth() - 1);
-      // ENTSCHÄRFT timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
-      winston.debug('month ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
-      res.status(200).send('Sync done for last month.');
+      timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then(() => {
+        res.status(200).send(JSON.stringify(result));
+        winston.debug('month ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
+      });
       break;
     default:
       res.status(400).send('Something went wrong - /synctimeular/:choice');
@@ -278,5 +375,6 @@ app.listen(config.get('appPort'), () => {
 })
 */
 app.listen(3000, () => {
+  console.log('Projectile-Timeular API / APP is listenning on port 3000! - Open http://localhost:3000/ in your browser to access it.');
   // logger.info(`Projectile-Timeular sync app listening on port 3000!`)
 })
