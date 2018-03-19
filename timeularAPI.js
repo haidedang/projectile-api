@@ -8,6 +8,7 @@ const util = require('util'); // for Debug only --> util.inspect()
 const winston = require('winston');
 // winston.level = 'debug';
 // error > warn > info > verbose > debug > silly
+
 let token;
 exports.initializeToken = async (tokenApi) => {
   try {
@@ -17,7 +18,7 @@ exports.initializeToken = async (tokenApi) => {
     // process.exit();
   }
 }
-/*
+/* OLD APPROACH
 let token;
 try {
   token = JSON.parse(fs.readFileSync('timeularToken.txt'));
@@ -163,31 +164,36 @@ exports.packageActivityList = async (id) => {
 /**
  *
  * execute creation and archiving of activities in timeular based on results of compareActivities()
- * @returns true or false for success of udating activities
+ * @param {create} create controlls whether activities are created or not
+ * @param {archive} archive controlls whether activities are archived or not
+ * @returns true or false for success of updating activities
  *
  */
-exports.updateActivities = async () => {
+exports.updateActivities = async (create, archive) => {
   let resultState = true;
   // compare jobList and activityList
   let result = await compareActivities();
+
   // create - contains projectile objects -> convert and create
-  result.projectileHasTimeularNot.forEach((item) => {
-    // winston.debug(item.name, item.no);
-    if (!createActivity(item.name, item.no)) {
-      winston.error('Error: Creating ' + item.name, item.no + ' failed.');
-      resultState = false;
-    }
-  });
+  if (create) {
+    result.projectileHasTimeularNot.forEach((item) => {
+      winston.debug('Starting creating activities...', item.name, item.no);
+      if (!createActivity(item.name, item.no)) {
+        winston.error('Error: Creating activity for ' + item.name, item.no + ' failed.');
+        resultState = false;
+      }
+    });
+  }
   // archive - contains timeular objects -> archive those
-  // DEACTIVATED FOR NOW, requested by Jan
-/*
-  result.timeularHasProjectileNot.forEach((item) => {
-    // winston.debug(item.name, item.id);
-    if (!archiveActivity(item.id)) {
-      winston.error('Error: Archiving ' + item.name, item.id + ' failed.');
-      resultState = false;
-    }
-  }); */
+  if (archive) {
+    result.timeularHasProjectileNot.forEach((item) => {
+      winston.debug('Starting archiving activities...', item.name, item.id);
+      if (!archiveActivity(item.id)) {
+        winston.error('Error: Archiving of activity ' + item.name, item.id + ' failed.');
+        resultState = false;
+      }
+    });
+  }
   return (resultState);
 }
 

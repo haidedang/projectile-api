@@ -53,7 +53,7 @@ $(document).ready(function() {
     });
 
     $.ajax({
-      url: '//localhost:3000/syncbookings/' + target,
+      url: '//localhost:{port}/syncbookings/' + target,
       cache: false,
       contentType: false,
       processData: false,
@@ -85,7 +85,7 @@ $(document).ready(function() {
     });
 
     $.ajax({
-      url: '//localhost:3000/syncbookings/' + startDate + '/' + endDate,
+      url: '//localhost:{port}/syncbookings/' + startDate + '/' + endDate,
       cache: false,
       contentType: false,
       processData: false,
@@ -108,7 +108,7 @@ $(document).ready(function() {
     cleanResults();
 
     $.ajax({
-      url: '//localhost:3000/syncactivities',
+      url: '//localhost:{port}/syncactivities',
       cache: false,
       contentType: false,
       processData: false,

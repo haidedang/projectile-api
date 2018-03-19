@@ -17,12 +17,12 @@ $(document).ready(function() {
       timeularApiSecret: $('#timeularApiSecret').val()
     };
 
-    $.post("//localhost:3000/start/", $currentJson, function(data) {
+    $.post("//localhost:{port}/start/", $currentJson, function(data) {
       console.log('data sent.');
       if (data) {
         console.log('Successfully created credentials.');
         $('#results').removeClass( "alert-warning" ).addClass( "alert-success" );
-        $('#results').html('Projectile and Timeular credentials were successfully sent and set. You can now open <a href="http://localhost:3000/">http://localhost:3000</a> to access the app.');
+        $('#results').html('Projectile and Timeular credentials were successfully sent and set. You can now open <a href="http://localhost:{port}/">http://localhost:{port}</a> to access the app.');
       } else {
         console.log('Something went wrong while sending and setting credentials.');
         $('#results').removeClass( "alert-success" ).addClass( "alert-warning" );

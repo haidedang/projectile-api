@@ -3,6 +3,8 @@ const rp = require('request-promise');
 const fs = require('fs');
 const util = require('util');
 
+const config = require('config');
+
 const projectile = require('./projectileAPI.js');
 const timeularapi = require('./timeularAPI.js');
 
@@ -11,7 +13,7 @@ const app = express();
 const bodyParser = require('body-parser');
 
 const winston = require('winston');
-winston.level = 'debug';
+winston.level = config.get('winstonLevel');
 // error > warn > info > verbose > debug > silly
 
 app.use(bodyParser.json()); // support json encoded bodies
@@ -60,7 +62,7 @@ async function init() {
 
 init();
 
-let basePath = '';
+let basePath = config.get('basePath');
 
 /**
  *  route for healthstatus checks
@@ -74,8 +76,14 @@ app.get(basePath + '/healthStatus', (req, res) => {
  */
 app.get(basePath + '/', (req, res) => {
     winston.debug('Base website entered.');
+    // dynamically set port for links in html files
+    let html = fs.readFileSync(__dirname + '/src/index.html', {encoding: 'utf8'});
+    html = html.replace(/\{port\}/g, config.get('appPort'));
     // delivering website with options
-    res.sendFile(__dirname + '/src/index.html');
+    res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'});
+    res.end(html);
+    // delivering website with options
+    // res.sendFile(__dirname + '/src/index.html');
     winston.debug('/ base website done');
 })
 
@@ -84,8 +92,13 @@ app.get(basePath + '/', (req, res) => {
  */
 app.get(basePath + '/src/:file', (req, res) => {
     winston.debug('Base website entered, file requested.');
+    // dynamically set port for links in html files
+    let content = fs.readFileSync(__dirname + '/src/' + req.params.file, {encoding: 'utf8'});
+    content = content.replace(/\{port\}/g, config.get('appPort'));
     // delivering website with options
-    res.sendFile(__dirname + '/src/' + req.params.file);
+    res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
+    res.end(content);
+    // res.sendFile(__dirname + '/src/' + req.params.file);
     winston.debug('/ base website file request done');
 })
 
@@ -94,8 +107,13 @@ app.get(basePath + '/src/:file', (req, res) => {
  */
 app.get(basePath + '/start', (req, res) => {
     winston.debug('start website entered.');
+    let html = fs.readFileSync(__dirname + '/src/start.html', {encoding: 'utf8'});
+    html = html.replace(/\{port\}/g, config.get('appPort'));
     // delivering website with options
-    res.sendFile(__dirname + '/src/start.html');
+    res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'});
+    res.end(html);
+    // delivering website with options
+    //res.sendFile(__dirname + '/src/start.html');
     winston.debug('/ start website done');
 })
 
@@ -311,7 +329,8 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
    app.get(basePath + '/syncactivities', async (req, res) => {
      try {
        winston.debug('trying to sync activities and projectile packages...');
-       let result = await timeularapi.updateActivities();
+       // just creating, no archiving ATM as requested by Jan!
+       let result = await timeularapi.updateActivities(true, false); // (create, archive)
        winston.debug('synactivities synchronized: ' + result);
        await res.status(200).send(result);
      } catch (e) {
@@ -339,7 +358,8 @@ app.listen(config.get('appPort'), () => {
   logger.info(`HDI CMS static content app listening on port ${config.get('appPort')}!`)
 })
 */
-app.listen(3000, () => {
-  console.log('Projectile-Timeular API / APP is listenning on port 3000! - Open http://localhost:3000/ in your browser to access it.');
+app.listen(config.get('appPort'), () => {
+  console.log(`Projectile-Timeular API / APP is listenning on port ${config.get('appPort')}!` +
+  ` - Open http://localhost:${config.get('appPort')}/ in your browser to access it.`);
   // logger.info(`Projectile-Timeular sync app listening on port 3000!`)
 })
