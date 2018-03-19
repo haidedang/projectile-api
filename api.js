@@ -140,41 +140,6 @@ app.post(basePath + '/start', (req, res) => {
         });
         res.status(200).send(true);
     });
-/*
-    // set timeular creds
-    rp.post('https://api.timeular.com/api/v2/developer/sign-in',{
-      headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json;charset=UTF-8'
-      },
-      json: {
-        'apiKey': json.timeularApiKey,
-        'apiSecret': json.timeularApiSecret
-      },
-    }, (err, res, body) => {
-      let apiToken = res.body.token;
-      let timeularApi = {
-          apiToken: apiToken
-      }
-      fs.writeFile('timeularToken.txt', JSON.stringify(timeularApi), (err) => {
-          if (err) throw err;
-          console.log("Timeular token has been saved.");
-      });
-    });
-    winston.debug('/ base website post request done');
-    init(); // fetch joblist, get cookie , employee
-    res.status(200).send(true);
-*/
-    /*
-    if (responseTimeularCred && responseProjectileCred) {
-      // .then(() => {
-      winston.debug('/ base website post request done');
-      init(); // fetch joblist, get cookie , employee
-      res.status(200).send(true);
-    } */
-    // });
-
-    // init();
 });
 
 // SYNC BOOKINGS
