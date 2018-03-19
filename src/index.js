@@ -3,8 +3,8 @@
 $(document).ready(function() {
   // clean results in general
   function cleanResults() {
-    $('#tmp').remove(); // working with duplicate ids is bad practise
-    $('#syncInfo').html('');
+    $('.syncOutput').remove();
+    // $('#syncActInfo').html(''); // fades out
   }
 
   /**
@@ -17,7 +17,7 @@ $(document).ready(function() {
       $.each(responseJSON.negResult, function(key, value) {
         console.log(key, JSON.stringify( value, null, 2 ));
         // $('#results').val(key + ' ' + value);
-        $('#results').append('<li class="list-group-item list-group-item-warning" id="tmp"><div class="row"><div class="col-md-3">' + value.StartDate + '</div>' +
+        $('#results').append('<li class="list-group-item list-group-item-warning syncOutput"><div class="row"><div class="col-md-3">' + value.StartDate + '</div>' +
           '<div class="col-md-2">' + value.Duration.toString().substring(0, 6) + '</div>' +
           '<div class="col-md-2">' + value.Activity + '</div>' +
           '<div class="col-md">' + (value.Note === ""?"<span class=\"badge badge-warning\">Note missing - not synchronized</span>": value.Note) + (value.LimitHit === "yes"?"<span class=\"badge badge-warning\">Package limit hit - not synchronized</span>":"") +'</div></div></li>');
@@ -26,14 +26,14 @@ $(document).ready(function() {
       $.each(responseJSON.posResult, function(key, value) {
         console.log(key, JSON.stringify( value, null, 2 ));
         // $('#results').val(key + ' ' + value);
-        $('#results').append('<li class="list-group-item list-group-item-success" id="tmp"><div class="row"><div class="col-md-3">' + value.StartDate + '</div>' +
+        $('#results').append('<li class="list-group-item list-group-item-success syncOutput"><div class="row"><div class="col-md-3">' + value.StartDate + '</div>' +
           '<div class="col-md-2">' + value.Duration.toString().substring(0, 6) + '</div>' +
           '<div class="col-md-2">' + value.Activity + '</div>' +
           '<div class="col-md">' + value.Note + '</div></div></li>');
         });
     } else {
       console.log("nothing to do");
-      $('#results').append('<li class="list-group-item list-group-item-success" id="tmp"><div class="row"><div class="col">nothing to do' +
+      $('#results').append('<li class="list-group-item list-group-item-success syncOutput"><div class="row"><div class="col">nothing to do' +
       '</div></div></li>');
     }
   }
@@ -47,6 +47,10 @@ $(document).ready(function() {
     console.log('DEBUG: Sync ' + target);
     //check if target valid?
     cleanResults();
+    $('#syncChoiceInfo').html('<span class="badge badge-info">Synchronizing started...</span>').delay(4000).fadeOut(function() {
+      $(this).html('');
+      $(this).show(); // remove display: none
+    });
 
     $.ajax({
       url: '//localhost:3000/syncbookings/' + target,
@@ -75,7 +79,11 @@ $(document).ready(function() {
     console.log('Sync ' + startDate + ' to ' + endDate);
     //check if target valid?
     cleanResults();
-    
+    $('#syncRangeInfo').html('<span class="badge badge-info">Synchronizing within range started...</span>').delay(4000).fadeOut(function() {
+      $(this).html('');
+      $(this).show();
+    });
+
     $.ajax({
       url: '//localhost:3000/syncbookings/' + startDate + '/' + endDate,
       cache: false,
@@ -108,8 +116,9 @@ $(document).ready(function() {
       type: 'get',
       success: function(response, status){
         console.log(response, status);
-        $('#syncInfo').html('<span class="badge badge-success">Projectile packages sychronized with Timeular activities.</span>').delay(5000).fadeOut(function() {
+        $('#syncActInfo').html('<span class="badge badge-success">Projectile packages sychronized with Timeular activities.</span>').delay(5000).fadeOut(function() {
           $(this).html('');
+          $(this).show();
         });
         /*
         .delay(3000).fadeOut(function() {
@@ -119,8 +128,9 @@ $(document).ready(function() {
       error : function(error) {
         //show error here
         console.log(error);
-        $('#syncInfo').html('<span class="badge badge-warning">Projectile packages not sychronized with Timeular activities. An Error occured</span>').delay(5000).fadeOut(function() {
+        $('#syncActInfo').html('<span class="badge badge-warning">Projectile packages not sychronized with Timeular activities. An Error occured</span>').delay(5000).fadeOut(function() {
           $(this).html('');
+          $(this).show();
         });
       }
     });
