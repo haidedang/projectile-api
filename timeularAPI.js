@@ -468,7 +468,7 @@ exports.merge = async (startDate, endDate) => {
     let monthCleaned = [];
     // timeperiod structure --> 2017-01-01T00:00:00.000/2018-01-31T00:00:00.000
     let timeperiod = startDate + 'T00:00:00.000/' + endDate + 'T23:59:59.999';
-
+    // get timeular entries
     let result = await rp({
       method: 'GET',
       uri: 'https://api.timeular.com/api/v2/time-entries/' + timeperiod,
@@ -479,7 +479,7 @@ exports.merge = async (startDate, endDate) => {
       }
     }).then(function (res) {
       let timeList = JSON.parse(res.body);
-      winston.silly('Retrieved bookinglist from range: ' + JSON.stringify( timeList, null, 2 ));
+      winston.debug('Merge -> timeList: ', JSON.stringify( timeList, null, 2 ));
 
       for (let i = 0; i < timeList.timeEntries.length; i++) {
           let day = {};

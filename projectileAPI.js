@@ -268,7 +268,6 @@ function escapeRegExp(str) {
   return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 }
 
-
 let saveEntry = async (cookie, employee, time, project, note) => {
     let dayList = await getDayListToday(cookie, employee);
     /*
@@ -287,7 +286,7 @@ let saveEntry = async (cookie, employee, time, project, note) => {
     } */
     let listEntry = dayList[lineSelector];
 
-    // "normalize" note - Q'n'D fix, until final solution found
+    // "normalize" note - Q'n'D fix, until final solution found - UMLAUTE
     // !!! TODO CHECK - final clean Solution necessary: Q'n'D fix in TimeularAPI -> merge
 
     // set time, select Project, write note -> all in one request now.
