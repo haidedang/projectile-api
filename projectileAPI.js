@@ -171,7 +171,7 @@ let showJobList = async (cookie, employee) => {
             Dock: ['Area.TrackingArea', 'Area.ProjectManagementArea']
         });
 
-        fs.writeFile("answer.json", JSON.stringify(body), (err)=>{winston.debug()});  // TODO TO CHECK necessary?
+        // fs.writeFile("answer.json", JSON.stringify(body), (err)=>{winston.debug()});  // TODO TO CHECK necessary?
 
         /**
          * get name and NO. of Employee Job
