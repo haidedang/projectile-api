@@ -694,8 +694,8 @@ async function saveToProjectile(monthArray) {
     gesResult.sort(function (a, b) { return (a.StartDate > b.StartDate) ? 1 : 0 });
 
     return ({
-      posResult: posResult,
-      negResult: negResult,
+      // posResult: posResult,
+      // negResult: negResult,
       gesResult: gesResult
     });
 }
