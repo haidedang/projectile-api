@@ -165,8 +165,8 @@ app.post(basePath + '/start', (req, res) => {
  *  route for syncing timeular with dates within a certain date range
  */
 app.get(basePath + '/syncbookings/:startDate/:endDate', (req, res) => {
+    winston.debug('(api) Sync range ' + req.params.startDate + ' to ' + req.params.endDate);
     timeularapi.merge(req.params.startDate, req.params.endDate).then((result) => {
-    winston.debug('Range ' + req.params.startDate + ' to ' + req.params.endDate);
     res.status(200).send(JSON.stringify(result));
   });
   winston.debug('/syncbookings/:startDate/:endDate done');
@@ -181,29 +181,30 @@ app.get(basePath + '/syncbookings/:choice', (req, res) => {
 
   switch (req.params.choice) {
     case 'today':
+      winston.debug('(api) Sync today result: ' + util.inspect(result));
       timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then((result) => {
-        winston.debug('(api) Sync result: ' + util.inspect(result));
         res.status(200).send(JSON.stringify(result)); // 'Sync done for "today".'
-        winston.debug('today ' + startDay.toISOString().substr(0, 10));
+        winston.debug('Sync done for today ' + startDay.toISOString().substr(0, 10));
       });
       // timeularapi.main(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
       // res.status(200).send('Sync done for today.');
       break;
     case 'week':
+      winston.debug('(api) Sync week result: ' + util.inspect(result));
       startDay.setDate(today.getDate() - 6);
       timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then((result) => {
-        winston.debug('(api) Sync result: ' + util.inspect(result));
         res.status(200).send(JSON.stringify(result));
-        winston.debug('week ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
+        winston.debug('Sync done for week ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
       });
       // winston.debug('week ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
       // res.status(200).send('Sync done for last 7 days.');
       break;
     case 'month':
+      winston.debug('(api) Sync month result: ' + util.inspect(result));
       startDay.setMonth(today.getMonth() - 1);
       timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then((result) => {
         res.status(200).send(JSON.stringify(result));
-        winston.debug('month ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
+        winston.debug('Sync done for month ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
       });
       break;
     default:
