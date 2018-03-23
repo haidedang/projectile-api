@@ -489,19 +489,26 @@ exports.merge = async (startDate, endDate) => {
           seconds and milliseconds from the timestamp. Decreases precision --> alternative would be to round values
           */
           day["Duration"] = ((Date.parse(timeList.timeEntries[i].duration.stoppedAt.substring(0, timeList.timeEntries[i].duration.stoppedAt.lastIndexOf(":"))) - Date.parse(timeList.timeEntries[i].duration.startedAt.substring(0, timeList.timeEntries[i].duration.startedAt.lastIndexOf(":")))) / 60000) / 60;
+          // get projectile packagename from timeular activity name e.g. "name": "Interne Organisation 2018 [2759-62]"
           day["Activity"] = timeList.timeEntries[i].activity.name.substring(timeList.timeEntries[i].activity.name.lastIndexOf("[") + 1, timeList.timeEntries[i].activity.name.lastIndexOf("]"));
+          // collision detection through improved Notes containing timeular id of entry
           if (timeList.timeEntries[i].note.text !== null) {
-            day["Note"] = timeList.timeEntries[i].note.text;
+            day["Note"] = timeList.timeEntries[i].note.text; // add timeular id of entry here
+            day["Note"] = day["Note"] + ' #['  + timeList.timeEntries[i].id + ']'; // creating new style note entries for collision detecting
           } else {
             day["Note"] = '';
           }
 
           // "normalize" note - Q'n'D fix for projectile.js to avoid malformed characters in projectile
-          // !!! TODO CHECK - final clean Solution in saveEntry necessary!
+          // !!! TODO CHECK - final clean solution in saveEntry necessary!
           day["Note"] = day["Note"].replace(/ä/g, "ae").replace(/Ä/g, "Ae").replace(/ü/g, "ue").replace(/Ü/g, "Ue").replace(/ö/g, "oe").replace(/Ö/g, "Oe").replace(/ß/g, "ss");
           // end
-
-          month.push(day);
+          // catch activities that that are not matched to a projectile package
+          if (day["Activity"] !== ""){
+            month.push(day);
+          } else {
+            winston.debug('merge -> month.push not executed, no projectile package could be matched from activity name. -> Timeular only booking!');
+          }
       }
       winston.debug('month size: ' + month.length);
 
@@ -514,8 +521,15 @@ exports.merge = async (startDate, endDate) => {
       for (var i = 0; i < month.length; i++) {
           for (var j = i + 1; j < month.length; j++) { // j = i + 1 because .csv is sorted!
             // winston.debug( i + "#" + j);
-              if ((month[i]["StartDate"] === month[j]["StartDate"]) && (month[i]["Note"] === month[j]["Note"]) && (month[i]["Activity"] === month[j]["Activity"])) {
+              if ((month[i]["StartDate"] === month[j]["StartDate"]) && (month[i]["Note"].substring(0, month[i]["Note"].lastIndexOf(" #[")) === month[j]["Note"].substring(0, month[j]["Note"].lastIndexOf(" #["))) && (month[i]["Activity"] === month[j]["Activity"])) {
                   month[i]["Duration"] = (month[i]["Duration"] * 60 + month[j]["Duration"] * 60) / 60;
+                  // add new extended note to "new" merged entry
+                  let monthIId = month[i]["Note"].substring(month[i]["Note"].lastIndexOf(' #[') + 3, month[i]["Note"].lastIndexOf(']'));
+                  let monthJId = month[j]["Note"].substring(month[j]["Note"].lastIndexOf(' #[') + 3, month[j]["Note"].lastIndexOf(']'));
+                  month[i]["Note"] = month[i]["Note"].substring(0, month[i]["Note"].lastIndexOf(' #['));
+                  month[i]["Note"] = month[i]["Note"] + ' #[' + monthIId + ',' + monthJId + ']';
+                  // all fine?
+                  winston.debug('merging bookings --> new Note: ' + month[i]["Note"] + ' for ', month[i]["StartDate"], month[i]["Activity"], month[i]["Duration"]);
                   // winston.debug("merging durations, compare activity: " + month[i]["Activity"] + " " + month[j]["Activity"] + " " + month[i]["Note"]);
                   month.splice(j, 1); // remove merged entry from original array, to avoid recounting them in next i increment
                   j--; // as one entry is spliced, the next candidate has the same j index number!
@@ -732,8 +746,10 @@ async function normalizeUP(startDate, endDate, MonthCleaned) {
 
     // group Objects to Array with same Date
     let monthDay = await splitintoSeperateDays(MonthCleaned);
+    winston.debug('normalizeUP -> splitintoSeperateDays: ', JSON.stringify(monthDay, null, 2));
     // get DateRange of Projectile  [ [Day1],[Day2] ]
     let serverDays = await getDistinctProjectileRange(startDate, endDate);
+    winston.debug('normalizeUP -> getDistinctProjectileRange: ', JSON.stringify(serverDays, null, 2));
 
     let clientDaysInProjectile = [];
 
@@ -741,17 +757,52 @@ async function normalizeUP(startDate, endDate, MonthCleaned) {
     // filter ServerArray for dates only containing in Timular List
     // clientDaysInProjectile = [1, 3, 4]   => Timular Dates exists in ServerArray at index 1, 3, 4 ;
     monthDay.forEach((item) => { clientDaysInProjectile.push(serverDays.filterAdvanced((obj) => obj[0].StartDate == item[0].StartDate, (temp) => serverDays.indexOf(temp))) });
-
+    winston.debug('normalizeUP -> monthDay.forEach(item): ', JSON.stringify(clientDaysInProjectile, null, 2));
     // split serverArray in 2 Arrays - one containing the client days, one containing everything else
-    let obj = await prepareForSaveAndDeleting(serverDays, clientDaysInProjectile);  // AWAIT ok hier?
+    let obj = await prepareForSaveAndDeleting(serverDays, clientDaysInProjectile);
+    winston.debug('normalizeUP -> prepareForSaveAndDeleting: ', JSON.stringify(obj, null, 2));
 
-    //delete the empty slots which are not in date
+    // delete the empty slots which are not in date  // what is it good for?
     await deleteProjectileEmptySlots(obj.cleanProjectileList);
 
     // delete changedayentries from projectile with same day as in timeluar
     // returns all new Entries from Timular, which havent been saved yet
     // winston.debug(monthDay);
     // winston.debug(obj.dayList);
+
+    // obj.dayList, remove all non #[] pattern matching entries! to avoid messing with existing projectile entries, not written by timeular sync
+
+/*    last version.....
+      obj.dayList[0] = obj.dayList[0].filter(item => {
+      console.log(item["Note"]);
+      if (item["Note"] && item["Note"].includes(" #[")) {
+        return true;
+      } else if (!item["Note"]) {
+        return true;
+      }
+      return false;
+    });  // works correctly?... also korrekte Zeile wird erfasst usw?!...obwohl Eintrag gelöscht wurde?!
+*/
+    // AUF FEHLER TESTEN
+    // doesnt work...deletes "dont delete" and inserts duplicate of test entry! :/
+    // check logic!
+
+    // iterate through every element of every day, check for Note not NULL and pattern " #[" to be NOT present in a Note
+    // --> thats an entry from projectile only! manipulate entry so it doesn't get deleted!
+    obj.dayList.forEach(async (day) => {
+      day.forEach(async (item) => {
+        winston.debug('normalizeUP -> obj.dayList day item: ', item, (item["Note"]?item["Note"].includes(" #["):''));
+            if (item["Note"] && !item["Note"].includes(" #[")) {
+          winston.debug('normalizeUP -> Item not matching " #[" found! - booking in projectile only: ,  ', item["Note"]);
+          // Null everything so it doesn't get deleted in deleteDepreceated() - TODO improve the approach
+          item["Duration"] = null;
+          item["Activity"] = null;
+          item["Note"] = null;
+        }
+      });
+    });
+
+    winston.debug('normalizeUP -> list w/ preserved projectile only entries: ', JSON.stringify(obj.dayList, null, 2));
     result = await deleteDepreceated(monthDay, obj.dayList);
     return result;
 }
@@ -788,7 +839,9 @@ function compareV2(clientArray, serverArray) {
                  break;
              } */
             for (var j = 0; j < clientArray.length; j++) {
+              // winston.debug('compareV2 -> Strings getting compared: ', JSON.stringify(clientArray[j]), JSON.stringify(serverArray[i]));
                 if (JSON.stringify(clientArray[j]) == JSON.stringify(serverArray[i])) {
+                  // winston.debug('compareV2 -> Match: -> arr[] = true ');
                     clientArray.splice(j, 1);
                     j = j - 1;
                     arr[i] = true;
@@ -820,7 +873,7 @@ async function deleteDepreceated(monthDay, dayList) {
     let finalresult = [];
     try {
         for (let i = 0; i < monthDay.length; i++) {
-            let res = compareV2(monthDay[i], dayList[i]);
+            let res = compareV2(monthDay[i], dayList[i]);  // returns whats not equal? arra for all days...all false except matches --> true
             // ----------DEBUG --------------
             // winston.debug("result COMPARE: " + JSON.stringify(res, null, 2));
             finalresult.push(monthDay[i]);
