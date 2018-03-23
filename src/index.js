@@ -14,23 +14,26 @@ $(document).ready(function() {
     let responseJSON = JSON.parse(response);
 
     if (response !== '""') {  // change that weird response!
-      $.each(responseJSON.negResult, function(key, value) {
-        console.log(key, JSON.stringify( value, null, 2 ));
-        // $('#results').val(key + ' ' + value);
-        $('#results').append('<li class="list-group-item list-group-item-warning syncOutput"><div class="row"><div class="col-md-3">' + value.StartDate + '</div>' +
-          '<div class="col-md-2">' + value.Duration.toString().substring(0, 6) + '</div>' +
-          '<div class="col-md-2">' + value.Activity + '</div>' +
-          '<div class="col-md">' + (value.Note === ""?"<span class=\"badge badge-warning\">Note missing - not synchronized</span>": value.Note) + (value.LimitHit === "yes"?"<span class=\"badge badge-warning\">Package limit hit - not synchronized</span>":"") +'</div></div></li>');
-        });
+      $.each(responseJSON.gesResult, function(key, value) {
+        console.log('gesResult: ' + key, JSON.stringify( value, null, 2 ));
+        if (value.Result === 'negative') {
+          $('#results').append('<li class="list-group-item list-group-item-warning syncOutput"><div class="row"><div class="col-md-3">' + value.StartDate + '</div>' +
+            '<div class="col-md-2">' + value.Duration.toString().substring(0, 6) + '</div>' +
+            '<div class="col-md-2">' + (value.Activity === ""?"-":value.Activity) + '</div>' +
+            '<div class="col-md">' + (value.Note === ""?"-":value.Note) + '</div></div>' +
+            '<div class="row"><div class="col">' +
+            (value.Activity === ""?"<span class=\"badge badge-warning\">no matching projectile package - Timeular only</span>":""  ) +
+            (value.Note === ""?"<span class=\"badge badge-warning\">Note missing - not synchronized</span>":"") +
+            (value.LimitHit === "yes"?"<span class=\"badge badge-warning\">Package limit hit - not synchronized</span>":"") +
+            '</div></div>' + '</li>');
+        } else {
+          $('#results').append('<li class="list-group-item list-group-item-success syncOutput"><div class="row"><div class="col-md-3">' + value.StartDate + '</div>' +
+            '<div class="col-md-2">' + value.Duration.toString().substring(0, 6) + '</div>' +
+            '<div class="col-md-2">' + value.Activity + '</div>' +
+            '<div class="col-md">' + value.Note + '</div></div></li>');
+        }
+      });
 
-      $.each(responseJSON.posResult, function(key, value) {
-        console.log(key, JSON.stringify( value, null, 2 ));
-        // $('#results').val(key + ' ' + value);
-        $('#results').append('<li class="list-group-item list-group-item-success syncOutput"><div class="row"><div class="col-md-3">' + value.StartDate + '</div>' +
-          '<div class="col-md-2">' + value.Duration.toString().substring(0, 6) + '</div>' +
-          '<div class="col-md-2">' + value.Activity + '</div>' +
-          '<div class="col-md">' + value.Note + '</div></div></li>');
-        });
     } else {
       console.log("nothing to do");
       $('#results').append('<li class="list-group-item list-group-item-success syncOutput"><div class="row"><div class="col">nothing to do' +
@@ -92,7 +95,7 @@ $(document).ready(function() {
       //data: form_data,
       type: 'get',
       success: function(response, status){
-        console.log('Sync bookings with range: ' + response, status);
+        console.log('Sync bookings with range - response + status: ' + response, status);
 
         // output to results div table
         outputResults(response);

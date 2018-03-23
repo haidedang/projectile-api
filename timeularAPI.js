@@ -502,13 +502,10 @@ exports.merge = async (startDate, endDate) => {
           // "normalize" note - Q'n'D fix for projectile.js to avoid malformed characters in projectile
           // !!! TODO CHECK - final clean solution in saveEntry necessary!
           day["Note"] = day["Note"].replace(/ä/g, "ae").replace(/Ä/g, "Ae").replace(/ü/g, "ue").replace(/Ü/g, "Ue").replace(/ö/g, "oe").replace(/Ö/g, "Oe").replace(/ß/g, "ss");
+          // remove newlines,... \n \r
+          day["Note"] = day["Note"].replace(/\r?\n|\r/g, " ");
           // end
-          // catch activities that that are not matched to a projectile package
-          if (day["Activity"] !== ""){
-            month.push(day);
-          } else {
-            winston.debug('merge -> month.push not executed, no projectile package could be matched from activity name. -> Timeular only booking!');
-          }
+          month.push(day);
       }
       winston.debug('month size: ' + month.length);
 
@@ -590,8 +587,8 @@ async function timularClient(monthArray, limitPackageArrayFromServer) {
  */
 async function saveToProjectile(monthArray) {
     // output to frontend
-    let posResult = [];
-    let negResult = [];
+    // let posResult = [];
+    // let negResult = [];
     let gesResult = [];
     // Fetch an actual Joblist from the server
     let data = await projectile.fetchNewJobList();
@@ -607,21 +604,33 @@ async function saveToProjectile(monthArray) {
          projectile.save(obj["StartDate"], obj["Duration"],  obj["Activity"], obj["Note"]);
      }) */
 
-    //synchronous saving of packages without limit
+    // synchronous saving of packages without limit
+    // only here can empty activities occur (timeular only entries!)
     async function syncSaving(package) {
         for (var i = 0; i < package.limitless.length; i++) {
-            let response = await projectile.save(package.limitless[i]["StartDate"], package.limitless[i]["Duration"], package.limitless[i]["Activity"], package.limitless[i]["Note"]);
-            winston.debug('saving w/o limit: ' + package.limitless[i]["StartDate"], package.limitless[i]["Duration"], package.limitless[i]["Activity"], package.limitless[i]["Note"]);
-            winston.debug('response: ' + response);
             let obj = {};
-            obj['LimitHit'] = 'noLimit';
-            obj = package.limitless[i];
-            if (response) {
-              obj['Result'] = 'positive';
-              posResult.push(package.limitless[i]);
+            if (package.limitless[i]["Activity"] !== "") {
+                let response = await projectile.save(package.limitless[i]["StartDate"], package.limitless[i]["Duration"], package.limitless[i]["Activity"], package.limitless[i]["Note"]);
+                winston.debug('saving w/o limit: ' + package.limitless[i]["StartDate"], package.limitless[i]["Duration"], package.limitless[i]["Activity"], package.limitless[i]["Note"]);
+                winston.debug('response: ' + response);
+                // let obj = {};
+                obj['LimitHit'] = 'noLimit';
+                obj = package.limitless[i];
+                if (response) {
+                  obj['Result'] = 'positive';
+                  // posResult.push(obj);
+                } else {
+                  obj['Result'] = 'negative';
+                  // negResult.push(obj);
+                }
+                // gesResult.push(obj);
             } else {
+              // empty Activity deleteDepreceated - return entry to frontend with notification
+              // let obj = {};
+              obj = package.limitless[i];
+              obj['LimitHit'] = 'noLimit';
               obj['Result'] = 'negative';
-              negResult.push(package.limitless[i]);
+              // negResult.push(obj);
             }
             gesResult.push(obj);
         }
@@ -653,10 +662,10 @@ async function saveToProjectile(monthArray) {
                 winston.debug('response: ' + response);
                 if (response) {
                   obj['Result'] = 'positive';
-                  posResult.push(obj);
+                  // posResult.push(obj);
                 } else {
                   obj['Result'] = 'negative';
-                  negResult.push(obj); // package.limit[i]
+                  // negResult.push(obj); // package.limit[i]
                 }
             } else {
                 obj['LimitHit'] = 'yes';
@@ -664,7 +673,7 @@ async function saveToProjectile(monthArray) {
                 winston.debug('Saving package with limit failed! ' + package.limit[i]["StartDate"], package.limit[i]["Duration"], package.limit[i]["Activity"], package.limit[i]["Note"] + ' with remaining time of: ' + Number(projectileObject[0].remainingTime));
                 // throw new Error('Remaining Time exceeded.');
                 winston.warn('Remaining Time exceeded.');
-                negResult.push(obj);
+                // negResult.push(obj);
             }
             gesResult.push(obj);
         }
@@ -680,9 +689,14 @@ async function saveToProjectile(monthArray) {
     // return true;
 // TEST THIS RESULT!!! better INFO LimitHit und Result
 // return geResult;
+
+    // sort the gesResult Array with results after ascending dates --> easier handling in frontend
+    gesResult.sort(function (a, b) { return (a.StartDate > b.StartDate) ? 1 : 0 });
+
     return ({
       posResult: posResult,
-      negResult: negResult
+      negResult: negResult,
+      gesResult: gesResult
     });
 }
 

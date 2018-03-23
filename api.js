@@ -191,7 +191,8 @@ app.get(basePath + '/syncbookings/:choice', (req, res) => {
       break;
     case 'week':
       startDay.setDate(today.getDate() - 6);
-      timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then(() => {
+      timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then((result) => {
+        winston.debug('(api) Sync result: ' + util.inspect(result));
         res.status(200).send(JSON.stringify(result));
         winston.debug('week ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
       });
@@ -200,7 +201,7 @@ app.get(basePath + '/syncbookings/:choice', (req, res) => {
       break;
     case 'month':
       startDay.setMonth(today.getMonth() - 1);
-      timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then(() => {
+      timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then((result) => {
         res.status(200).send(JSON.stringify(result));
         winston.debug('month ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
       });
