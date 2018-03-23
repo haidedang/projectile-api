@@ -564,7 +564,7 @@ exports.merge = async (startDate, endDate) => {
  *
  */
 async function timularClient(monthArray, limitPackageArrayFromServer) {
-    let package = {};
+    let packageReply = {};
     let monthLimitPackage = [];
     // Check every element of Timular list for the packages and split them into a seperate array.
     for (var i = 0; i < limitPackageArrayFromServer.length; i++) {
@@ -574,9 +574,9 @@ async function timularClient(monthArray, limitPackageArrayFromServer) {
     }
 
     // store the arrays in different object properties
-    package.limit = monthLimitPackage;
-    package.limitless = monthArray;
-    return package;
+    packageReply.limit = monthLimitPackage;
+    packageReply.limitless = monthArray;
+    return packageReply;
 
 }
 
@@ -597,7 +597,7 @@ async function saveToProjectile(monthArray) {
         return item > 0;
     });
     // split Timular list into List with limitless and packages with limit
-    let package = await timularClient(monthArray, limitPackageArrayFromServer);
+    let packageReply = await timularClient(monthArray, limitPackageArrayFromServer);
 
     //async saving of packages without limit
     /*  package.limitless.forEach((obj)=>{
@@ -606,16 +606,16 @@ async function saveToProjectile(monthArray) {
 
     // synchronous saving of packages without limit
     // only here can empty activities occur (timeular only entries!)
-    async function syncSaving(package) {
-        for (var i = 0; i < package.limitless.length; i++) {
+    async function syncSaving(packageReply) {
+        for (var i = 0; i < packageReply.limitless.length; i++) {
             let obj = {};
-            if (package.limitless[i]["Activity"] !== "") {
-                let response = await projectile.save(package.limitless[i]["StartDate"], package.limitless[i]["Duration"], package.limitless[i]["Activity"], package.limitless[i]["Note"]);
-                winston.debug('saving w/o limit: ' + package.limitless[i]["StartDate"], package.limitless[i]["Duration"], package.limitless[i]["Activity"], package.limitless[i]["Note"]);
+            if (packageReply.limitless[i]["Activity"] !== "") {
+                let response = await projectile.save(packageReply.limitless[i]["StartDate"], packageReply.limitless[i]["Duration"], packageReply.limitless[i]["Activity"], packageReply.limitless[i]["Note"]);
+                winston.debug('saving w/o limit: ' + packageReply.limitless[i]["StartDate"], packageReply.limitless[i]["Duration"], packageReply.limitless[i]["Activity"], packageReply.limitless[i]["Note"]);
                 winston.debug('response: ' + response);
                 // let obj = {};
                 obj['LimitHit'] = 'noLimit';
-                obj = package.limitless[i];
+                obj = packageReply.limitless[i];
                 if (response) {
                   obj['Result'] = 'positive';
                   // posResult.push(obj);
@@ -627,7 +627,7 @@ async function saveToProjectile(monthArray) {
             } else {
               // empty Activity deleteDepreceated - return entry to frontend with notification
               // let obj = {};
-              obj = package.limitless[i];
+              obj = packageReply.limitless[i];
               obj['LimitHit'] = 'noLimit';
               obj['Result'] = 'negative';
               // negResult.push(obj);
@@ -640,37 +640,37 @@ async function saveToProjectile(monthArray) {
     // await syncSaving(package);
 
     //  synchrounously saving and checking packages with limit
-    async function syncSavingWithLimit(package) {
-        for (var i = 0; i < package.limit.length; i++) {
+    async function syncSavingWithLimit(packageReply) {
+        for (var i = 0; i < packageReply.limit.length; i++) {
             // fetch projectile instance of the current project and get the remaining time
             let data = await projectile.fetchNewJobList();
             let projectileObject = await projectile.joblistLimited(data, "no", (item) => {
-                return item === package.limit[i]["Activity"];
+                return item === packageReply.limit[i]["Activity"];
             });
 
             winston.debug("Saving entry with package limit.");
-            winston.debug("duration of new entry: " + package.limit[i].Duration + " remainingTime in package before add: " + Number(projectileObject[0].remainingTime));
+            winston.debug("duration of new entry: " + packageReply.limit[i].Duration + " remainingTime in package before add: " + Number(projectileObject[0].remainingTime));
             // compare the timular project time with projectile instance
             // attention: toFixed(5) to avoid comparision issues with rounding errors
             let obj = {};
-            obj = package.limit[i];
+            obj = packageReply.limit[i];
             obj['LimitHit'] = 'no';
 
-            if (parseFloat(package.limit[i].Duration.toFixed(5)) <= parseFloat(Number(projectileObject[0].remainingTime.toFixed(5)))) {
-                let response = await projectile.save(package.limit[i]["StartDate"], parseFloat(package.limit[i]["Duration"].toFixed(5)), package.limit[i]["Activity"], package.limit[i]["Note"]);
-                winston.debug('saving w/ limit: ' + package.limit[i]["StartDate"], package.limit[i]["Duration"], package.limit[i]["Activity"], package.limit[i]["Note"]);
+            if (parseFloat(packageReply.limit[i].Duration.toFixed(5)) <= parseFloat(Number(projectileObject[0].remainingTime.toFixed(5)))) {
+                let response = await projectile.save(packageReply.limit[i]["StartDate"], parseFloat(packageReply.limit[i]["Duration"].toFixed(5)), packageReply.limit[i]["Activity"], packageReply.limit[i]["Note"]);
+                winston.debug('saving w/ limit: ' + packageReply.limit[i]["StartDate"], packageReply.limit[i]["Duration"], packageReply.limit[i]["Activity"], packageReply.limit[i]["Note"]);
                 winston.debug('response: ' + response);
                 if (response) {
                   obj['Result'] = 'positive';
                   // posResult.push(obj);
                 } else {
                   obj['Result'] = 'negative';
-                  // negResult.push(obj); // package.limit[i]
+                  // negResult.push(obj); // packageReply.limit[i]
                 }
             } else {
                 obj['LimitHit'] = 'yes';
                 obj['Result'] = 'negative';
-                winston.debug('Saving package with limit failed! ' + package.limit[i]["StartDate"], package.limit[i]["Duration"], package.limit[i]["Activity"], package.limit[i]["Note"] + ' with remaining time of: ' + Number(projectileObject[0].remainingTime));
+                winston.debug('Saving package with limit failed! ' + packageReply.limit[i]["StartDate"], packageReply.limit[i]["Duration"], packageReply.limit[i]["Activity"], packageReply.limit[i]["Note"] + ' with remaining time of: ' + Number(projectileObject[0].remainingTime));
                 // throw new Error('Remaining Time exceeded.');
                 winston.warn('Remaining Time exceeded.');
                 // negResult.push(obj);
@@ -680,12 +680,12 @@ async function saveToProjectile(monthArray) {
         return true;
     }
 
-    await syncSaving(package).then(async () => {
-      await syncSavingWithLimit(package);
+    await syncSaving(packageReply).then(async () => {
+      await syncSavingWithLimit(packageReply);
       return true;
     });
 
-    // await syncSavingWithLimit(package);
+    // await syncSavingWithLimit(packageReply);
     // return true;
 // TEST THIS RESULT!!! better INFO LimitHit und Result
 // return geResult;
