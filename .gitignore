@@ -63,3 +63,9 @@ yarn.lock
 
 ## foobar only
 test.js
+
+/nexe/
+/nexe/*
+
+/pkg/
+/pkg/*

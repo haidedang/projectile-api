@@ -12,7 +12,7 @@
   },
   "license": "ISC",
   "bin": {
-    "projectile": "./projectileCli.js"
+    "api": "./api.js"
   },
   "dependencies": {
     "body-parser": "^1.18.2",
@@ -26,5 +26,8 @@
     "request-promise": "^4.2.2",
     "request-promise-native": "^1.0.5",
     "winston": "^2.4.1"
+  },
+  "pkg": {
+    "assets": "src/**/*"
   }
 }

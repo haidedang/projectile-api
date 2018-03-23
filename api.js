@@ -3,7 +3,7 @@ const rp = require('request-promise');
 const fs = require('fs');
 const util = require('util');
 
-const config = require('config');
+//const config = require('config');
 
 const projectile = require('./projectileAPI.js');
 const timeularapi = require('./timeularAPI.js');
@@ -13,7 +13,49 @@ const app = express();
 const bodyParser = require('body-parser');
 
 const winston = require('winston');
-winston.level = config.get('winstonLevel');
+
+// handle commandline parameters
+let appPort = 3000;
+let winstonLevel = 'warn';
+let re = new RegExp('[0-9]{4,6}', 'g');
+process.argv.forEach(function (val, index, array) {
+  // check if parameter is a port
+  let portMatch = val.match(re);
+  if (portMatch) {
+    appPort = val;
+  } else {
+    // check if parameter is a winston debug level or help request
+    switch (val) {
+        case 'error':
+          winstonLevel = 'error';
+          break;
+        case 'warn':
+          winstonLevel = 'warn';
+          break;
+        case 'info':
+          winstonLevel = 'info';
+          break;
+        case 'verbose':
+          winstonLevel = 'verbose';
+          break;
+        case 'debug':
+          winstonLevel = 'debug';
+          break;
+        case 'silly':
+          winstonLevel = 'silly';
+          break;
+        case 'help':
+          console.log('Help: You can provide the following parameters to the application:');
+          console.log('A port number can be set. Just provide a number between 1024 and 65335 e.g. 3000');
+          console.log('A debug level can be set. Just provide ONE of the following level names: error, warn, info, verbose, debug, silly. The verbosity increases in sequence.');
+          console.log('You can combine both parameters. e.g. "3000 error" or "silly 3333".');
+          process.exit();
+          break;
+        default:
+      }
+  }
+});
+winston.level = winstonLevel;
 // error > warn > info > verbose > debug > silly
 
 app.use(bodyParser.json()); // support json encoded bodies
@@ -27,6 +69,8 @@ let token;
 let cookie = '';
 let employee = '';
 let jobList = '';
+
+let basePath = '';
 
 async function init() {
   try {
@@ -62,7 +106,6 @@ async function init() {
 
 init();
 
-let basePath = config.get('basePath');
 
 /**
  *  route for healthstatus checks
@@ -78,7 +121,7 @@ app.get(basePath + '/', (req, res) => {
     winston.debug('Base website entered.');
     // dynamically set port for links in html files
     let html = fs.readFileSync(__dirname + '/src/index.html', {encoding: 'utf8'});
-    html = html.replace(/\{port\}/g, config.get('appPort'));
+    html = html.replace(/\{port\}/g, appPort);
     // delivering website with options
     res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'});
     res.end(html);
@@ -94,7 +137,7 @@ app.get(basePath + '/src/:file', (req, res) => {
     winston.debug('Base website entered, file requested.');
     // dynamically set port for links in html files
     let content = fs.readFileSync(__dirname + '/src/' + req.params.file, {encoding: 'utf8'});
-    content = content.replace(/\{port\}/g, config.get('appPort'));
+    content = content.replace(/\{port\}/g, appPort);
     // delivering website with options
     res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
     res.end(content);
@@ -108,7 +151,7 @@ app.get(basePath + '/src/:file', (req, res) => {
 app.get(basePath + '/start', (req, res) => {
     winston.debug('start website entered.');
     let html = fs.readFileSync(__dirname + '/src/start.html', {encoding: 'utf8'});
-    html = html.replace(/\{port\}/g, config.get('appPort'));
+    html = html.replace(/\{port\}/g, appPort);
     // delivering website with options
     res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'});
     res.end(html);
@@ -153,7 +196,6 @@ app.post(basePath + '/start', (req, res) => {
               console.log("Timeular token has been saved.");
               winston.debug('/ base website post request done');
               init(); // fetch joblist, get cookie , employee
-
           });
         });
         res.status(200).send(true);
@@ -181,8 +223,8 @@ app.get(basePath + '/syncbookings/:choice', (req, res) => {
 
   switch (req.params.choice) {
     case 'today':
-      winston.debug('(api) Sync today result: ' + util.inspect(result));
       timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then((result) => {
+        winston.debug('(api) Sync today result: ' + util.inspect(result));
         res.status(200).send(JSON.stringify(result)); // 'Sync done for "today".'
         winston.debug('Sync done for today ' + startDay.toISOString().substr(0, 10));
       });
@@ -190,9 +232,9 @@ app.get(basePath + '/syncbookings/:choice', (req, res) => {
       // res.status(200).send('Sync done for today.');
       break;
     case 'week':
-      winston.debug('(api) Sync week result: ' + util.inspect(result));
       startDay.setDate(today.getDate() - 6);
       timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then((result) => {
+        winston.debug('(api) Sync week result: ' + util.inspect(result));
         res.status(200).send(JSON.stringify(result));
         winston.debug('Sync done for week ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
       });
@@ -200,9 +242,9 @@ app.get(basePath + '/syncbookings/:choice', (req, res) => {
       // res.status(200).send('Sync done for last 7 days.');
       break;
     case 'month':
-      winston.debug('(api) Sync month result: ' + util.inspect(result));
       startDay.setMonth(today.getMonth() - 1);
       timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then((result) => {
+        winston.debug('(api) Sync month result: ' + util.inspect(result));
         res.status(200).send(JSON.stringify(result));
         winston.debug('Sync done for month ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
       });
@@ -360,8 +402,8 @@ app.listen(config.get('appPort'), () => {
   logger.info(`HDI CMS static content app listening on port ${config.get('appPort')}!`)
 })
 */
-app.listen(config.get('appPort'), () => {
-  console.log(`Projectile-Timeular API / APP is listenning on port ${config.get('appPort')}!` +
-  ` - Open http://localhost:${config.get('appPort')}/ in your browser to access it.`);
+app.listen(appPort, () => {
+  console.log(`Projectile-Timeular API / APP is listenning on port ${appPort}!` +
+  ` - Open http://localhost:${appPort}/ in your browser to access it.`);
   // logger.info(`Projectile-Timeular sync app listening on port 3000!`)
 })
