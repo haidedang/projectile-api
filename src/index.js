@@ -1,9 +1,32 @@
 'use strict';
 
 $(document).ready(function() {
+  // check if credentials are present in api service or show info box with link to /start to set them
+  $.ajax({
+    url: '//localhost:{port}/credsStatus',
+    cache: false,
+    contentType: false,
+    processData: false,
+    type: 'get',
+    success: function(response, status){
+      console.log('DEBUG: Credential status: ' + response.credsPresent);
+      if (!response.credsPresent){
+        // set badge
+        $( '<div class="col" id="headerInfo">' +
+        '<span class=\"badge badge-warning\">No credentials available, please visit <a ' +
+        'href="//localhost:{port}/start">http://localhost:{port}/start</a></span>' +
+        '</div>' ).insertAfter( "#headerText" );
+      //  '<div class="col" id="headerInfo">' +
+      //  '<span class=\"badge badge-warning\">No credentials available, please visit <a href="//localhost:{port}/start">http://localhost:{port}/start</a></span>' +
+      //  '</div>'
+      }
+    }
+  });
+
   // clean results in general
   function cleanResults() {
     $('.syncOutput').remove();
+    $('#headerInfo').remove();
     // $('#syncActInfo').html(''); // fades out
   }
 
@@ -17,7 +40,8 @@ $(document).ready(function() {
       $.each(responseJSON.gesResult, function(key, value) {
         console.log('gesResult: ' + key, JSON.stringify( value, null, 2 ));
         if (value.Result === 'negative') {
-          $('#results').append('<li class="list-group-item list-group-item-warning syncOutput"><div class="row"><div class="col-md-3">' + value.StartDate + '</div>' +
+          $('#results').append('<li class="list-group-item list-group-item-warning syncOutput"><div class="row">' +
+          '<div class="col-md-3">' + value.StartDate + '</div>' +
             '<div class="col-md-2">' + value.Duration.toString().substring(0, 6) + '</div>' +
             '<div class="col-md-2">' + (value.Activity === ""?"-":value.Activity) + '</div>' +
             '<div class="col-md">' + (value.Note === ""?"-":value.Note) + '</div></div>' +
@@ -27,7 +51,8 @@ $(document).ready(function() {
             (value.LimitHit === "yes"?"<span class=\"badge badge-warning\">Package limit hit - not synchronized</span>":"") +
             '</div></div>' + '</li>');
         } else {
-          $('#results').append('<li class="list-group-item list-group-item-success syncOutput"><div class="row"><div class="col-md-3">' + value.StartDate + '</div>' +
+          $('#results').append('<li class="list-group-item list-group-item-success syncOutput"><div class="row">' +
+            '<div class="col-md-3">' + value.StartDate + '</div>' +
             '<div class="col-md-2">' + value.Duration.toString().substring(0, 6) + '</div>' +
             '<div class="col-md-2">' + value.Activity + '</div>' +
             '<div class="col-md">' + value.Note + '</div></div></li>');
@@ -36,7 +61,8 @@ $(document).ready(function() {
 
     } else {
       console.log("nothing to do");
-      $('#results').append('<li class="list-group-item list-group-item-success syncOutput"><div class="row"><div class="col">nothing to do' +
+      $('#results').append('<li class="list-group-item list-group-item-success syncOutput"><div class="row"><div ' +
+      'class="col">nothing to do' +
       '</div></div></li>');
     }
   }
@@ -119,7 +145,8 @@ $(document).ready(function() {
       type: 'get',
       success: function(response, status){
         console.log(response, status);
-        $('#syncActInfo').html('<span class="badge badge-success">Projectile packages sychronized with Timeular activities.</span>').delay(5000).fadeOut(function() {
+        $('#syncActInfo').html('<span class="badge badge-success">Projectile packages sychronized with Timeular ' +
+        'activities.</span>').delay(5000).fadeOut(function() {
           $(this).html('');
           $(this).show();
         });
@@ -131,7 +158,8 @@ $(document).ready(function() {
       error : function(error) {
         //show error here
         console.log(error);
-        $('#syncActInfo').html('<span class="badge badge-warning">Projectile packages not sychronized with Timeular activities. An Error occured</span>').delay(5000).fadeOut(function() {
+        $('#syncActInfo').html('<span class="badge badge-warning">Projectile packages not sychronized with Timeular ' +
+        'activities. An Error occured</span>').delay(5000).fadeOut(function() {
           $(this).html('');
           $(this).show();
         });

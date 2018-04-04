@@ -479,7 +479,14 @@ exports.merge = async (startDate, endDate) => {
       }
     }).then(function (res) {
       let timeList = JSON.parse(res.body);
-      winston.debug('Merge -> timeList: ', JSON.stringify( timeList, null, 2 ));
+
+      winston.debug('Merge (Range, retrieved) -> timeList: ', JSON.stringify( timeList, null, 2 ));
+
+      // sort the retrieved unsorted list of Timular Entries after ascending dates and times --> easier handling from now on
+      // (keep the booking order)
+      timeList.timeEntries.sort(function (a, b) { return (new Date(a.duration.startedAt) - new Date(b.duration.startedAt)) });
+
+      winston.debug('Merge (Range, sorted) -> timeList: ', JSON.stringify( timeList, null, 2 ));
 
       for (let i = 0; i < timeList.timeEntries.length; i++) {
           let day = {};
@@ -507,12 +514,9 @@ exports.merge = async (startDate, endDate) => {
           // end
           month.push(day);
       }
-      winston.debug('month size: ' + month.length);
+      winston.debug('Merge (Range) -> resulting month size: ' + month.length);
 
-      // sort the MonthList with Timular Entries after ascending dates --> easier handling from now on
-      month.sort(function (a, b) { return (a.StartDate > b.StartDate) ? 1 : 0 });
-
-      winston.debug("month before merge: " + JSON.stringify(month, null, 2));
+      winston.debug("Merge (Range) -> month before merge: " + JSON.stringify(month, null, 2));
 
       // merging Duration time of dup Note lines for entries from same day
       for (var i = 0; i < month.length; i++) {
@@ -526,7 +530,7 @@ exports.merge = async (startDate, endDate) => {
                   month[i]["Note"] = month[i]["Note"].substring(0, month[i]["Note"].lastIndexOf(' #['));
                   month[i]["Note"] = month[i]["Note"] + ' #[' + monthIId + ',' + monthJId + ']';
                   // all fine?
-                  winston.debug('merging bookings --> new Note: ' + month[i]["Note"] + ' for ', month[i]["StartDate"], month[i]["Activity"], month[i]["Duration"]);
+                  winston.debug('Merge (Range) -> merging bookings --> new Note: ' + month[i]["Note"] + ' for ', month[i]["StartDate"], month[i]["Activity"], month[i]["Duration"]);
                   // winston.debug("merging durations, compare activity: " + month[i]["Activity"] + " " + month[j]["Activity"] + " " + month[i]["Note"]);
                   month.splice(j, 1); // remove merged entry from original array, to avoid recounting them in next i increment
                   j--; // as one entry is spliced, the next candidate has the same j index number!
@@ -536,17 +540,17 @@ exports.merge = async (startDate, endDate) => {
           }
           monthCleaned.push(month[i]); // output the merged day entry to clean array
       }
-      winston.debug('monthCleaned size: ' + monthCleaned.length);
+      winston.debug('Merge (Range) -> (after merge) monthCleaned size: ' + monthCleaned.length);
     }).catch(function (err) {
       return false; // Crawling failed...
     });
 
     await normalizeUP(startDate, endDate, monthCleaned).then(async (result) => {
-      winston.debug('monthCleaned size in normalizeUP: ' + monthCleaned.length);
-      winston.debug('normalizeUP: ');
-      winston.debug('Input: ' + util.inspect(result));
+      winston.debug('Merge (Range) -> monthCleaned size in normalizeUP: ' + monthCleaned.length);
+      winston.debug('Merge (Range) -> normalizeUP: ');
+      winston.debug('Merge (Range) -> Input: ' + util.inspect(result));
       if (result && result.length <= 0) { // nothing to do, no need to call saveToProjectile
-        winston.debug('normalized list empty - nothing to do.');
+        winston.debug('Merge (Range) -> normalized list empty - nothing to do.');
         return ('Nothing to do.');
       }
       returnResponse = await saveToProjectile(result);
@@ -672,7 +676,7 @@ async function saveToProjectile(monthArray) {
                 obj['Result'] = 'negative';
                 winston.debug('Saving package with limit failed! ' + packageReply.limit[i]["StartDate"], packageReply.limit[i]["Duration"], packageReply.limit[i]["Activity"], packageReply.limit[i]["Note"] + ' with remaining time of: ' + Number(projectileObject[0].remainingTime));
                 // throw new Error('Remaining Time exceeded.');
-                winston.warn('Remaining Time exceeded.');
+                winston.warn('Saving package with limit failed - Remaining Time exceeded. ' + packageReply.limit[i]["StartDate"], packageReply.limit[i]["Duration"], packageReply.limit[i]["Activity"], packageReply.limit[i]["Note"]);
                 // negResult.push(obj);
             }
             gesResult.push(obj);
