@@ -270,6 +270,7 @@ function escapeRegExp(str) {
 
 let saveEntry = async (cookie, employee, time, project, note) => {
     let dayList = await getDayListToday(cookie, employee);
+    winston.debug('saveEntry -> dayList: ' + JSON.stringify(dayList, null, 2));
     /*
     extend the "lines" range of originally 6 depending on amount of existing entries in dayList! else insertion of larger lists
     than 7 entries per day fail to save successfully.
@@ -279,7 +280,7 @@ let saveEntry = async (cookie, employee, time, project, note) => {
       lineSelector = dayList.length - 43;
     }
 
-    winston.debug('lineSelector DEBUG: ' + lineSelector);
+    winston.debug('saveEntry -> lineSelector: ' + lineSelector);
     // let lineSelector = dayList.length - 43; // case that 7 days are in dayList
     /* if (dayList && dayList.length < 49) { // case that 1 day is in dayList
       lineSelector = dayList.length -1;
@@ -484,7 +485,7 @@ exports.save = async (date, time, project, note) => {
         winston.debug("saveEntryResult --> " + saveEntryResult);
         // TODO: store packages which couldnt be saved in an external file
         if (saveEntryResult) {
-            winston.debug('Finished saving entry.'+ "\n");
+            winston.debug('Finished saving entry.');
             return true;
         }
     }
@@ -507,7 +508,7 @@ exports.getDate = async (date) => {
 }
 
 // Split Joblist into one without limit and one array with packages with limit
-exports.joblistLimited = async (list, limitTime, callback) => {
+exports.joblistLimited = async (list, limitTime, callback) => { // "limitTime" is a fieldname
    let limitedJobList = [];
 
    //transform array to a bundle of property values
@@ -526,6 +527,7 @@ exports.joblistLimited = async (list, limitTime, callback) => {
         }
     })
     // array of limited packages
+    winston.debug('exports.joblistLimited -> limitedJobList: ', JSON.stringify(limitedJobList, null, 2));
     return limitedJobList;
     /* winston.debug(list);
     winston.debug(limitedJobList); */
