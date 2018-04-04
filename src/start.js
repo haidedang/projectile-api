@@ -37,6 +37,8 @@ $(document).ready(function() {
         $('#results').text('Projectile and Timeular credentials couldn\'t be sent and set. Please check your ' +
         'connection and the api service.');
       }
+    }).fail(function() {
+    alert( "Connection to api service seems lost - error!" );
     });
   });
 

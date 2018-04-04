@@ -1,7 +1,7 @@
 'use strict';
 
 $(document).ready(function() {
-  // check if credentials are present or show info box with link to /start
+  // check if credentials are present in api service or show info box with link to /start to set them
   $.ajax({
     url: '//localhost:{port}/credsStatus',
     cache: false,
@@ -26,7 +26,7 @@ $(document).ready(function() {
   // clean results in general
   function cleanResults() {
     $('.syncOutput').remove();
-    $('#headerText').remove();
+    $('#headerInfo').remove();
     // $('#syncActInfo').html(''); // fades out
   }
 

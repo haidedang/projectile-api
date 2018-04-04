@@ -72,6 +72,11 @@ let employee = '';
 let jobList = '';
 
 let credsPresent = false;
+/*
+let credsPresent = {
+  projectileCreds: false,
+  timeularCreds: false
+}; */
 
 let basePath = '';
 
@@ -174,6 +179,7 @@ app.get(basePath + '/start', (req, res) => {
 /**
  *  route for start website post request
  */
+ /*
 app.post(basePath + '/start', (req, res) => {
     winston.debug('Post request to /start');
     // receiving post requests for base website
@@ -183,46 +189,240 @@ app.post(basePath + '/start', (req, res) => {
     // json content not empty?
     if (json.projectileUser && json.projectilePassword && json.timeularApiKey && json.timeularApiSecret){
         winston.debug('Credentials json from frontend not empty - trying to save those.');
-
         // set projectile creds
         let user = {login: json.projectileUser,
             password: json.projectilePassword
         }
 
-        fs.writeFile('user.txt', JSON.stringify(user), (err) => {
-            if (err) throw err;
-            console.log("Projectile User credentials have been saved.");
+        function testCredentials(user) {
+          let options = {
+              method: 'POST',
+              url: 'https://projectile.office.sevenval.de/projectile/start',
+              headers:
+                  {'content-type': 'application/x-www-form-urlencoded'},
+              form:
+                  {
+                      action: 'login2',
+                      clientId: '0',
+                      jsenabled: '1',
+                      isAjax: '0',
+                      develop: '0',
+                      login: user.login,
+                      password: user.password
+                  },
+              strictSSL: false, //TODO: SSL Zertifizierung mit node.js
+              timeout: 7000
 
-            rp.post('https://api.timeular.com/api/v2/developer/sign-in',{
-              headers: {
-                  'Content-Type': 'application/json',
-                  'Accept': 'application/json;charset=UTF-8'
-              },
-              json: {
-                'apiKey': json.timeularApiKey,
-                'apiSecret': json.timeularApiSecret
-              },
-            }, (err, res, body) => {
-              let apiToken = res.body.token;
-              let timeularApi = {
-                  apiToken: apiToken
-              }
-              fs.writeFile('timeularToken.txt', JSON.stringify(timeularApi), (err) => {
+          };
+          rp(options, function (error, response, body) {
+              if (error) { winston.error('Login error in projectile.'); }
+              return (!response.body.substr(1, 2000).includes("Login</title>")) {
+        }
+        console.log('#####');
+        let options = {
+            method: 'POST',
+            url: 'https://projectile.office.sevenval.de/projectile/start',
+            headers:
+                {'content-type': 'application/x-www-form-urlencoded'},
+            form:
+                {
+                    action: 'login2',
+                    clientId: '0',
+                    jsenabled: '1',
+                    isAjax: '0',
+                    develop: '0',
+                    login: user.login,
+                    password: user.password
+                },
+            strictSSL: false, //TODO: SSL Zertifizierung mit node.js
+            timeout: 7000
+
+        };
+        rp(options, function (error, response, body) {
+            if (error) { winston.error('Login error in projectile.'); }
+            else {
+                winston.debug('Login page? : ', response.body.substr(1, 2000).includes("Login</title>"));
+            }
+            if (!response.body.substr(1, 2000).includes("Login</title>")) {
+              fs.writeFile('user.txt', JSON.stringify(user), (err) => {
                   if (err) throw err;
-                  console.log("Timeular token has been saved.");
-                  winston.debug('/ base website post request done');
-                  init(); // fetch joblist, get cookie , employee
+                  console.log("Projectile User credentials have been saved.");
+
+                  rp.post('https://api.timeular.com/api/v2/developer/sign-in',{
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json;charset=UTF-8'
+                    },
+                    json: {
+                      'apiKey': json.timeularApiKey,
+                      'apiSecret': json.timeularApiSecret
+                    },
+                  }, (err, res, body) => {
+                    if (apiToken && apiToken !== '') {
+                      let apiToken = res.body.token;
+                      let timeularApi = {
+                          apiToken: apiToken
+                      }
+                      fs.writeFile('timeularToken.txt', JSON.stringify(timeularApi), (err) => {
+                          if (err) throw err;
+                          console.log("Timeular token has been saved.");
+                          winston.debug('/ base website post request done');
+                          init(); // fetch joblist, get cookie , employee
+                      });
+                    }
+
+                  });
+                  res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
               });
-            });
-            res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
+            } else {res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));}
         });
+
+
     } else {
       winston.warn('Credentials json from frontend are empty or incomplete');
       res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
     }
     // res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
     winston.debug('Post request to /start handled.');
+}); */
+
+
+app.post(basePath + '/start', async (req, res) => {
+    winston.debug('Post request to /start');
+    // receiving post requests for base website
+    // winston.debug(req.body); // shows credentials!
+    let json = req.body;
+
+    // json content not empty?
+    if (json.projectileUser && json.projectilePassword && json.timeularApiKey && json.timeularApiSecret){
+        winston.debug('Credentials json from frontend not empty - trying to test and store those.');
+        // set projectile creds
+        let user = {login: json.projectileUser,
+            password: json.projectilePassword
+        }
+
+        async function testCredentials(user) {
+          let options = {
+              method: 'POST',
+              url: 'https://projectile.office.sevenval.de/projectile/start',
+              headers:
+                  {'content-type': 'application/x-www-form-urlencoded'},
+              form:
+                  {
+                      action: 'login2',
+                      clientId: '0',
+                      jsenabled: '1',
+                      isAjax: '0',
+                      develop: '0',
+                      login: user.login,
+                      password: user.password
+                  },
+              strictSSL: false, //TODO: SSL Zertifizierung mit node.js
+              timeout: 7000
+          };
+          let result = rp(options, function (error, response, body) {
+              if (error) { winston.error('testCredentials -> Login error in projectile.'); }
+              result = response.body.substr(1, 2000).includes("Login</title>");
+              winston.debug('testCredentials -> Login keyword existence: ', response.body.substr(1, 2000).includes("Login</title>"));
+              return result;
+          }).then((result) => {
+            winston.debug('testCredentials -> negated result before returning from function: ', !result);
+            return !result; // reverse boolean, true = no login keyword found
+          }).catch((err) => {
+            if (!res.statusCode === 302) {
+              winston.warn('testCredentials -> Something went wrong: ', err);
+            }
+            return true;
+          });
+          return result;
+        }
+
+        async function retrieveToken(json) {
+          // let timeularApi = '';
+          let timeularApi = await rp.post('https://api.timeular.com/api/v2/developer/sign-in',{
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json;charset=UTF-8'
+            },
+            json: {
+              'apiKey': json.timeularApiKey,
+              'apiSecret': json.timeularApiSecret
+            },
+          }, (err, res, body) => {
+            if (res.statusCode === 200) {
+              winston.debug('retrieveToken -> Token retrieved.');
+              let apiToken = res.body.token;
+              /*
+              let timeularApi = {
+                  apiToken: apiToken
+              } */
+              return apiToken; // timeularApi;
+            }
+          }).catch((err) => {
+            if (!res.statusCode === 401) {
+              winston.warn('retrieveToken -> Timeular api key and/or secret seem to be invalid. ', err);
+            }
+            return null;
+          });
+          // winston.debug('retrieveToken -> Token: ' + JSON.stringify( timeularApi, null, 2 ));
+          return timeularApi;
+        }
+
+        // do projectile credentials work?
+        let projectileCreds = false;
+
+        await testCredentials(user).then((testCreds) => {
+          winston.debug('testCredentials -> executed, projectile credentials test result is: ', testCreds);
+          if (testCreds) { // !credsPresent.projectileCreds &&
+                fs.writeFile('user.txt', JSON.stringify(user), (err) => {
+                    if (err) {
+                      throw err;
+                      winston.warn('testCredentials -> issues while writing projectile credentials to file.');
+                    }
+                    winston.debug('testCredentials -> writing positivly tested projectile credentials to file user.txt.');
+                    projectileCreds = true;
+                });
+          } else {
+            winston.warn('testCredentials -> Test of projectile credentials failed - please check the input.');
+          }
+        });
+
+        await retrieveToken(json).then((timeularApi) => {
+          winston.debug('retrieveToken -> executed, timeular token test result is: ' + (timeularApi?'token retrieved':'no token retrieved'));
+          if (timeularApi) {
+          let timeularApi2 = { // what happens here :o // TODO to check!
+                apiToken: timeularApi.token
+            };
+            fs.writeFile('timeularToken.txt', JSON.stringify(timeularApi2), (err) => {
+                if (err) {
+                  throw err;
+                  winston.warn('retrieveToken -> issues while writing timeular token to file.');
+                }
+                winston.debug('retrieveToken -> writing positivly tested timeular token to file timeularToken.txt.');
+                console.log('projectileCreds: ' + projectileCreds);
+                if (projectileCreds === true) {
+                  credsPresent = true;
+                  winston.debug('retrieveToken -> All credentials are available now. Initiate init sequence of api.');
+                  init(); // fetch joblist, get cookie , employee
+                }
+                res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
+            });
+          } else {
+            winston.warn('retrieveToken -> Timeular api credentials seems to be invalid.');
+            res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
+          }
+          // res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
+        });
+
+    } else {
+      winston.warn('Credentials json from frontend is empty or incomplete');
+      res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
+    }
+    // res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
+    winston.debug('Post request to /start handled.');
 });
+
+
 
 // SYNC BOOKINGS
 /**
