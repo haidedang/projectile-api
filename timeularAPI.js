@@ -505,11 +505,13 @@ exports.merge = async (startDate, endDate) => {
           } else {
             day["Note"] = '';
           }
+          // keep the original complete date, to provide improved sorting of results for frontend
+          day["startedAt"] = timeList.timeEntries[i].duration.startedAt;
 
           // "normalize" note - Q'n'D fix for projectile.js to avoid malformed characters in projectile
           // !!! TODO CHECK - final clean solution in saveEntry necessary!
           day["Note"] = day["Note"].replace(/ä/g, "ae").replace(/Ä/g, "Ae").replace(/ü/g, "ue").replace(/Ü/g, "Ue").replace(/ö/g, "oe").replace(/Ö/g, "Oe").replace(/ß/g, "ss");
-          // remove newlines,... \n \r
+          // remove newlines,... \n \r from notes
           day["Note"] = day["Note"].replace(/\r?\n|\r/g, " ");
           // end
           month.push(day);
@@ -616,7 +618,7 @@ async function saveToProjectile(monthArray) {
             if (packageReply.limitless[i]["Activity"] !== "") {
                 let response = await projectile.save(packageReply.limitless[i]["StartDate"], packageReply.limitless[i]["Duration"], packageReply.limitless[i]["Activity"], packageReply.limitless[i]["Note"]);
                 winston.debug('saving w/o limit: ' + packageReply.limitless[i]["StartDate"], packageReply.limitless[i]["Duration"], packageReply.limitless[i]["Activity"], packageReply.limitless[i]["Note"]);
-                winston.debug('response: ' + response);
+                winston.debug('response: ' + response + '\n');
                 // let obj = {};
                 obj['LimitHit'] = 'noLimit';
                 obj = packageReply.limitless[i];
@@ -663,7 +665,7 @@ async function saveToProjectile(monthArray) {
             if (parseFloat(packageReply.limit[i].Duration.toFixed(5)) <= parseFloat(Number(projectileObject[0].remainingTime.toFixed(5)))) {
                 let response = await projectile.save(packageReply.limit[i]["StartDate"], parseFloat(packageReply.limit[i]["Duration"].toFixed(5)), packageReply.limit[i]["Activity"], packageReply.limit[i]["Note"]);
                 winston.debug('saving w/ limit: ' + packageReply.limit[i]["StartDate"], packageReply.limit[i]["Duration"], packageReply.limit[i]["Activity"], packageReply.limit[i]["Note"]);
-                winston.debug('response: ' + response);
+                winston.debug('response: ' + response + '\n');
                 if (response) {
                   obj['Result'] = 'positive';
                   // posResult.push(obj);
@@ -674,9 +676,8 @@ async function saveToProjectile(monthArray) {
             } else {
                 obj['LimitHit'] = 'yes';
                 obj['Result'] = 'negative';
-                winston.debug('Saving package with limit failed! ' + packageReply.limit[i]["StartDate"], packageReply.limit[i]["Duration"], packageReply.limit[i]["Activity"], packageReply.limit[i]["Note"] + ' with remaining time of: ' + Number(projectileObject[0].remainingTime));
                 // throw new Error('Remaining Time exceeded.');
-                winston.warn('Saving package with limit failed - Remaining Time exceeded. ' + packageReply.limit[i]["StartDate"], packageReply.limit[i]["Duration"], packageReply.limit[i]["Activity"], packageReply.limit[i]["Note"]);
+                winston.warn('Saving package with limit failed - Remaining Time exceeded. ' + packageReply.limit[i]["StartDate"], packageReply.limit[i]["Duration"], packageReply.limit[i]["Activity"], packageReply.limit[i]["Note"] + ' with remaining time of: ' + Number(projectileObject[0].remainingTime));
                 // negResult.push(obj);
             }
             gesResult.push(obj);
@@ -689,13 +690,9 @@ async function saveToProjectile(monthArray) {
       return true;
     });
 
-    // await syncSavingWithLimit(packageReply);
-    // return true;
-// TEST THIS RESULT!!! better INFO LimitHit und Result
-// return geResult;
-
     // sort the gesResult Array with results after ascending dates --> easier handling in frontend
-    gesResult.sort(function (a, b) { return (a.StartDate > b.StartDate) ? 1 : 0 });
+    // improved sorting by original startedAt value from timeular, to keep booking order!
+    gesResult.sort(function (a, b) { return (new Date(a.startedAt) - new Date(b.startedAt)) });
 
     return ({
       // posResult: posResult,
@@ -715,11 +712,12 @@ async function getDistinctProjectileRange(startDate, endDate) {
         /*  let startDate = MonthCleaned[0].StartDate;
          let endDate = MonthCleaned[MonthCleaned.length-1].StartDate;
           */
-        winston.debug("startDate: " + startDate);
-        winston.debug("endDate: " + endDate);
+        winston.debug("getDistinctProjectileRange -> startDate: " + startDate);
+        winston.debug("getDistinctProjectileRange -> endDate: " + endDate);
 
         let TimeRangeArray = [];
         let List = await projectile.getallEntriesInTimeFrame(startDate, endDate);
+        winston.debug('getDistinctProjectileRange -> after getallEntriesInTimeFrame: ', JSON.stringify(List, null, 2));
         let obj = List["values"];
 
         for (key in obj) {
@@ -764,10 +762,10 @@ async function normalizeUP(startDate, endDate, MonthCleaned) {
 
     // group Objects to Array with same Date
     let monthDay = await splitintoSeperateDays(MonthCleaned);
-    winston.debug('normalizeUP -> splitintoSeperateDays: ', JSON.stringify(monthDay, null, 2));
+    winston.debug('normalizeUP -> after splitintoSeperateDays: ', JSON.stringify(monthDay, null, 2));
     // get DateRange of Projectile  [ [Day1],[Day2] ]
     let serverDays = await getDistinctProjectileRange(startDate, endDate);
-    winston.debug('normalizeUP -> getDistinctProjectileRange: ', JSON.stringify(serverDays, null, 2));
+    winston.debug('normalizeUP -> after getDistinctProjectileRange : ', JSON.stringify(serverDays, null, 2));
 
     let clientDaysInProjectile = [];
 
@@ -857,9 +855,17 @@ function compareV2(clientArray, serverArray) {
                  break;
              } */
             for (var j = 0; j < clientArray.length; j++) {
-              // winston.debug('compareV2 -> Strings getting compared: ', JSON.stringify(clientArray[j]), JSON.stringify(serverArray[i]));
-                if (JSON.stringify(clientArray[j]) == JSON.stringify(serverArray[i])) {
-                  // winston.debug('compareV2 -> Match: -> arr[] = true ');
+              // too mutch output -> silly
+              winston.silly('compareV2 -> Strings getting compared: ', JSON.stringify(clientArray[j]), JSON.stringify(serverArray[i]));
+              // to avoid startedAt entry to destroy matching capabilities
+              let tempClientArrayEntry = {
+                StartDate: clientArray[j].StartDate,
+                Duration: clientArray[j].Duration,
+                Activity: clientArray[j].Activity,
+                Note: clientArray[j].Note
+              };
+                if (JSON.stringify(tempClientArrayEntry) == JSON.stringify(serverArray[i])) {
+                    winston.silly('compareV2 -> Match: -> arr[] = true ');
                     clientArray.splice(j, 1);
                     j = j - 1;
                     arr[i] = true;
