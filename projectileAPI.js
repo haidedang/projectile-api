@@ -508,7 +508,7 @@ exports.getDate = async (date) => {
 }
 
 // Split Joblist into one without limit and one array with packages with limit
-exports.joblistLimited = async (list, limitTime, callback) => {
+exports.joblistLimited = async (list, limitTime, callback) => { // "limitTime" is a fieldname
    let limitedJobList = [];
 
    //transform array to a bundle of property values
@@ -527,6 +527,7 @@ exports.joblistLimited = async (list, limitTime, callback) => {
         }
     })
     // array of limited packages
+    winston.debug('exports.joblistLimited -> limitedJobList: ', JSON.stringify(limitedJobList, null, 2));
     return limitedJobList;
     /* winston.debug(list);
     winston.debug(limitedJobList); */
