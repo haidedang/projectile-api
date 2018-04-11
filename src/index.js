@@ -44,6 +44,16 @@ $(document).ready(function() {
       $.each(responseJSON.gesResult, function(key, value) {
         console.log('gesResult: ' + key, JSON.stringify( value, null, 2 ));
         if (value.Result === 'negative') {
+          // generate Error messages badges
+          let errors = '';
+          if (value.Errors) {
+            $.each(value.Errors, function(key, value) {
+              // "message":"Die Daten wurden nicht gespeichert","severity":"Warning"
+              console.log(value.severity + ' -> ' + value.message);
+              errors = errors + '<span class=\"badge badge-warning text-left\" style=\"white-space: normal\">' + value.severity + ' -> ' + value.message + '</span>';
+            });
+          }
+
           $('#results').append('<li class="list-group-item list-group-item-warning syncOutput"><div class="row">' +
           '<div class="col-md-3">' + value.StartDate + '</div>' +
             '<div class="col-md-2">' + value.Duration.toString().substring(0, 6) + '</div>' +
@@ -53,6 +63,7 @@ $(document).ready(function() {
             (value.Activity === ""?"<span class=\"badge badge-warning\">no matching projectile package - Timeular only</span>":""  ) +
             (value.Note === ""?"<span class=\"badge badge-warning\">Note missing - not synchronized</span>":"") +
             (value.LimitHit === "yes"?"<span class=\"badge badge-warning\">Package limit hit - not synchronized</span>":"") +
+            (errors !== ''?errors:"") +
             '</div></div>' + '</li>');
         } else {
           $('#results').append('<li class="list-group-item list-group-item-success syncOutput"><div class="row">' +
@@ -80,10 +91,7 @@ $(document).ready(function() {
     console.log('DEBUG: Sync ' + target);
     //check if target valid?
     cleanResults();
-    $('#syncChoiceInfo').html('<span class="badge badge-info">Synchronizing started...</span>').delay(4000).fadeOut(function() {
-      $(this).html('');
-      $(this).show(); // remove display: none
-    });
+    $('#syncChoiceInfo').html('<span class="badge badge-info">Synchronizing started...</span>');
 
     $.ajax({
       url: '//localhost:{port}/syncbookings/' + target,
@@ -94,6 +102,10 @@ $(document).ready(function() {
       type: 'get',
       success: function(response, status){
         console.log('DEBUG: Response: ' + response + ' status: ' + status);
+
+        // fadeout:
+        $('#syncChoiceInfo').html('');
+        $('#syncChoiceInfo').show();
 
         // output to results div table
         outputResults(response);
@@ -112,10 +124,7 @@ $(document).ready(function() {
     console.log('Sync ' + startDate + ' to ' + endDate);
     //check if target valid?
     cleanResults();
-    $('#syncRangeInfo').html('<span class="badge badge-info">Synchronizing within range started...</span>').delay(4000).fadeOut(function() {
-      $(this).html('');
-      $(this).show();
-    });
+    $('#syncRangeInfo').html('<span class="badge badge-info">Synchronizing within range started...</span>');
 
     $.ajax({
       url: '//localhost:{port}/syncbookings/' + startDate + '/' + endDate,
@@ -126,6 +135,10 @@ $(document).ready(function() {
       type: 'get',
       success: function(response, status){
         console.log('Sync bookings with range - response + status: ' + response, status);
+
+        // fadeout:
+        $('#syncRangeInfo').html('');
+        $('#syncRangeInfo').show();
 
         // output to results div table
         outputResults(response);

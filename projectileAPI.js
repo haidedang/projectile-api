@@ -268,6 +268,7 @@ function escapeRegExp(str) {
   return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 }
 
+// Save entry to projectile
 let saveEntry = async (cookie, employee, time, project, note) => {
     let dayList = await getDayListToday(cookie, employee);
     winston.debug('saveEntry -> dayList: ' + JSON.stringify(dayList, null, 2));
@@ -329,7 +330,7 @@ let saveEntry = async (cookie, employee, time, project, note) => {
     if (bodyStringMatch){
       count = bodyStringMatch.length;   // "api * ! \" ' url1" zu matchen!
     }
-    winston.debug("Occurence count of note text: " + count);
+    winston.debug("saveEntry -> Occurence count of note text: " + count);
     for (let i = 0; i < count; i++) {
       // find the note
       let indexOfNote = bodyString.search(re);
@@ -347,16 +348,45 @@ let saveEntry = async (cookie, employee, time, project, note) => {
     }
 
     // evaluate results for correct return value
-    let returnValue = false;
+    // let returnValue = false;
+    let returnValue = {
+      returnValue: false
+    };
 
     entries.forEach((item) => { // time has to be noramlized. Projectile ALWAYS returns x.xx though x,xx or x:xx may have been sent before
       // winston.debug('Länge Response TimeTracker: ' + body.values['TimeTracker!^.|Default|Employee|1|357'].length);
       if (body.values['TimeTracker!^.|Default|Employee|1|357'].length >= 5 && item.includes('"Time","v":' + time + ',"d"') && item.includes('"What","v":"' + project + '","d"') && item.includes('"Note","v":"' + note.replace(/[\"]/g, "\\\$&") + '","d"')) {
-        returnValue = true; // created a new entry
+        // returnValue = true; // created a new entry
+        returnValue = {
+          returnValue: true
+        };
+        winston.debug('saveEntry -> While recognizing save status: created a new entry, return value: true');
       } else if (item.includes('"What","v":"' + project + '","d"') && item.includes('"Note","v":"' + note.replace(/[\"]/g, "\\\$&") + '","d"')) {
-        returnValue = true; // added to an existing entry
+        // returnValue = true; // added to an existing entry
+        returnValue = {
+          returnValue: true
+        };
+        winston.debug('saveEntry -> While recognizing save status: added to an existing entry, return value: true');
       }
     });
+    if (bodyString.includes('"problems":[{"ref"')){
+      // returnValue = false;
+      winston.debug('saveEntry -> Recognizing problem status: problem message found! returnValue can\'t be true!');
+      let indexOfErrorArrayStart = bodyString.lastIndexOf('problems":[');
+      let indexOfErrorArrayEnd = bodyString.slice(indexOfErrorArrayStart).indexOf('"}],');
+      winston.debug('saveEntry -> Error array: ', 'Start: ', indexOfErrorArrayStart, 'length:',indexOfErrorArrayEnd, bodyString.slice(indexOfErrorArrayStart + 10, indexOfErrorArrayStart + indexOfErrorArrayEnd + 3));
+      let errorArray = JSON.parse(bodyString.slice(indexOfErrorArrayStart + 10, indexOfErrorArrayStart + indexOfErrorArrayEnd + 3));
+      winston.debug('saveEntry -> Error array itms: ', errorArray.length);
+      errorArray.forEach((item) => {
+        winston.debug(item.message, item.severity);
+      });
+      // array contains: ref, message, severity
+      // error message should be returned!
+      returnValue = {
+        returnValue: false,
+        errors: errorArray
+      }
+    }
     return returnValue;
 }
 
@@ -482,14 +512,19 @@ exports.save = async (date, time, project, note) => {
     // let jobList = await exports.jobList(cookie, employee); // fetch the actual joblist.
     if (await setCalendarDate(date, cookie, employee)) {
         let saveEntryResult = await saveEntry(cookie, employee, time, project, note); // saveEntry returns true or false depending on save result
+        // returns { returnValue: false, errors: errorArray }
         winston.debug("saveEntryResult --> " + saveEntryResult);
-        // TODO: store packages which couldnt be saved in an external file
-        if (saveEntryResult) {
+        if (saveEntryResult.returnValue) {
             winston.debug('Finished saving entry.');
-            return true;
+            // return true;
+            // return saveEntryResult;
         }
+        return saveEntryResult;
     }
-    return false;
+    return {
+      returnValue: false
+     };
+    // return false;
 }
 /*
 async function blubb () {

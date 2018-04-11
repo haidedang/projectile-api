@@ -431,6 +431,7 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
      // book in projectile
      projectile.save(req.params.date, time, packageActivity.Package, req.params.note).then(() => {
        winston.debug('save for projectile successfull');
+       // handle result of save request!! TODO
        res.status(200).send(req.params.date + ' ' +  req.params.duration + ' ' +  req.params.activity + ' ' +  req.params.note)
      });
    } catch (e) {
@@ -472,6 +473,7 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
       // book in projectile
       projectile.save(today, time, packageActivity.Package, req.params.note).then(() => {
         winston.debug('save for projectile successfull');
+        // handle result of save request TODO
         res.status(200).send(today + ' ' +  req.params.duration + ' ' +  req.params.activity + ' ' +  req.params.note)
       });
       } catch (e) {
