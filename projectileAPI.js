@@ -348,7 +348,6 @@ let saveEntry = async (cookie, employee, time, project, note) => {
     }
 
     // evaluate results for correct return value
-    // let returnValue = false;
     let returnValue = {
       returnValue: false
     };
@@ -356,21 +355,22 @@ let saveEntry = async (cookie, employee, time, project, note) => {
     entries.forEach((item) => { // time has to be noramlized. Projectile ALWAYS returns x.xx though x,xx or x:xx may have been sent before
       // winston.debug('Länge Response TimeTracker: ' + body.values['TimeTracker!^.|Default|Employee|1|357'].length);
       if (body.values['TimeTracker!^.|Default|Employee|1|357'].length >= 5 && item.includes('"Time","v":' + time + ',"d"') && item.includes('"What","v":"' + project + '","d"') && item.includes('"Note","v":"' + note.replace(/[\"]/g, "\\\$&") + '","d"')) {
-        // returnValue = true; // created a new entry
+        // created a new entry
         returnValue = {
           returnValue: true
         };
         winston.debug('saveEntry -> While recognizing save status: created a new entry, return value: true');
       } else if (item.includes('"What","v":"' + project + '","d"') && item.includes('"Note","v":"' + note.replace(/[\"]/g, "\\\$&") + '","d"')) {
-        // returnValue = true; // added to an existing entry
+        // added to an existing entry
         returnValue = {
           returnValue: true
         };
         winston.debug('saveEntry -> While recognizing save status: added to an existing entry, return value: true');
       }
     });
+
+    // check for problems that indicate saving was NOT successfull
     if (bodyString.includes('"problems":[{"ref"')){
-      // returnValue = false;
       winston.debug('saveEntry -> Recognizing problem status: problem message found! returnValue can\'t be true!');
       let indexOfErrorArrayStart = bodyString.lastIndexOf('problems":[');
       let indexOfErrorArrayEnd = bodyString.slice(indexOfErrorArrayStart).indexOf('"}],');
