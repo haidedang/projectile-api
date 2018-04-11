@@ -215,7 +215,7 @@ app.post(basePath + '/start', async (req, res) => {
           let result = rp(options, function (error, response, body) {
               if (error) { winston.error('testCredentials -> Login error in projectile.'); }
               result = response.body.substr(1, 2000).includes("Login</title>");
-              winston.debug('testCredentials -> Login keyword existence: ', response.body.substr(1, 2000).includes("Login</title>"));
+              winston.debug('testCredentials -> Login keyword existence after login attempt: ', response.body.substr(1, 2000).includes("Login</title>"));
               return result;
           }).then((result) => {
             winston.debug('testCredentials -> negated result before returning from function: ', !result);
@@ -242,7 +242,7 @@ app.post(basePath + '/start', async (req, res) => {
             },
           }, (err, res, body) => {
             if (res.statusCode === 200) {
-              winston.debug('retrieveToken -> Token retrieved.');
+              winston.debug('retrieveToken -> API credentials retrieved.');
               let apiToken = res.body.token;
               /*
               let timeularApi = {

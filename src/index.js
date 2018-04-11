@@ -2,26 +2,30 @@
 
 $(document).ready(function() {
   // check if credentials are present in api service or show info box with link to /start to set them
-  $.ajax({
-    url: '//localhost:{port}/credsStatus',
+  // stops cycle once creds are present
+  (function checkCredsStatus() {
+    $.ajax({ url: "//localhost:{port}/credsStatus",
     cache: false,
     contentType: false,
     processData: false,
     type: 'get',
     success: function(response, status){
-      console.log('DEBUG: Credential status: ' + response.credsPresent);
+      // console.log('DEBUG: Credential status: ' + response.credsPresent);
       if (!response.credsPresent){
         // set badge
-        $( '<div class="col" id="headerInfo">' +
-        '<span class=\"badge badge-warning\">No credentials available, please visit <a ' +
-        'href="//localhost:{port}/start">http://localhost:{port}/start</a></span>' +
-        '</div>' ).insertAfter( "#headerText" );
-      //  '<div class="col" id="headerInfo">' +
-      //  '<span class=\"badge badge-warning\">No credentials available, please visit <a href="//localhost:{port}/start">http://localhost:{port}/start</a></span>' +
-      //  '</div>'
+        if (!document.getElementById("headerInfo")) {
+          $( '<div class="col" id="headerInfo">' +
+          '<span class=\"badge badge-warning\">No credentials available, please visit <a ' +
+          'href="//localhost:{port}/start">http://localhost:{port}/start</a></span>' +
+          '</div>' ).insertAfter( "#headerText" );
+        }
+        // Setup the next poll recursively, only while credsPresent is false!
+        setTimeout(checkCredsStatus, 1000);
+      } else {
+        $('#headerInfo').remove();
       }
-    }
-  });
+    }, dataType: "json"});
+  })();
 
   // clean results in general
   function cleanResults() {
