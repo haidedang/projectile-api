@@ -130,7 +130,7 @@ exports.login = async () => {
 
             };
             request(options, function (error, response, body) {
-                if (error) { reject("Zeitüberschreitung... Bitte überprüfe deine VPN Internetverbindung.");}
+                if (error) { reject("Zeitüberschreitung... Bitte überprüfe deine VPN Internetverbindung." + error); }
                 else {
                     let temp = response.headers['set-cookie'][0];
                     let cookie = temp.split(';')[0];

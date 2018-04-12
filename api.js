@@ -71,15 +71,16 @@ let cookie = '';
 let employee = '';
 let jobList = '';
 
+let config = {};
+let defaultInterval = 300000; // 5min
+
 let credsPresent = false;
-/*
-let credsPresent = {
-  projectileCreds: false,
-  timeularCreds: false
-}; */
 
 let basePath = '';
 
+/**
+ *  function init() to initialize projectile creds, timeular token, config.json and trigger necessary functions to get ready to rumble
+ */
 async function init() {
   try {
     // get user creds and timeular API token
@@ -105,6 +106,16 @@ async function init() {
       employee = await projectile.getEmployee(cookie);
       jobList = await projectile.jobList(cookie, employee);
       credsPresent = true;
+
+      // get config from config.json
+      try {
+        config = JSON.parse(fs.readFileSync('config.json'));
+        winston.debug('Successfully read config.json.');
+        winston.silly('config.json: ' + JSON.stringify( config, null, 2 ));
+      } catch (e) {
+        winston.warn('init() -> Failed to read config.json configurationfile on startup. Corrupted or non existent.');
+      }
+
     } else {
       winston.warn('Initialization failed. token and/or user missing.');
     }
@@ -113,8 +124,54 @@ async function init() {
   }
 }
 
+// Gentlemen, lets start the engines
 init();
 
+/**
+ *  function to synchronize the projectile packages to the timeular activities in intervals (default 300s)
+ */
+var cyclicPackageSync = async function() {
+  winston.silly('cyclicPackageSync -> Starting syncing packages and activities with timeout of',
+  (config.timeOutForSync?(config.timeOutForSync / 1000):(defaultInterval / 1000)), 's');
+
+  let result = await timeularapi.updateActivities(true, false); // (create, archive)
+  if (result) {
+    winston.silly('Automatically synced projectile packages to timeular activities.');
+  } else {
+    winston.warn('Automatic syncing of projectile packages to timeular activities failed.');
+  }
+  setTimeout(cyclicPackageSync, config.timeOutForSync || defaultInterval);
+}
+setTimeout(cyclicPackageSync, config.timeOutForSync || defaultInterval);
+
+/**
+ *  function to write content of config to config.json
+ */
+async function writeToConfig(parametername, value) {
+  // read from config
+  try {
+    let config = JSON.parse(fs.readFileSync('config.json'));
+  } catch (e) {
+    winston.warn('writeToConfig -> Failed to read config.json configurationfile. Corrupted or non existent.');
+    if (config.length <= 0) {
+      winston.debug('writeToConfig -> Config json variable is empty, initialize it cleanly.');
+      config = {};
+    }
+  }
+  // set value
+  config[parametername] = value;
+  // write to config
+  try {
+    fs.writeFile('config.json', JSON.stringify(config), (err)=>{ if (err){
+        winston.warn('writeToConfig -> writing to file ->', err);
+      } else {
+        winston.debug('writeToConfig -> writing to file done.');
+      }
+    });
+  } catch (e) {
+    winston.error('writeToConfig -> Failed to write config.json configurationfile. Corrupted or blocked.');
+  }
+}
 
 /**
  *  route for healthstatus checks
@@ -498,6 +555,41 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
      }
      winston.debug('/syncactivities done');
    })
+
+   /**
+    *  route for setting syncing interval for activities of projectile and timeular in seconds
+    */
+    app.get(basePath + '/syncinterval/:interval', async (req, res) => {
+      try {
+        winston.debug('Setting interval for auto syncing of activities... Value: ' + req.params.interval + 's');
+        // timeOutForSync = req.params.interval * 1000;
+        if (req.params.interval * 1000 !== config.timeOutForSync) {
+          writeToConfig('timeOutForSync', req.params.interval * 1000);
+          winston.debug('Sync interval set to: ' + req.params.interval + 's');
+        } else {
+          winston.debug('Sync interval not changed, because same value provided: ' + req.params.interval + 's');
+        }
+        await res.status(200).send(true);
+      } catch (e) {
+        winston.warn('Something went wrong - /syncinterval/:interval value: ' + req.params.interval);
+        res.status(400).send(false);
+      }
+      winston.debug('/syncinterval/:interval done');
+    })
+
+    /**
+     *  route for getting syncing interval for activities of projectile and timeular in seconds
+     */
+     app.get(basePath + '/syncinterval', async (req, res) => {
+       try {
+         winston.debug('/syncinterval -> Getting interval for auto syncing of activities... Value: ' + (config.timeOutForSync?(config.timeOutForSync/1000):(defaultInterval/1000)) + 's');
+         //await res.status(200).send((config.timeOutForSync?(config.timeOutForSync/1000):(defaultInterval/1000)));
+         res.send('' + (config.timeOutForSync?(config.timeOutForSync/1000):(defaultInterval/1000)));
+       } catch (e) {
+         res.status(400).send('Something went wrong - /syncinterval');
+       }
+       winston.debug('/syncinterval done');
+     })
 
 // new default? old one acted weird
 app.use(function(req, res, next){

@@ -698,7 +698,8 @@ async function getDistinctProjectileRange(startDate, endDate) {
 
         let TimeRangeArray = [];
         let List = await projectile.getallEntriesInTimeFrame(startDate, endDate);
-        winston.debug('getDistinctProjectileRange -> after getallEntriesInTimeFrame: ', JSON.stringify(List, null, 2));
+        // large output!
+        // winston.debug('getDistinctProjectileRange -> after getallEntriesInTimeFrame: ', JSON.stringify(List, null, 2));
         let obj = List["values"];
 
         for (key in obj) {

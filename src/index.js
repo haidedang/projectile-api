@@ -1,6 +1,22 @@
 'use strict';
 
 $(document).ready(function() {
+  // set interval value in input field
+  (function setIntervalField() {
+    $.ajax({ url: "//localhost:{port}/syncinterval",
+    cache: false,
+    contentType: false,
+    processData: false,
+    type: 'get',
+    success: function(response, status){
+      console.log('DEBUG: retrieved current sync interval value: ' + response + ' status: ' + status);
+      if (response){
+        $('#syncInterval').val(response);
+      }
+    }, dataType: "json"});
+  })();
+
+
   // check if credentials are present in api service or show info box with link to /start to set them
   // stops cycle once creds are present
   (function checkCredsStatus() {
@@ -121,30 +137,47 @@ $(document).ready(function() {
     var startDate = $('#startDate').val();
     var endDate = $('#endDate').val();
 
-    console.log('Sync ' + startDate + ' to ' + endDate);
-    //check if target valid?
-    cleanResults();
-    $('#syncRangeInfo').html('<span class="badge badge-info">Synchronizing within range started...</span>');
+    if (startDate && endDate) {
+      console.log('Syncing range from ' + startDate + ' to ' + endDate);
+      //check if target valid?
+      cleanResults();
+      $('#syncRangeInfo').html('<span class="badge badge-info">Synchronizing within range started...</span>');
 
-    $.ajax({
-      url: '//localhost:{port}/syncbookings/' + startDate + '/' + endDate,
-      cache: false,
-      contentType: false,
-      processData: false,
-      //data: form_data,
-      type: 'get',
-      success: function(response, status){
-        console.log('Sync bookings with range - response + status: ' + response, status);
+      $.ajax({
+        url: '//localhost:{port}/syncbookings/' + startDate + '/' + endDate,
+        cache: false,
+        contentType: false,
+        processData: false,
+        //data: form_data,
+        type: 'get',
+        success: function(response, status){
+          console.log('Sync bookings with range - response + status: ' + response, status);
 
-        // fadeout:
-        $('#syncRangeInfo').html('');
-        $('#syncRangeInfo').show();
+          // output to results div table
+          outputResults(response);
 
-        // output to results div table
-        outputResults(response);
-
-      }
-    });
+          // fadeout of info badge
+          $('#syncRangeInfo').fadeOut(function() {
+            $(this).html('');
+            $(this).show();
+          });
+        },
+        error : function(error) {
+          //show error here
+          console.log(error);
+          $('#syncRangeInfo').html('<span class="badge badge-warning">Couldn\'t sync in range from ' + startDate +
+          ' to ' + endDate + '</span>').delay(5000).fadeOut(function() {
+            $(this).html('');
+            $(this).show();
+          });
+        }
+      });
+    } else {
+      $('#syncRangeInfo').html('<span class="badge badge-warning">Couldn\'t sync, no range given.</span>').delay(5000).fadeOut(function() {
+        $(this).html('');
+        $(this).show();
+      });
+    }
   });
 
   /**
@@ -152,6 +185,8 @@ $(document).ready(function() {
    */
   $('#buttonSyncActivities').click(function () {
     cleanResults();
+    $('#syncActInfo').html('<span class="badge badge-success">Projectile packages sychronized with Timeular ' +
+    'activities.</span>');
 
     $.ajax({
       url: '//localhost:{port}/syncactivities',
@@ -162,15 +197,10 @@ $(document).ready(function() {
       type: 'get',
       success: function(response, status){
         console.log(response, status);
-        $('#syncActInfo').html('<span class="badge badge-success">Projectile packages sychronized with Timeular ' +
-        'activities.</span>').delay(5000).fadeOut(function() {
+        $('#syncActInfo').fadeOut(function() {
           $(this).html('');
           $(this).show();
         });
-        /*
-        .delay(3000).fadeOut(function() {
-          $(this).remove();
-        }); */
       },
       error : function(error) {
         //show error here
@@ -182,6 +212,30 @@ $(document).ready(function() {
         });
       }
     });
+  });
+
+  /**
+   *  set sync interval
+   */
+  $('#buttonSetSyncInterval').click(function () {
+    if ($('#syncInterval').val() >= 1){
+      $.ajax({
+        url: '//localhost:{port}/syncinterval/' + $('#syncInterval').val(),
+        cache: false,
+        contentType: false,
+        processData: false,
+        //data: form_data,
+        type: 'get',
+        success: function(response, status){
+          console.log('Setting sync interval returned: ' + response, status);
+        },
+        error : function(error) {
+          //show error here
+          console.log('Something went wrong while setting new sync interval:', error);
+          setIntervalField();
+        }
+      });
+    }
   });
 
 
