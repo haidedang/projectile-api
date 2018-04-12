@@ -131,7 +131,7 @@ init();
  *  function to synchronize the projectile packages to the timeular activities in intervals (default 300s)
  */
 var cyclicPackageSync = async function() {
-  winston.silly('cyclicPackageSync -> Starting syncing packages and activities with timeout of',
+  winston.debug('cyclicPackageSync -> Starting syncing packages and activities with timeout of',
   (config.timeOutForSync?(config.timeOutForSync / 1000):(defaultInterval / 1000)), 's');
 
   let result = await timeularapi.updateActivities(true, false); // (create, archive)
