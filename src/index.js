@@ -119,9 +119,11 @@ $(document).ready(function() {
       success: function(response, status){
         console.log('DEBUG: Response: ' + response + ' status: ' + status);
 
-        // fadeout:
-        $('#syncChoiceInfo').html('');
-        $('#syncChoiceInfo').show();
+        // fadeout of info badge
+        $('#syncChoiceInfo').fadeOut(function() {
+          $(this).html('');
+          $(this).show();
+        });
 
         // output to results div table
         outputResults(response);
