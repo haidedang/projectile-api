@@ -71,15 +71,16 @@ let cookie = '';
 let employee = '';
 let jobList = '';
 
+let config = {};
+let defaultInterval = 300000; // 5min
+
 let credsPresent = false;
-/*
-let credsPresent = {
-  projectileCreds: false,
-  timeularCreds: false
-}; */
 
 let basePath = '';
 
+/**
+ *  function init() to initialize projectile creds, timeular token, config.json and trigger necessary functions to get ready to rumble
+ */
 async function init() {
   try {
     // get user creds and timeular API token
@@ -105,6 +106,16 @@ async function init() {
       employee = await projectile.getEmployee(cookie);
       jobList = await projectile.jobList(cookie, employee);
       credsPresent = true;
+
+      // get config from config.json
+      try {
+        config = JSON.parse(fs.readFileSync('config.json'));
+        winston.debug('Successfully read config.json.');
+        winston.silly('config.json: ' + JSON.stringify( config, null, 2 ));
+      } catch (e) {
+        winston.warn('init() -> Failed to read config.json configurationfile on startup. Corrupted or non existent.');
+      }
+
     } else {
       winston.warn('Initialization failed. token and/or user missing.');
     }
@@ -113,8 +124,54 @@ async function init() {
   }
 }
 
+// Gentlemen, lets start the engines
 init();
 
+/**
+ *  function to synchronize the projectile packages to the timeular activities in intervals (default 300s)
+ */
+var cyclicPackageSync = async function() {
+  winston.debug('cyclicPackageSync -> Starting syncing packages and activities with timeout of',
+  (config.timeOutForSync?(config.timeOutForSync / 1000):(defaultInterval / 1000)), 's');
+
+  let result = await timeularapi.updateActivities(true, false); // (create, archive)
+  if (result) {
+    winston.silly('Automatically synced projectile packages to timeular activities.');
+  } else {
+    winston.warn('Automatic syncing of projectile packages to timeular activities failed.');
+  }
+  setTimeout(cyclicPackageSync, config.timeOutForSync || defaultInterval);
+}
+setTimeout(cyclicPackageSync, config.timeOutForSync || defaultInterval);
+
+/**
+ *  function to write content of config to config.json
+ */
+async function writeToConfig(parametername, value) {
+  // read from config
+  try {
+    let config = JSON.parse(fs.readFileSync('config.json'));
+  } catch (e) {
+    winston.warn('writeToConfig -> Failed to read config.json configurationfile. Corrupted or non existent.');
+    if (config.length <= 0) {
+      winston.debug('writeToConfig -> Config json variable is empty, initialize it cleanly.');
+      config = {};
+    }
+  }
+  // set value
+  config[parametername] = value;
+  // write to config
+  try {
+    fs.writeFile('config.json', JSON.stringify(config), (err)=>{ if (err){
+        winston.warn('writeToConfig -> writing to file ->', err);
+      } else {
+        winston.debug('writeToConfig -> writing to file done.');
+      }
+    });
+  } catch (e) {
+    winston.error('writeToConfig -> Failed to write config.json configurationfile. Corrupted or blocked.');
+  }
+}
 
 /**
  *  route for healthstatus checks
@@ -179,114 +236,6 @@ app.get(basePath + '/start', (req, res) => {
 /**
  *  route for start website post request
  */
- /*
-app.post(basePath + '/start', (req, res) => {
-    winston.debug('Post request to /start');
-    // receiving post requests for base website
-    // winston.debug(req.body); // shows credentials!
-    let json = req.body;
-
-    // json content not empty?
-    if (json.projectileUser && json.projectilePassword && json.timeularApiKey && json.timeularApiSecret){
-        winston.debug('Credentials json from frontend not empty - trying to save those.');
-        // set projectile creds
-        let user = {login: json.projectileUser,
-            password: json.projectilePassword
-        }
-
-        function testCredentials(user) {
-          let options = {
-              method: 'POST',
-              url: 'https://projectile.office.sevenval.de/projectile/start',
-              headers:
-                  {'content-type': 'application/x-www-form-urlencoded'},
-              form:
-                  {
-                      action: 'login2',
-                      clientId: '0',
-                      jsenabled: '1',
-                      isAjax: '0',
-                      develop: '0',
-                      login: user.login,
-                      password: user.password
-                  },
-              strictSSL: false, //TODO: SSL Zertifizierung mit node.js
-              timeout: 7000
-
-          };
-          rp(options, function (error, response, body) {
-              if (error) { winston.error('Login error in projectile.'); }
-              return (!response.body.substr(1, 2000).includes("Login</title>")) {
-        }
-        console.log('#####');
-        let options = {
-            method: 'POST',
-            url: 'https://projectile.office.sevenval.de/projectile/start',
-            headers:
-                {'content-type': 'application/x-www-form-urlencoded'},
-            form:
-                {
-                    action: 'login2',
-                    clientId: '0',
-                    jsenabled: '1',
-                    isAjax: '0',
-                    develop: '0',
-                    login: user.login,
-                    password: user.password
-                },
-            strictSSL: false, //TODO: SSL Zertifizierung mit node.js
-            timeout: 7000
-
-        };
-        rp(options, function (error, response, body) {
-            if (error) { winston.error('Login error in projectile.'); }
-            else {
-                winston.debug('Login page? : ', response.body.substr(1, 2000).includes("Login</title>"));
-            }
-            if (!response.body.substr(1, 2000).includes("Login</title>")) {
-              fs.writeFile('user.txt', JSON.stringify(user), (err) => {
-                  if (err) throw err;
-                  console.log("Projectile User credentials have been saved.");
-
-                  rp.post('https://api.timeular.com/api/v2/developer/sign-in',{
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json;charset=UTF-8'
-                    },
-                    json: {
-                      'apiKey': json.timeularApiKey,
-                      'apiSecret': json.timeularApiSecret
-                    },
-                  }, (err, res, body) => {
-                    if (apiToken && apiToken !== '') {
-                      let apiToken = res.body.token;
-                      let timeularApi = {
-                          apiToken: apiToken
-                      }
-                      fs.writeFile('timeularToken.txt', JSON.stringify(timeularApi), (err) => {
-                          if (err) throw err;
-                          console.log("Timeular token has been saved.");
-                          winston.debug('/ base website post request done');
-                          init(); // fetch joblist, get cookie , employee
-                      });
-                    }
-
-                  });
-                  res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
-              });
-            } else {res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));}
-        });
-
-
-    } else {
-      winston.warn('Credentials json from frontend are empty or incomplete');
-      res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
-    }
-    // res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
-    winston.debug('Post request to /start handled.');
-}); */
-
-
 app.post(basePath + '/start', async (req, res) => {
     winston.debug('Post request to /start');
     // receiving post requests for base website
@@ -323,7 +272,7 @@ app.post(basePath + '/start', async (req, res) => {
           let result = rp(options, function (error, response, body) {
               if (error) { winston.error('testCredentials -> Login error in projectile.'); }
               result = response.body.substr(1, 2000).includes("Login</title>");
-              winston.debug('testCredentials -> Login keyword existence: ', response.body.substr(1, 2000).includes("Login</title>"));
+              winston.debug('testCredentials -> Login keyword existence after login attempt: ', response.body.substr(1, 2000).includes("Login</title>"));
               return result;
           }).then((result) => {
             winston.debug('testCredentials -> negated result before returning from function: ', !result);
@@ -350,7 +299,7 @@ app.post(basePath + '/start', async (req, res) => {
             },
           }, (err, res, body) => {
             if (res.statusCode === 200) {
-              winston.debug('retrieveToken -> Token retrieved.');
+              winston.debug('retrieveToken -> API credentials retrieved.');
               let apiToken = res.body.token;
               /*
               let timeularApi = {
@@ -539,6 +488,7 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
      // book in projectile
      projectile.save(req.params.date, time, packageActivity.Package, req.params.note).then(() => {
        winston.debug('save for projectile successfull');
+       // handle result of save request!! TODO
        res.status(200).send(req.params.date + ' ' +  req.params.duration + ' ' +  req.params.activity + ' ' +  req.params.note)
      });
    } catch (e) {
@@ -580,6 +530,7 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
       // book in projectile
       projectile.save(today, time, packageActivity.Package, req.params.note).then(() => {
         winston.debug('save for projectile successfull');
+        // handle result of save request TODO
         res.status(200).send(today + ' ' +  req.params.duration + ' ' +  req.params.activity + ' ' +  req.params.note)
       });
       } catch (e) {
@@ -604,6 +555,41 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
      }
      winston.debug('/syncactivities done');
    })
+
+   /**
+    *  route for setting syncing interval for activities of projectile and timeular in seconds
+    */
+    app.get(basePath + '/syncinterval/:interval', async (req, res) => {
+      try {
+        winston.debug('Setting interval for auto syncing of activities... Value: ' + req.params.interval + 's');
+        // timeOutForSync = req.params.interval * 1000;
+        if (req.params.interval * 1000 !== config.timeOutForSync) {
+          writeToConfig('timeOutForSync', req.params.interval * 1000);
+          winston.debug('Sync interval set to: ' + req.params.interval + 's');
+        } else {
+          winston.debug('Sync interval not changed, because same value provided: ' + req.params.interval + 's');
+        }
+        await res.status(200).send(true);
+      } catch (e) {
+        winston.warn('Something went wrong - /syncinterval/:interval value: ' + req.params.interval);
+        res.status(400).send(false);
+      }
+      winston.debug('/syncinterval/:interval done');
+    })
+
+    /**
+     *  route for getting syncing interval for activities of projectile and timeular in seconds
+     */
+     app.get(basePath + '/syncinterval', async (req, res) => {
+       try {
+         winston.debug('/syncinterval -> Getting interval for auto syncing of activities... Value: ' + (config.timeOutForSync?(config.timeOutForSync/1000):(defaultInterval/1000)) + 's');
+         //await res.status(200).send((config.timeOutForSync?(config.timeOutForSync/1000):(defaultInterval/1000)));
+         res.send('' + (config.timeOutForSync?(config.timeOutForSync/1000):(defaultInterval/1000)));
+       } catch (e) {
+         res.status(400).send('Something went wrong - /syncinterval');
+       }
+       winston.debug('/syncinterval done');
+     })
 
 // new default? old one acted weird
 app.use(function(req, res, next){

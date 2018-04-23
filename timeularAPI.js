@@ -631,11 +631,14 @@ async function saveToProjectile(monthArray) {
                 if (parseFloat(packageReply[i].Duration.toFixed(5)) <= parseFloat(Number(projectileObject[0].remainingTime.toFixed(5)))) {
                     let response = await projectile.save(packageReply[i]["StartDate"], parseFloat(packageReply[i]["Duration"].toFixed(5)), packageReply[i]["Activity"], packageReply[i]["Note"]);
                     winston.debug('saving w/ limit: ' + packageReply[i]["StartDate"], packageReply[i]["Duration"], packageReply[i]["Activity"], packageReply[i]["Note"]);
-                    winston.debug('response: ' + response + '\n');
-                    if (response) {
+                    winston.debug('response: ' + response.returnValue + '\n');
+                    if (response.returnValue) {
                       obj['Result'] = 'positive';
                     } else {
                       obj['Result'] = 'negative';
+                      if (response.errors) {
+                        obj['Errors'] = response.errors;
+                      }
                     }
                 } else {
                     obj['LimitHit'] = 'yes';
@@ -646,13 +649,16 @@ async function saveToProjectile(monthArray) {
                 if (packageReply[i]["Activity"] !== "") {
                     let response = await projectile.save(packageReply[i]["StartDate"], packageReply[i]["Duration"], packageReply[i]["Activity"], packageReply[i]["Note"]);
                     winston.debug('saving w/o limit: ' + packageReply[i]["StartDate"], packageReply[i]["Duration"], packageReply[i]["Activity"], packageReply[i]["Note"]);
-                    winston.debug('response: ' + response + '\n');
-                    obj['LimitHit'] = 'noLimit';
+                    winston.debug('response: ' + response.returnValue + '\n');
                     obj = packageReply[i];
-                    if (response) {
+                    obj['LimitHit'] = 'noLimit';
+                    if (response.returnValue) {
                       obj['Result'] = 'positive';
                     } else {
                       obj['Result'] = 'negative';
+                      if (response.errors) {
+                        obj['Errors'] = response.errors;
+                      }
                     }
                 } else {
                     // empty Activity deleteDepreceated - return entry to frontend with notification
@@ -692,7 +698,8 @@ async function getDistinctProjectileRange(startDate, endDate) {
 
         let TimeRangeArray = [];
         let List = await projectile.getallEntriesInTimeFrame(startDate, endDate);
-        winston.debug('getDistinctProjectileRange -> after getallEntriesInTimeFrame: ', JSON.stringify(List, null, 2));
+        // large output!
+        // winston.debug('getDistinctProjectileRange -> after getallEntriesInTimeFrame: ', JSON.stringify(List, null, 2));
         let obj = List["values"];
 
         for (key in obj) {
