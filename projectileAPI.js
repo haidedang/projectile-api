@@ -108,39 +108,47 @@ function createLogin() {
  * possible Error Cases: Wrong user and Login Data, No VPN Connection.
  *
  */
-exports.login = async () => {
-
-    return new Promise((resolve, reject) => {
-            let options = {
-                method: 'POST',
-                url: 'https://projectile.office.sevenval.de/projectile/start',
-                headers:
-                    {'content-type': 'application/x-www-form-urlencoded'},
-                form:
-                    {
-                        action: 'login2',
-                        clientId: '0',
-                        jsenabled: '1',
-                        isAjax: '0',
-                        develop: '0',
-                        login: user.login,
-                        password: user.password
-                    },
-                strictSSL: false, //TODO: SSL Zertifizierung mit node.js
-                timeout: 7000
-
-            };
-            request(options, function (error, response, body) {
-                if (error) { reject("Zeitüberschreitung beim Verbinden zum projectile Server... Bitte überprüfe deine Netzwerkverbindung." + error); }
-                else {
-                    let temp = response.headers['set-cookie'][0];
-                    let cookie = temp.split(';')[0];
-                    resolve(cookie);
-                }
-            });
-        }
-    ).catch((e)=> {throw new Error(e)});
-}
+ exports.login = async () => {
+   let options = {
+       method: 'POST',
+       url: 'https://projectile.office.sevenval.de/projectile/start',
+       headers:
+           {'content-type': 'application/x-www-form-urlencoded'},
+       form:
+           {
+               action: 'login2',
+               clientId: '0',
+               jsenabled: '1',
+               isAjax: '0',
+               develop: '0',
+               login: user.login,
+               password: user.password
+           },
+       strictSSL: false, //TODO: SSL Zertifizierung mit node.js
+       timeout: 7000,
+       simple: false,
+       resolveWithFullResponse: true
+       /*
+       insecure: true,
+       rejectUnauthorized: false,
+       followRedirect: true,
+       */
+   };
+   let status = await rp(options)
+     .then(function (response) {
+       winston.silly('projectile.login -> processing headers and creating cookie.');
+       let temp = response.headers['set-cookie'][0];
+       let cookie = temp.split(';')[0];
+       return cookie;
+     })
+     .catch(function (err) {
+       //Zeitüberschreitung beim Verbinden zum projectile Server... Bitte überprüfe deine Netzwerkverbindung." + error
+       winston.warn('projectile.login -> Timeout - projectile server seems to be unreachable.');
+       winston.debug(err, JSON.stringify( err, null, 2 ));
+       return false;
+     });
+   return status;
+ }
 
 
 function option(method, url, cookie, body) {
@@ -234,7 +242,7 @@ exports.projectileAlive = async () => {
       return true;
     })
     .catch(function (err) {
-      winston.warn('projectileAlive -> projectile seems to be unreachable.');
+      winston.warn('projectileAlive -> projectile server seems to be unreachable.');
       return false;
     });
   return status;

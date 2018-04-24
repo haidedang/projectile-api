@@ -132,7 +132,7 @@ async function init() {
         winston.warn('Initialization failed. token and/or user missing.');
       }
     } else { // end of if (projectileStatus) {
-      winston.warn('init -> Projectile server seems to be unreachable. Establishing continuous checking for when he\'s reachable again. Every: ', defaultProjectileAliveInterval/1000, 's' );
+      winston.warn('init -> Projectile server seems to be unreachable. Establishing continuous checking for when he\'s reachable again. Every:', defaultProjectileAliveInterval/1000, 's' );
       setTimeout(init, defaultProjectileAliveInterval || 10000);
     }
   } catch (e) {
@@ -149,6 +149,8 @@ init();
 let cyclicPackageSync = async function() {
   winston.debug('cyclicPackageSync -> Starting syncing packages and activities with timeout of',
   (config.timeOutForSync?(config.timeOutForSync / 1000):(defaultInterval / 1000)), 's');
+  // check projectile status
+  projectileStatus = await projectile.projectileAlive();
 
   if (projectileStatus) {
     let result = await timeularapi.updateActivities(true, false); // (create, archive)
@@ -157,15 +159,14 @@ let cyclicPackageSync = async function() {
     } else {
       winston.warn('Automatic syncing of projectile packages to timeular activities failed.');
     }
+    // continue cyclic package syncing
+    setTimeout(cyclicPackageSync, config.timeOutForSync || defaultInterval);
   } else {
     // projectile server not reachable? --> trigger repeated checking
-    winston.warn('cyclicPackageSync -> Projectile server seems to be unreachable. Establishing continuous checking for when he\'s reachable again.');
-    checkProjectile();
+    winston.warn('cyclicPackageSync -> Projectile server seems to be unreachable. Establishing continuous checking for when he\'s reachable again. Every', defaultProjectileAliveInterval/1000, 's');
+    setTimeout(checkProjectile, defaultProjectileAliveInterval || 10000); // likely shorter interval than cyclicPackageSync !!
   }
-  setTimeout(cyclicPackageSync, config.timeOutForSync || defaultInterval);
 };
-// run cyclicPackageSync first time
-// setTimeout(cyclicPackageSync, config.timeOutForSync || defaultInterval);
 
 /**
  *  function to constantly check if projectile server is reachable (vpn, lokal)
@@ -173,7 +174,13 @@ let cyclicPackageSync = async function() {
 let checkProjectile = async function() {
   winston.silly('checkProjectile -> Trying to reach projectile server . . .');
   projectileStatus = await projectile.projectileAlive();
-  winston.debug('checkProjectile -> Projectile server status is: ', projectileStatus);
+  if (projectileStatus) {
+    winston.silly('checkProjectile -> projectile server status is true.');
+    cyclicPackageSync();
+  } else {
+    winston.silly('checkProjectile -> projectile server status is still false. Keep checking every', defaultProjectileAliveInterval/1000, 's');
+    setTimeout(checkProjectile, defaultProjectileAliveInterval || 10000);
+  }
 };
 
 /**
