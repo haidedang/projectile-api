@@ -144,7 +144,7 @@ function createLogin() {
      .catch(function (err) {
        //Zeitüberschreitung beim Verbinden zum projectile Server... Bitte überprüfe deine Netzwerkverbindung." + error
        winston.warn('projectile.login -> possible Timeout - projectile server could be unreachable.');
-       winston.debug(err, JSON.stringify( err, null, 2 ));
+       winston.silly(err); // JSON.stringify( err, null, 2 ));
        return false;
      });
    return status;

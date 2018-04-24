@@ -423,7 +423,8 @@ app.post(basePath + '/start', async (req, res) => {
 /**
  *  route for syncing timeular with dates within a certain date range
  */
-app.get(basePath + '/syncbookings/:startDate/:endDate', (req, res) => {
+app.get(basePath + '/syncbookings/:startDate/:endDate', async (req, res) => {
+  await checkProjectile();
   if (projectileStatus){
     winston.debug('(api) Sync range ' + req.params.startDate + ' to ' + req.params.endDate);
     timeularapi.merge(req.params.startDate, req.params.endDate).then((result) => {
@@ -436,7 +437,8 @@ app.get(basePath + '/syncbookings/:startDate/:endDate', (req, res) => {
 /**
  *  route for syncing timeular for fixed time ranges e.g. today, week, month
  */
-app.get(basePath + '/syncbookings/:choice', (req, res) => {
+app.get(basePath + '/syncbookings/:choice', async (req, res) => {
+  await checkProjectile();
   if (projectileStatus){
     let today = new Date();
     let startDay = new Date();

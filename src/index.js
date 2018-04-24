@@ -4,6 +4,7 @@ $(document).ready(function() {
 
   // check if projectile server is available and place a badge in case of error
   let projectileStatus = false;
+
   (function checkProjectileStatus() {
     $.ajax({ url: "//localhost:{port}/projectileStatus",
     cache: false,
@@ -26,8 +27,8 @@ $(document).ready(function() {
       } else {
         $('#headerWarning').remove();
       }
-      setTimeout(checkProjectileStatus, 3000);
     }, dataType: "json"});
+    setTimeout(checkProjectileStatus, 3000);
   })();
 
 
