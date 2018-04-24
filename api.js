@@ -424,53 +424,57 @@ app.post(basePath + '/start', async (req, res) => {
  *  route for syncing timeular with dates within a certain date range
  */
 app.get(basePath + '/syncbookings/:startDate/:endDate', (req, res) => {
+  if (projectileStatus){
     winston.debug('(api) Sync range ' + req.params.startDate + ' to ' + req.params.endDate);
     timeularapi.merge(req.params.startDate, req.params.endDate).then((result) => {
-    res.status(200).send(JSON.stringify(result));
-  });
-  winston.debug('/syncbookings/:startDate/:endDate done');
-})
+      res.status(200).send(JSON.stringify(result));
+    });
+    winston.debug('/syncbookings/:startDate/:endDate done');
+  } else { res.status(504).send(false); }
+});
 
 /**
  *  route for syncing timeular for fixed time ranges e.g. today, week, month
  */
 app.get(basePath + '/syncbookings/:choice', (req, res) => {
-  let today = new Date();
-  let startDay = new Date();
+  if (projectileStatus){
+    let today = new Date();
+    let startDay = new Date();
 
-  switch (req.params.choice) {
-    case 'today':
-      timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then((result) => {
-        winston.debug('(api) Sync today result: ' + util.inspect(result));
-        res.status(200).send(JSON.stringify(result)); // 'Sync done for "today".'
-        winston.debug('Sync done for today ' + startDay.toISOString().substr(0, 10));
-      });
-      // timeularapi.main(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
-      // res.status(200).send('Sync done for today.');
-      break;
-    case 'week':
-      startDay.setDate(today.getDate() - 6);
-      timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then((result) => {
-        winston.debug('(api) Sync week result: ' + util.inspect(result));
-        res.status(200).send(JSON.stringify(result));
-        winston.debug('Sync done for week ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
-      });
-      // winston.debug('week ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
-      // res.status(200).send('Sync done for last 7 days.');
-      break;
-    case 'month':
-      startDay.setMonth(today.getMonth() - 1);
-      timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then((result) => {
-        winston.debug('(api) Sync month result: ' + util.inspect(result));
-        res.status(200).send(JSON.stringify(result));
-        winston.debug('Sync done for month ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
-      });
-      break;
-    default:
-      res.status(400).send('Something went wrong - /synctimeular/:choice');
-  }
-  // res.status(200).send(' ' + req.params.choice )
-  winston.debug('/syncbookings/:choice done');
+    switch (req.params.choice) {
+      case 'today':
+        timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then((result) => {
+          winston.debug('(api) Sync today result: ' + util.inspect(result));
+          res.status(200).send(JSON.stringify(result)); // 'Sync done for "today".'
+          winston.debug('Sync done for today ' + startDay.toISOString().substr(0, 10));
+        });
+        // timeularapi.main(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
+        // res.status(200).send('Sync done for today.');
+        break;
+      case 'week':
+        startDay.setDate(today.getDate() - 6);
+        timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then((result) => {
+          winston.debug('(api) Sync week result: ' + util.inspect(result));
+          res.status(200).send(JSON.stringify(result));
+          winston.debug('Sync done for week ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
+        });
+        // winston.debug('week ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
+        // res.status(200).send('Sync done for last 7 days.');
+        break;
+      case 'month':
+        startDay.setMonth(today.getMonth() - 1);
+        timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then((result) => {
+          winston.debug('(api) Sync month result: ' + util.inspect(result));
+          res.status(200).send(JSON.stringify(result));
+          winston.debug('Sync done for month ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
+        });
+        break;
+      default:
+        res.status(400).send('Something went wrong - /synctimeular/:choice');
+    }
+    // res.status(200).send(' ' + req.params.choice )
+    winston.debug('/syncbookings/:choice done');
+  } else { res.status(504).send(false); }
 })
 
 // SHOW
@@ -583,24 +587,26 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
       res.status(400).send('Something went wrong - /book/:duration/:activity/:note');
       }
       winston.debug('/book/:duration/:activity/:note done');
-  })
+  });
 
   // SYNC ACTIVITIES
   /**
    *  route for syncing activities of projectile and timeular
    */
    app.get(basePath + '/syncactivities', async (req, res) => {
-     try {
-       winston.debug('trying to sync activities and projectile packages...');
-       // just creating, no archiving ATM as requested by Jan!
-       let result = await timeularapi.updateActivities(true, false); // (create, archive)
-       winston.debug('synactivities synchronized: ' + result);
-       await res.status(200).send(result);
-     } catch (e) {
-       res.status(400).send('Something went wrong - /syncactivities');
-     }
-     winston.debug('/syncactivities done');
-   })
+     if (projectileStatus){
+       try {
+         winston.debug('trying to sync activities and projectile packages...');
+         // just creating, no archiving ATM as requested by Jan!
+         let result = await timeularapi.updateActivities(true, false); // (create, archive)
+         winston.debug('synactivities synchronized: ' + result);
+         await res.status(200).send(result);
+       } catch (e) {
+         res.status(400).send('Something went wrong - /syncactivities');
+       }
+       winston.debug('/syncactivities done');
+     } else { res.status(504).send(false); }
+   });
 
    /**
     *  route for setting syncing interval for activities of projectile and timeular in seconds

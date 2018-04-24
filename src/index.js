@@ -1,20 +1,35 @@
 'use strict';
 
 $(document).ready(function() {
-  // set interval value in input field
-  (function setIntervalField() {
-    $.ajax({ url: "//localhost:{port}/syncinterval",
+
+  // check if projectile server is available and place a badge in case of error
+  let projectileStatus = false;
+  (function checkProjectileStatus() {
+    $.ajax({ url: "//localhost:{port}/projectileStatus",
     cache: false,
     contentType: false,
     processData: false,
     type: 'get',
     success: function(response, status){
-      console.log('DEBUG: retrieved current sync interval value: ' + response + ' status: ' + status);
-      if (response){
-        $('#syncInterval').val(response);
+      // console.log('DEBUG: projectileStatus: ' + response.projectileStatus);
+
+      projectileStatus = response.projectileStatus;
+
+      if (!response.projectileStatus){
+        // set badge
+        if (!document.getElementById("headerWarning")) {
+          $( '<div class="row" id="headerWarning"><div class="col" id="headerInfoText">' +
+          '<span class=\"badge badge-warning\">The projectile server seems to be unreachable. Please check your ' +
+          'network connection. Do you have access to the Sevenval network?</span>' +
+          '</div></div>' ).insertAfter( "#header" );
+        }
+      } else {
+        $('#headerWarning').remove();
       }
+      setTimeout(checkProjectileStatus, 3000);
     }, dataType: "json"});
   })();
+
 
 
   // check if credentials are present in api service or show info box with link to /start to set them
@@ -26,8 +41,8 @@ $(document).ready(function() {
     processData: false,
     type: 'get',
     success: function(response, status){
-      // console.log('DEBUG: Credential status: ' + response.credsPresent);
-      if (!response.credsPresent){
+      console.log('DEBUG: Credential status: ' + response.credsPresent);
+      if (!response.credsPresent && projectileStatus){
         // set badge
         if (!document.getElementById("headerInfo")) {
           $( '<div class="col" id="headerInfo">' +
@@ -98,6 +113,25 @@ $(document).ready(function() {
     }
   }
 
+  /**
+   *  open modal, set interval
+   */
+  $('#setSync').click(function () {
+    // set interval
+    $.ajax({ url: "//localhost:{port}/syncinterval",
+    cache: false,
+    contentType: false,
+    processData: false,
+    type: 'get',
+    success: function(response, status){
+      console.log('DEBUG: retrieved current sync interval value: ' + response + ' status: ' + status);
+      if (response){
+        $('#syncInterval').val(response);
+      }
+      // open modal
+      $('#setIntervalModal').modal();
+    }, dataType: "json"});
+  });
 
   /**
    *  sync today
@@ -127,7 +161,14 @@ $(document).ready(function() {
 
         // output to results div table
         outputResults(response);
-
+      },
+      error : function(error) {
+        // foobar handle bad reply
+        console.log(error);
+        $('#syncChoiceInfo').html('<span class="badge badge-warning">Synchronizing currently not possible...</span>').delay(5000).fadeOut(function() {
+          $(this).html('');
+          $(this).show();
+        });
       }
     });
   });
@@ -167,11 +208,18 @@ $(document).ready(function() {
         error : function(error) {
           //show error here
           console.log(error);
-          $('#syncRangeInfo').html('<span class="badge badge-warning">Couldn\'t sync in range from ' + startDate +
-          ' to ' + endDate + '</span>').delay(5000).fadeOut(function() {
-            $(this).html('');
-            $(this).show();
-          });
+          if (error.status !== 504) {
+            $('#syncRangeInfo').html('<span class="badge badge-warning">Couldn\'t sync in range from ' + startDate +
+            ' to ' + endDate + '</span>').delay(5000).fadeOut(function() {
+              $(this).html('');
+              $(this).show();
+            });
+          } else {
+            $('#syncRangeInfo').html('<span class="badge badge-warning">Synchronizing currently not possible...</span>').delay(5000).fadeOut(function() {
+              $(this).html('');
+              $(this).show();
+            });
+          }
         }
       });
     } else {
