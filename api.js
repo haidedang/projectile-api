@@ -73,8 +73,10 @@ let jobList = '';
 
 let config = {};
 let defaultInterval = 300000; // 5min
+let defaultProjectileAliveInterval = 10000;
 
 let credsPresent = false;
+let projectileStatus = false;
 
 let basePath = '';
 
@@ -83,41 +85,55 @@ let basePath = '';
  */
 async function init() {
   try {
-    // get user creds and timeular API token
-    try {
-      user = JSON.parse(fs.readFileSync('user.txt'));
-    } catch (e) {
-      winston.error('API No usercredential file seems to be available. Please run "node userCred.js" to create a credential file.');
-      // process.exit();
-    }
+    // get projectile status before proceeding (access to projectile server)
+    projectileStatus = await projectile.projectileAlive(); // checkProjectile();
 
-    try {
-      token = JSON.parse(fs.readFileSync('timeularToken.txt'));
-    } catch (e) {
-      winston.error('API No token file seems to be available. Please run "node getTimularToken.js" to create a token file.');
-      // process.exit();
-    }
-
-    // get cookie, employee and jobList
-    if (token && user) {
-      await projectile.initializeUser(user);
-      await timeularapi.initializeToken(token);
-      cookie = await projectile.login();
-      employee = await projectile.getEmployee(cookie);
-      jobList = await projectile.jobList(cookie, employee);
-      credsPresent = true;
-
-      // get config from config.json
+    if (projectileStatus) {
+      // get user creds and timeular API token
       try {
-        config = JSON.parse(fs.readFileSync('config.json'));
-        winston.debug('Successfully read config.json.');
-        winston.silly('config.json: ' + JSON.stringify( config, null, 2 ));
+        user = JSON.parse(fs.readFileSync('user.txt'));
       } catch (e) {
-        winston.warn('init() -> Failed to read config.json configurationfile on startup. Corrupted or non existent.');
+        winston.error('API No usercredential file seems to be available. Please run "node userCred.js" to create a credential file.');
+        // process.exit();
       }
 
-    } else {
-      winston.warn('Initialization failed. token and/or user missing.');
+      try {
+        token = JSON.parse(fs.readFileSync('timeularToken.txt'));
+      } catch (e) {
+        winston.error('API No token file seems to be available. Please run "node getTimularToken.js" to create a token file.');
+        // process.exit();
+      }
+
+      // get cookie, employee and jobList
+      if (token && user) {
+        await projectile.initializeUser(user);
+        await timeularapi.initializeToken(token);
+        cookie = await projectile.login();
+        employee = await projectile.getEmployee(cookie);
+        jobList = await projectile.jobList(cookie, employee);
+        credsPresent = true;
+
+        // get config from config.json
+        try {
+          config = JSON.parse(fs.readFileSync('config.json'));
+          winston.debug('Successfully read config.json.');
+          winston.silly('config.json: ' + JSON.stringify( config, null, 2 ));
+        } catch (e) {
+          winston.warn('init() -> Failed to read config.json configurationfile on startup. Corrupted or non existent.');
+        }
+
+        try {
+          // run cyclicPackageSync first time
+          cyclicPackageSync();
+        } catch (e) {
+          winston.warn('init() -> Failed to run cyclicPackageSync() with setTimeout.');
+        }
+      } else {
+        winston.warn('Initialization failed. token and/or user missing.');
+      }
+    } else { // end of if (projectileStatus) {
+      winston.warn('init -> Projectile server seems to be unreachable. Establishing continuous checking for when he\'s reachable again. Every: ', defaultProjectileAliveInterval/1000, 's' );
+      setTimeout(init, defaultProjectileAliveInterval || 10000);
     }
   } catch (e) {
     winston.error('Initialization failed. ', e);
@@ -130,19 +146,35 @@ init();
 /**
  *  function to synchronize the projectile packages to the timeular activities in intervals (default 300s)
  */
-var cyclicPackageSync = async function() {
+let cyclicPackageSync = async function() {
   winston.debug('cyclicPackageSync -> Starting syncing packages and activities with timeout of',
   (config.timeOutForSync?(config.timeOutForSync / 1000):(defaultInterval / 1000)), 's');
 
-  let result = await timeularapi.updateActivities(true, false); // (create, archive)
-  if (result) {
-    winston.silly('Automatically synced projectile packages to timeular activities.');
+  if (projectileStatus) {
+    let result = await timeularapi.updateActivities(true, false); // (create, archive)
+    if (result) {
+      winston.silly('Automatically synced projectile packages to timeular activities.');
+    } else {
+      winston.warn('Automatic syncing of projectile packages to timeular activities failed.');
+    }
   } else {
-    winston.warn('Automatic syncing of projectile packages to timeular activities failed.');
+    // projectile server not reachable? --> trigger repeated checking
+    winston.warn('cyclicPackageSync -> Projectile server seems to be unreachable. Establishing continuous checking for when he\'s reachable again.');
+    checkProjectile();
   }
   setTimeout(cyclicPackageSync, config.timeOutForSync || defaultInterval);
-}
-setTimeout(cyclicPackageSync, config.timeOutForSync || defaultInterval);
+};
+// run cyclicPackageSync first time
+// setTimeout(cyclicPackageSync, config.timeOutForSync || defaultInterval);
+
+/**
+ *  function to constantly check if projectile server is reachable (vpn, lokal)
+ */
+let checkProjectile = async function() {
+  winston.silly('checkProjectile -> Trying to reach projectile server . . .');
+  projectileStatus = await projectile.projectileAlive();
+  winston.debug('checkProjectile -> Projectile server status is: ', projectileStatus);
+};
 
 /**
  *  function to write content of config to config.json
@@ -185,6 +217,13 @@ app.get(basePath + '/healthStatus', (req, res) => {
  */
 app.get(basePath + '/credsStatus', (req, res) => {
   res.status(200).send({ credsPresent: credsPresent });
+});
+
+/**
+ *  route for projectile status checks
+ */
+app.get(basePath + '/projectileStatus', (req, res) => {
+  res.status(200).send({ projectileStatus: projectileStatus });
 });
 
 /**

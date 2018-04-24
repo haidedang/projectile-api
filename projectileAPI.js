@@ -1,5 +1,6 @@
 const fs = require('fs');
 const request = require('request');
+const rp = require('request-promise');
 
 const util = require('util'); // for Debug only --> util.inspect()
 
@@ -130,7 +131,7 @@ exports.login = async () => {
 
             };
             request(options, function (error, response, body) {
-                if (error) { reject("Zeitüberschreitung... Bitte überprüfe deine VPN Internetverbindung." + error); }
+                if (error) { reject("Zeitüberschreitung beim Verbinden zum projectile Server... Bitte überprüfe deine Netzwerkverbindung." + error); }
                 else {
                     let temp = response.headers['set-cookie'][0];
                     let cookie = temp.split(';')[0];
@@ -223,12 +224,36 @@ function normalPostURL(method, url, cookie, body) {
 }
 
 /**
+ *  function to test if projectile webserver is alive/reachable
+ *  @returns {boolean} status
+ */
+exports.projectileAlive = async () => {
+  let status = await rp({uri: 'https://projectile.office.sevenval.de/projectile/start', strictSSL: false})
+    .then(function (htmlString) {
+      winston.silly('projectileAlive -> projectile is alive.');
+      return true;
+    })
+    .catch(function (err) {
+      winston.warn('projectileAlive -> projectile seems to be unreachable.');
+      return false;
+    });
+  return status;
+}
+
+// cheaper version TODO TOCHECK
+/*
+var sys = require('sys')
+var exec = require('child_process').exec;
+function puts(error, stdout, stderr) { sys.puts(stdout) }
+exec("ping -c 3 localhost", puts);
+*/
+
+/**
  *
  * @param cookie
  * @returns {Promise} Employee
  * # possible Error Case: wrong login data.
  */
-
 exports.getEmployee = async (cookie) => {
             // Überprüfe ob Request in Ordnung ging
             let body = await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action', cookie, {
