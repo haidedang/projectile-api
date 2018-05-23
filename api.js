@@ -483,10 +483,20 @@ app.get(basePath + '/syncbookings/:choice', async (req, res) => {
 /**
  *  route for retrieving package list from Projectile in JSON format
  */
-app.get(basePath + '/showListProjectile', async (req, res, next) => {
+app.get(basePath + '/showListProjectile/:pretty?', async (req, res, next) => {
   try {
     jobList = await projectile.fetchNewJobList();
-    res.status(200).send(JSON.stringify(jobList));
+    if (req.params.pretty) { // any value for pretty should be ok
+      let result = '<ul>';
+      jobList.forEach((item) => {
+        result = result + '<li>Name: ' + item.name + ' - No.: ' + item.no + ' - remaining Time: ' + item.remainingTime + ' - Time limit: ' + item.limitTime + ' - Total booked time: ' + item.Totaltime + '</li>';
+      });
+      result = result + '</ul>';
+      res.status(200).send(result);
+    } else {
+      res.status(200).send(JSON.stringify(jobList));
+    }
+    // res.status(200).send(JSON.stringify(jobList));
   } catch (err) {
      res.status(400).send('Something went wrong - /showListProjectile');
   }
@@ -551,7 +561,7 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
 
 // eg: http://localhost:3000/book/1/2788-3/testing    WORKS :)
  /**
-  *  route for booking (date, duration, activity, note provided)
+  *  route for booking (duration, activity, note provided), for date current date is used!
   */
   app.get(basePath + '/book/:duration/:activity/:note', async (req, res) => {
     try {
