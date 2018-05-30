@@ -16,7 +16,7 @@ $(document).ready(function() {
       projectilePassword: $('#projectilePassword').val(),
       timeularApiKey: $('#timeularApiKey').val(),
       timeularApiSecret: $('#timeularApiSecret').val(),
-      projectileOnly: $('#projectileOnly').attr('aria-pressed')
+      projectileOnly: ($('#projectileOnly').attr('aria-pressed') === 'true')? true: false
     };
     // projectileOnly: $('projectileOnly').is(':checked')
 

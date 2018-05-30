@@ -404,20 +404,28 @@ let saveEntry = async (cookie, employee, time, project, note) => {
 
     // check for problems that indicate saving was NOT successfull
     if (bodyString.includes('"problems":[{"ref"')){
-      winston.debug('saveEntry -> Recognizing problem status: problem message found! returnValue can\'t be true!');
+      winston.warn('saveEntry -> Recognizing problem status: problem message found! returnValue can\'t be true!');
       let indexOfErrorArrayStart = bodyString.lastIndexOf('problems":[');
       let indexOfErrorArrayEnd = bodyString.slice(indexOfErrorArrayStart).indexOf('"}],');
-      winston.debug('saveEntry -> Error array: ', 'Start: ', indexOfErrorArrayStart, 'length:',indexOfErrorArrayEnd, bodyString.slice(indexOfErrorArrayStart + 10, indexOfErrorArrayStart + indexOfErrorArrayEnd + 3));
+      winston.warn('saveEntry -> Error array: ', 'Start: ', indexOfErrorArrayStart, 'length:',indexOfErrorArrayEnd, bodyString.slice(indexOfErrorArrayStart + 10, indexOfErrorArrayStart + indexOfErrorArrayEnd + 3));
       let errorArray = JSON.parse(bodyString.slice(indexOfErrorArrayStart + 10, indexOfErrorArrayStart + indexOfErrorArrayEnd + 3));
-      winston.debug('saveEntry -> Error array itms: ', errorArray.length);
+      winston.warn('saveEntry -> Error array itms: ', errorArray.length);
       errorArray.forEach((item) => {
-        winston.debug(item.message, item.severity);
+        winston.warn(item.message, item.severity);
       });
       // array contains: ref, message, severity
       // error message should be returned!
       returnValue = {
         returnValue: false,
         errors: errorArray
+      }
+    }
+    if (bodyString.includes('"clearProblems":["')){
+      winston.warn('saveEntry -> Recognizing problem status: problem message found! returnValue can\'t be true!');
+      winston.warn('saveEntry -> "clearProblems" error - can\'t write to projectile - booking locked for current timeperiod.');
+      if (returnValue.returnValue) {
+        returnValue.returnValue = false;
+          returnValue["errors"].push("clearProblems error, booking locked for current timeperiod");
       }
     }
     return returnValue;
@@ -546,7 +554,7 @@ exports.save = async (date, time, project, note) => {
     if (await setCalendarDate(date, cookie, employee)) {
         let saveEntryResult = await saveEntry(cookie, employee, time, project, note); // saveEntry returns true or false depending on save result
         // returns { returnValue: false, errors: errorArray }
-        winston.debug("saveEntryResult --> " + saveEntryResult);
+        winston.debug("saveEntryResult --> " + JSON.stringify(saveEntryResult, null, 2));
         if (saveEntryResult.returnValue) {
             winston.debug('Finished saving entry.');
             // return true;
