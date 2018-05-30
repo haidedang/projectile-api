@@ -15,7 +15,7 @@ $(document).ready(function() {
       projectilePassword: $('#projectilePassword').val(),
       timeularApiKey: $('#timeularApiKey').val(),
       timeularApiSecret: $('#timeularApiSecret').val(),
-      projectileOnly: $('projectileOnly').is(':checked')
+      projectileOnly: ($('#projectileOnly').attr('aria-pressed') === 'true')? true: false
     };
 
     $.post("//localhost:{port}/start/", $currentJson, function(data) {

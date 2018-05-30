@@ -472,6 +472,7 @@ app.get(basePath + '/syncbookings/:startDate/:endDate', async (req, res) => {
 app.get(basePath + '/syncbookings/:choice', async (req, res) => {
   await checkProjectile();
   if (projectileStatus && !projectileOnly){
+    console.log('WTF')
     let today = new Date();
     let startDay = new Date();
 
@@ -509,10 +510,11 @@ app.get(basePath + '/syncbookings/:choice', async (req, res) => {
     // res.status(200).send(' ' + req.params.choice )
     winston.debug('/syncbookings/:choice done');
   } else {
+    console.log('my oh my')
     if (!projectileStatus) {
       res.status(504).send(false);
     }
-    if (!projectileOnly) {
+    if (projectileOnly === true) {
       await res.status(200).send('API in projectileOnly mode - function currently not available.');
       winston.info('/syncbookings/:choice not executed. ProjectileOnly mode is active.');
     }
