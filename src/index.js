@@ -47,7 +47,7 @@ $(document).ready(function() {
         // set badge
         if (!document.getElementById("headerInfo")) {
           $( '<div class="col" id="headerInfo">' +
-          '<span class=\"badge badge-warning\">No sufficient credentials available, please visit <a ' +
+          '<span class=\"badge badge-warning\">No credentials available, please visit <a ' +
           'href="//localhost:{port}/start">http://localhost:{port}/start</a></span>' +
           '</div>' ).insertAfter( "#headerText" );
         }

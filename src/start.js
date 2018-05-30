@@ -9,31 +9,24 @@ $(document).ready(function() {
    */
   $('#buttonSetCred').click(function(e) {
     console.log('DEBUG: SetCred ');
-    console.log($('#projectileOnly').attr('aria-pressed'));
 
     let $currentJson = {
       projectileUser: $('#projectileUser').val(),
       projectilePassword: $('#projectilePassword').val(),
       timeularApiKey: $('#timeularApiKey').val(),
       timeularApiSecret: $('#timeularApiSecret').val(),
-      projectileOnly: $('#projectileOnly').attr('aria-pressed')
+      projectileOnly: $('projectileOnly').is(':checked')
     };
-    // projectileOnly: $('projectileOnly').is(':checked')
 
     $.post("//localhost:{port}/start/", $currentJson, function(data) {
       console.log('Credential data sent.');
       let dataJSON = JSON.parse(data);
       console.log('Service reply: ' + data);
-      if (dataJSON.requestReceived && dataJSON.credsPresent && !dataJSON.projectileOnly) {
+      if (dataJSON.requestReceived && dataJSON.credsPresent) {
         console.log('Successfully created credentials.');
         $('#results').removeClass( "alert-warning" ).addClass( "alert-success" );
         $('#results').html('Projectile and Timeular credentials were successfully sent and set. You can now ' +
         'open <a href="http://localhost:{port}/">http://localhost:{port}</a> to access the app.');
-      } else if(dataJSON.requestReceived && dataJSON.credsPresent && dataJSON.projectileOnly) {
-        console.log('Something went wrong while setting credentials.');
-        $('#results').removeClass( "alert-warning" ).addClass( "alert-success" );
-        $('#results').html('Projectile credentials and ProjectileOnly mode were successfully sent and set. You can now ' +
-        'use the projectile API with the base Url http://localhost:{port}.');
       } else if(dataJSON.requestReceived) {
         console.log('Something went wrong while setting credentials.');
         $('#results').removeClass( "alert-success" ).addClass( "alert-warning" );
