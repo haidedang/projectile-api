@@ -14,7 +14,8 @@ $(document).ready(function() {
       projectileUser: $('#projectileUser').val(),
       projectilePassword: $('#projectilePassword').val(),
       timeularApiKey: $('#timeularApiKey').val(),
-      timeularApiSecret: $('#timeularApiSecret').val()
+      timeularApiSecret: $('#timeularApiSecret').val(),
+      projectileOnly: $('projectileOnly').is(':checked')
     };
 
     $.post("//localhost:{port}/start/", $currentJson, function(data) {

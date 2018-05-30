@@ -21,12 +21,23 @@
 
     <div>
       Please enter your projectile username and password and your timeular API key and API secret in the input fields below.<br><br>
-      You can create your API key and secret on <a href="https://profile.timeular.com/" target="_blank">https://profile.timeular.com</a>. You have to log in there with your timeular account.
+      You can create your API key and secret on <a href="https://profile.timeular.com/" target="_blank">https://profile.timeular.com</a>. You have to log in there with your timeular account.<br><br>
+      If you want to use the projectile API only, please check the "projectileOnly" button and provide the projectile username and password only.
     </div>
 
     <hr>
 
     <!-- sync range -->
+    <div class="row">
+      <div class="col-6">
+        <div class="btn-group-toggle" data-toggle="buttons">
+          <label class="btn btn-secondary">
+            <input type="checkbox" autocomplete="off" id="projectileOnly">projectileOnly
+          </label>
+        </div>
+      </div>
+    </div>
+    <br>
     <div class="row">
       <div class="col">
         <div class="input-group mb-3">

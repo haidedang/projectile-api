@@ -17,6 +17,8 @@ const winston = require('winston');
 // handle commandline parameters
 let appPort = 3000;
 let winstonLevel = 'warn';
+let projectileOnly = false;
+
 let re = new RegExp('[0-9]{4,6}', 'g');
 process.argv.forEach(function (val, index, array) {
   // check if parameter is a port
@@ -24,7 +26,7 @@ process.argv.forEach(function (val, index, array) {
   if (portMatch) {
     appPort = val;
   } else {
-    // check if parameter is a winston debug level or help request
+    // check if parameter is a winston debug level or help request or projectileOnly setting
     switch (val) {
         case 'error':
           winstonLevel = 'error';
@@ -44,6 +46,10 @@ process.argv.forEach(function (val, index, array) {
         case 'silly':
           winstonLevel = 'silly';
           break;
+        case 'projectileOnly':
+          projectileOnly = true;
+          console.log('### ProjectileOnly mode recognized and activated.');
+          break;
         case 'help':
           console.log('Help: You can provide the following parameters to the application:');
           console.log('A port number can be set. Just provide a number between 1024 and 65335 e.g. 3000');
@@ -55,6 +61,7 @@ process.argv.forEach(function (val, index, array) {
       }
   }
 });
+
 winston.level = winstonLevel;
 // error > warn > info > verbose > debug > silly
 console.log('Winston debug level: ' + winstonLevel);
@@ -96,18 +103,21 @@ async function init() {
         winston.error('API No usercredential file seems to be available. Please run "node userCred.js" to create a credential file.');
         // process.exit();
       }
-
-      try {
-        token = JSON.parse(fs.readFileSync('timeularToken.txt'));
-      } catch (e) {
-        winston.error('API No token file seems to be available. Please run "node getTimularToken.js" to create a token file.');
-        // process.exit();
+      if (!projectileOnly) {
+        try {
+          token = JSON.parse(fs.readFileSync('timeularToken.txt'));
+        } catch (e) {
+          winston.error('API No token file seems to be available. Please run "node getTimularToken.js" to create a token file.');
+          // process.exit();
+        }
       }
 
       // get cookie, employee and jobList
-      if (token && user) {
+      if ((!projectileOnly && token && user) || (projectileOnly && user)) {
         await projectile.initializeUser(user);
-        await timeularapi.initializeToken(token);
+        if (!projectileOnly) {
+          await timeularapi.initializeToken(token);
+        }
         cookie = await projectile.login();
         employee = await projectile.getEmployee(cookie);
         jobList = await projectile.jobList(cookie, employee);
@@ -124,7 +134,9 @@ async function init() {
 
         try {
           // run cyclicPackageSync first time
-          cyclicPackageSync();
+          if (!projectileOnly) {
+            cyclicPackageSync();
+          }
         } catch (e) {
           winston.warn('init() -> Failed to run cyclicPackageSync() with setTimeout.');
         }
@@ -176,7 +188,9 @@ let checkProjectile = async function() {
   projectileStatus = await projectile.projectileAlive();
   if (projectileStatus) {
     winston.silly('checkProjectile -> projectile server status is true.');
-    cyclicPackageSync();
+    if(!projectileOnly) {
+      cyclicPackageSync();
+    }
   } else {
     winston.silly('checkProjectile -> projectile server status is still false. Keep checking every', defaultProjectileAliveInterval/1000, 's');
     setTimeout(checkProjectile, defaultProjectileAliveInterval || 10000);
@@ -289,12 +303,14 @@ app.post(basePath + '/start', async (req, res) => {
     let json = req.body;
 
     // json content not empty?
-    if (json.projectileUser && json.projectilePassword && json.timeularApiKey && json.timeularApiSecret){
+    if ((!json.projectileOnly && json.projectileUser && json.projectilePassword) || (json.projectileOnly && json.projectileUser && json.projectilePassword && json.timeularApiKey && json.timeularApiSecret)){
         winston.debug('Credentials json from frontend not empty - trying to test and store those.');
         // set projectile creds
         let user = {login: json.projectileUser,
             password: json.projectilePassword
         }
+
+        writeToConfig('projectileOnly', json.projectileOnly);
 
         async function testCredentials(user) {
           let options = {
@@ -382,33 +398,41 @@ app.post(basePath + '/start', async (req, res) => {
           }
         });
 
-        await retrieveToken(json).then((timeularApi) => {
-          winston.debug('retrieveToken -> executed, timeular token test result is: ' + (timeularApi?'token retrieved':'no token retrieved'));
-          if (timeularApi) {
-          let timeularApi2 = { // what happens here :o // TODO to check!
-                apiToken: timeularApi.token
-            };
-            fs.writeFile('timeularToken.txt', JSON.stringify(timeularApi2), (err) => {
-                if (err) {
-                  throw err;
-                  winston.warn('retrieveToken -> issues while writing timeular token to file.');
-                }
-                winston.debug('retrieveToken -> writing positivly tested timeular token to file timeularToken.txt.');
-                console.log('projectileCreds: ' + projectileCreds);
-                if (projectileCreds === true) {
-                  credsPresent = true;
-                  winston.debug('retrieveToken -> All credentials are available now. Initiate init sequence of api.');
-                  init(); // fetch joblist, get cookie , employee
-                }
-                res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
-            });
-          } else {
-            winston.warn('retrieveToken -> Timeular api credentials seems to be invalid.');
-            res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
-          }
-          // res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
-        });
+        if (json.projectileOnly) {
+            credsPresent = projectileCreds;
+        }
 
+        if (!json.projectileOnly) {
+          await retrieveToken(json).then((timeularApi) => {
+            winston.debug('retrieveToken -> executed, timeular token test result is: ' + (timeularApi?'token retrieved':'no token retrieved'));
+            if (timeularApi) {
+            let timeularApi2 = { // what happens here :o // TODO to check!
+                  apiToken: timeularApi.token
+              };
+              fs.writeFile('timeularToken.txt', JSON.stringify(timeularApi2), (err) => {
+                  if (err) {
+                    throw err;
+                    winston.warn('retrieveToken -> issues while writing timeular token to file.');
+                  }
+                  winston.debug('retrieveToken -> writing positivly tested timeular token to file timeularToken.txt.');
+                  console.log('projectileCreds: ' + projectileCreds);
+                  if (projectileCreds === true) {
+                    credsPresent = true;
+                    winston.debug('retrieveToken -> All credentials are available now. Initiate init sequence of api.');
+                    init(); // fetch joblist, get cookie , employee
+                  }
+                  res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
+              });
+            } else {
+              winston.warn('retrieveToken -> Timeular api credentials seems to be invalid.');
+              res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
+            }
+            // res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
+          });
+        } else {
+          winston.info('ProjectileOnly mode activated. No timeular functions are going to work.');
+          res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
+        }
     } else {
       winston.warn('Credentials json from frontend is empty or incomplete');
       res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
@@ -425,13 +449,21 @@ app.post(basePath + '/start', async (req, res) => {
  */
 app.get(basePath + '/syncbookings/:startDate/:endDate', async (req, res) => {
   await checkProjectile();
-  if (projectileStatus){
+  if (projectileStatus && !projectileOnly){
     winston.debug('(api) Sync range ' + req.params.startDate + ' to ' + req.params.endDate);
     timeularapi.merge(req.params.startDate, req.params.endDate).then((result) => {
       res.status(200).send(JSON.stringify(result));
     });
     winston.debug('/syncbookings/:startDate/:endDate done');
-  } else { res.status(504).send(false); }
+  } else {
+    if (!projectileStatus) {
+      res.status(504).send(false);
+    }
+    if (!projectileOnly) {
+      await res.status(200).send('API in projectileOnly mode - function currently not available.');
+      winston.info('/syncbookings/:startDate/:endDate not executed. ProjectileOnly mode is active.');
+    }
+  }
 });
 
 /**
@@ -439,7 +471,7 @@ app.get(basePath + '/syncbookings/:startDate/:endDate', async (req, res) => {
  */
 app.get(basePath + '/syncbookings/:choice', async (req, res) => {
   await checkProjectile();
-  if (projectileStatus){
+  if (projectileStatus && !projectileOnly){
     let today = new Date();
     let startDay = new Date();
 
@@ -476,7 +508,15 @@ app.get(basePath + '/syncbookings/:choice', async (req, res) => {
     }
     // res.status(200).send(' ' + req.params.choice )
     winston.debug('/syncbookings/:choice done');
-  } else { res.status(504).send(false); }
+  } else {
+    if (!projectileStatus) {
+      res.status(504).send(false);
+    }
+    if (!projectileOnly) {
+      await res.status(200).send('API in projectileOnly mode - function currently not available.');
+      winston.info('/syncbookings/:choice not executed. ProjectileOnly mode is active.');
+    }
+  }
 })
 
 // SHOW
@@ -507,16 +547,21 @@ app.get(basePath + '/showListProjectile/:pretty?', async (req, res, next) => {
  *  route for retrieving package list from timeular in JSON format
  */
 app.get(basePath + '/showListTimeular', async (req, res, next) => {
-  try {
-    let timeularActivities = await timeularapi.getActivities();
-    winston.debug(timeularActivities);
-    // winston.debug(timeularapi.activityList);
-    // res.status(200).send(JSON.stringify(timeularapi.activityList));
-    res.status(200).send(JSON.stringify(timeularActivities));
-  } catch (err) {
-     res.status(400).send('Something went wrong - /showListProjectile');
+  if (!projectileOnly) {
+    try {
+      let timeularActivities = await timeularapi.getActivities();
+      winston.debug(timeularActivities);
+      // winston.debug(timeularapi.activityList);
+      // res.status(200).send(JSON.stringify(timeularapi.activityList));
+      res.status(200).send(JSON.stringify(timeularActivities));
+    } catch (err) {
+       res.status(400).send('Something went wrong - /showListProjectile');
+    }
+    winston.debug('/showListTimeular done');
+  } else {
+    res.status(200).send('API in projectileOnly mode - function currently not available.');
+    winston.info('/showListTimeular can\'t work. API started in projectileOnly mode.');
   }
-  winston.debug('/showListTimeular done');
 })
 
 // BOOK
@@ -541,17 +586,21 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
      }
      // create package/activity table
      // analyse the provided "activity" parameter and find the fitting package or activity id pair
-     let packageActivity = await timeularapi.packageActivityList(req.params.activity);
-     winston.debug('Debug packageActivity result: ' + packageActivity.Package, packageActivity.Activity);
+     if (!projectileOnly) {
+       let packageActivity = await timeularapi.packageActivityList(req.params.activity);
+       winston.debug('Debug packageActivity result: ' + packageActivity.Package, packageActivity.Activity);
 
-     // book in TIMEULAR
-     // OBOSLETE??  ENTSCHÄRFT timeularapi.bookActivity(req.params.date, req.params.duration, req.params.activity, req.params.note);
-     let response = await timeularapi.bookActivityNG(date, req.params.duration, packageActivity.Activity, req.params.note).then((response) => {
-       if(response) {
-         winston.debug('bookActivity for timeular successfull');
-       }
-       return response;
-     });
+       // book in TIMEULAR
+       // OBOSLETE??  ENTSCHÄRFT timeularapi.bookActivity(req.params.date, req.params.duration, req.params.activity, req.params.note);
+       let response = await timeularapi.bookActivityNG(date, req.params.duration, packageActivity.Activity, req.params.note).then((response) => {
+         if(response) {
+           winston.debug('bookActivity for timeular successfull');
+         }
+         return response;
+       });
+     } else {
+       winston.info('bookActivity for timeular not executed. ProjectileOnly mode is active.');
+     }
 
      // normalizing duration time if necessary (to x.xx and parse as float to avoid weird duration lengths)
      let time = await projectile.normalizetime(req.params.duration);
@@ -573,7 +622,7 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
    *  route for syncing activities of projectile and timeular
    */
    app.get(basePath + '/syncactivities', async (req, res) => {
-     if (projectileStatus){
+     if (projectileStatus && !projectileOnly){
        try {
          winston.debug('trying to sync activities and projectile packages...');
          // just creating, no archiving ATM as requested by Jan!
@@ -584,7 +633,15 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
          res.status(400).send('Something went wrong - /syncactivities');
        }
        winston.debug('/syncactivities done');
-     } else { res.status(504).send(false); }
+     } else {
+       if (!projectileStatus) {
+         res.status(504).send(false);
+       }
+       if (!projectileOnly) {
+         await res.status(200).send('API in projectileOnly mode - function currently not available.');
+         winston.info('/syncactivities not executed. ProjectileOnly mode is active.');
+       }
+     }
    });
 
    /**
