@@ -39,7 +39,12 @@ describe('get Activites/Activity from Timeular', function () {
 
 describe('book an Entry in Timeular API', function () {
   it('should save successfully', async () => {
-    let response = await timeularAPI.bookActivityNG('2018-05-31', '1', activityID, 'hallo');
+    let response = await timeularAPI.bookActivityNG({
+      date: '2018-05-31', 
+      duration: '1',
+      activityId: activityID,
+      note: 'hallo'
+    });
     expect(response, 'returnValue of Save function should be true').to.be.true;
   })
 })

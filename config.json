@@ -6,7 +6,7 @@
         },
         "projectile":{
             "date": "2018-05-31", 
-            "duration": 1, 
+            "duration": "1", 
             "note":"hallo",
             "activity":"2759-327"
         }

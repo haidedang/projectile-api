@@ -358,7 +358,7 @@ exports.bookActivity = async (date, duration, activityId, note) => {
 }
 
 // WIP - successor to bookActivity
-exports.bookActivityNG = async (date, duration, activityId, note) => {
+exports.bookActivityNG = async ({date, duration, activityId, note}) => {
   // get all entries for date
   let startTime = date + 'T00:00:00.000'; // set minimum time here :)
   let endTime = date + 'T23:59:59.999';
