@@ -28,3 +28,20 @@ describe('Login', function () {
         tempCookie = cookie;
     })
 })
+
+describe('ProjectileAPI', function() { 
+    this.timeout(7000);
+    describe('GET ProjectileList',  (done) => { 
+        it('it should GET all the tasks', (done) => { 
+          chai.request(server)
+            .get('/showListProjectile')
+            .end((err, res) => { 
+            res.should.have.status(200);
+            // res.body.should.be.a('string'); 
+            // expect(res.body.length).to.not.equal(0);
+            done()
+            })
+        })
+    })
+})
+
