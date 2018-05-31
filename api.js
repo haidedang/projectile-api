@@ -705,3 +705,5 @@ if(!module.parent){app.listen(appPort, () => {
   ` - Open http://localhost:${appPort}/ in your browser to access it.`);
   // logger.info(`Projectile-Timeular sync app listening on port 3000!`)
 })}
+
+module.exports = app; 
