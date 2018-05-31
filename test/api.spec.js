@@ -29,6 +29,7 @@ describe('Login', function () {
     })
 })
 
+//------------ SERVER API TESTS 
 describe('ProjectileAPI', function() { 
     this.timeout(7000);
     describe('GET ProjectileList',  (done) => { 
@@ -44,4 +45,6 @@ describe('ProjectileAPI', function() { 
         })
     })
 })
+
+
 
