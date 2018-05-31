@@ -11,8 +11,6 @@ const host = "http://localhost:3001";
 chai.use(chaiHttp);
 
 
-
-
 describe('book an Entry in Projectile API', function() { 
     this.timeout(7000);
    

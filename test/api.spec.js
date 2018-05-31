@@ -15,7 +15,7 @@ chai.use(chaiHttp);
 
 let tempCookie = null;
 
-before(async function () {
+before(function () {
     let user = fs.readFileSync('user.txt').toString();
     projectileAPI.initializeUser(user);
 })
