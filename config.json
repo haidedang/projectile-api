@@ -1,0 +1,14 @@
+{
+    "projectileOnly": "false",
+    "test": {
+        "timeular": {
+            "TimularActivityID": "106114"
+        },
+        "projectile":{
+            "date": "2018-05-31", 
+            "duration": 1, 
+            "note":"hallo",
+            "activity":"2759-327"
+        }
+    }
+}
