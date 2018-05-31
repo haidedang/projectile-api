@@ -301,6 +301,7 @@ function escapeRegExp(str) {
   return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 }
 
+// TODO: Refactoring Neccessary 
 // Save entry to projectile
 let saveEntry = async (cookie, employee, time, project, note) => {
     let dayList = await getDayListToday(cookie, employee);
@@ -387,7 +388,7 @@ let saveEntry = async (cookie, employee, time, project, note) => {
 
     entries.forEach((item) => { // time has to be noramlized. Projectile ALWAYS returns x.xx though x,xx or x:xx may have been sent before
       // winston.debug('Länge Response TimeTracker: ' + body.values['TimeTracker!^.|Default|Employee|1|357'].length);
-      if (body.values['TimeTracker!^.|Default|Employee|1|357'].length >= 5 && item.includes('"Time","v":' + time + ',"d"') && item.includes('"What","v":"' + project + '","d"') && item.includes('"Note","v":"' + note.replace(/[\"]/g, "\\\$&") + '","d"')) {
+      if (body.values[employee].length >= 5 && item.includes('"Time","v":' + time + ',"d"') && item.includes('"What","v":"' + project + '","d"') && item.includes('"Note","v":"' + note.replace(/[\"]/g, "\\\$&") + '","d"')) {
         // created a new entry
         returnValue = {
           returnValue: true
@@ -420,14 +421,16 @@ let saveEntry = async (cookie, employee, time, project, note) => {
         errors: errorArray
       }
     }
-    if (bodyString.includes('"clearProblems":["')){
-      winston.warn('saveEntry -> Recognizing problem status: problem message found! returnValue can\'t be true!');
-      winston.warn('saveEntry -> "clearProblems" error - can\'t write to projectile - booking locked for current timeperiod.');
-      if (returnValue.returnValue) {
-        returnValue.returnValue = false;
-          returnValue["errors"].push("clearProblems error, booking locked for current timeperiod");
-      }
-    }
+
+    //-------- TO BE DELETED -> Always causing an error, because successful save retunrs an object where clearProblems always is contained even if successful save!! 
+    // if (bodyString.includes('"clearProblems":["')){
+    //   winston.warn('saveEntry -> Recognizing problem status: problem message found! returnValue can\'t be true!');
+    //   winston.warn('saveEntry -> "clearProblems" error - can\'t write to projectile - booking locked for current timeperiod.');
+    //   if (returnValue.returnValue) {
+    //     returnValue.returnValue = false;
+    //       returnValue["errors"].push("clearProblems error, booking locked for current timeperiod");
+    //   }
+    // }
     return returnValue;
 }
 
