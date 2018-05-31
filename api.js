@@ -15,7 +15,7 @@ const bodyParser = require('body-parser');
 const winston = require('winston');
 
 // handle commandline parameters
-let appPort = 3000;
+let appPort = 3001;
 let winstonLevel = 'warn';
 let projectileOnly = false;
 
@@ -700,8 +700,8 @@ app.listen(config.get('appPort'), () => {
   logger.info(`HDI CMS static content app listening on port ${config.get('appPort')}!`)
 })
 */
-app.listen(appPort, () => {
+if(!module.parent){app.listen(appPort, () => {
   console.log(`Projectile-Timeular API / APP is listenning on port ${appPort}!` +
   ` - Open http://localhost:${appPort}/ in your browser to access it.`);
   // logger.info(`Projectile-Timeular sync app listening on port 3000!`)
-})
+})}
