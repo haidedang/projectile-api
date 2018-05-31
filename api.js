@@ -572,6 +572,8 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
  */
  app.get(basePath + '/book/:date?/:duration/:activity/:note', async (req, res) => { // whats the spec duration format - 1,75? 1:45?
    try {
+
+    /// WRONG --> activity has to be TimularActivity ID otherwise function won't work 
 /*   e.g.
      http://localhost:3000/book/1/2788-3/testing
      http://localhost:3000/book/2018-05-23/1.5/2788-3/testing
@@ -600,11 +602,8 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
          }
          return response;
        });
-     } else {
-       winston.info('bookActivity for timeular not executed. ProjectileOnly mode is active.');
-     }
 
-     // normalizing duration time if necessary (to x.xx and parse as float to avoid weird duration lengths)
+         // normalizing duration time if necessary (to x.xx and parse as float to avoid weird duration lengths)
      let time = await projectile.normalizetime(req.params.duration);
      time = parseFloat(time);
      // book in projectile
@@ -613,6 +612,22 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
        // handle result of save request!! TODO
        res.status(200).send(date + ' ' +  req.params.duration + ' ' +  req.params.activity + ' ' +  req.params.note)
      });
+       
+     } else {
+       winston.info('bookActivity for timeular not executed. ProjectileOnly mode is active.');
+     }
+/* 
+     
+     let packageActivity = await timeularapi.packageActivityList(req.params.activity);
+     console.log(packageActivity)
+     let response = await timeularapi.bookActivityNG(date, req.params.duration, packageActivity.Activity, req.params.note).then((response) => {
+      if(response) {
+        winston.debug('bookActivity for timeular successfull');
+      }
+      return response;
+    });
+ */
+   
    } catch (e) {
      res.status(400).send('Something went wrong - /book/:date/:duration/:activity/:note');
    }

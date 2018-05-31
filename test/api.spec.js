@@ -16,7 +16,13 @@ chai.use(chaiHttp);
 let tempCookie = null;
 
 before(function () {
-    let user = fs.readFileSync('user.txt').toString();
+    config = JSON.parse(fs.readFileSync('config.json'));
+    timeularActivityID = config.test.timeular.TimularActivityID; 
+    activity = config.test.projectile.activity;
+    date = config.test.projectile.date; 
+    duration = config.test.projectile.duration; 
+    note = config.test.projectile.note; 
+    let user = JSON.parse(fs.readFileSync('user.txt'));
     projectileAPI.initializeUser(user);
 })
 
@@ -44,7 +50,21 @@ describe('ProjectileAPI', function() { 
             })
         })
     })
+
+    describe('book an Entry in Projectile API', function() { 
+   
+        it('it should save successfully', (done) => { 
+          chai.request(server)
+              .get(`/book/${date}/${duration}/${timeularActivityID}/${note}`)
+              .end((err, res) => { 
+              res.should.have.status(200);
+              done()
+              })
+        })
+      })
 })
+
+
 
 
 
