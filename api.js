@@ -572,8 +572,8 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
  */
  app.get(basePath + '/book/:date?/:duration/:activity/:note', async (req, res) => { // whats the spec duration format - 1,75? 1:45?
    try {
-        
-    /// WRONG --> activity has to be TimularActivity ID otherwise function won't work 
+
+    /// WRONG --> activity has to be TimularActivity ID otherwise function won't work
 /*   e.g.
      http://localhost:3000/book/1/2788-3/testing
      http://localhost:3000/book/2018-05-23/1.5/2788-3/testing
@@ -597,7 +597,7 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
        // book in TIMEULAR
        // OBOSLETE??  ENTSCHÄRFT timeularapi.bookActivity(req.params.date, req.params.duration, req.params.activity, req.params.note);
        let response = await timeularapi.bookActivityNG({
-         date:date, 
+         date:date,
          duration:req.params.duration,
          activityId: packageActivity.Activity,
          note: req.params.note
@@ -612,16 +612,16 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
      let time = await projectile.normalizetime(req.params.duration);
      time = parseFloat(time);
      // book in projectile
-     projectile.save(date, time, packageActivity.Package, req.params.note).then(() => {
+     projectile.save(date, time, req.params.activity, req.params.note).then(() => {
        winston.debug('save for projectile successfull');
        // handle result of save request!! TODO
        res.status(200).send(date + ' ' +  req.params.duration + ' ' +  req.params.activity + ' ' +  req.params.note)
      });
-       
+
      } else {
        winston.info('bookActivity for timeular not executed. ProjectileOnly mode is active.');
      }
-   
+
    } catch (e) {
      res.status(400).send('Something went wrong - /book/:date/:duration/:activity/:note');
    }
@@ -715,4 +715,4 @@ if(!module.parent){app.listen(appPort, () => {
   // logger.info(`Projectile-Timeular sync app listening on port 3000!`)
 })}
 
-module.exports = app; 
+module.exports = app;
