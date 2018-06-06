@@ -420,6 +420,8 @@ let saveEntry = async (cookie, employee, time, project, note) => {
         errors: errorArray
       }
     }
+    // fs.writeFile('bodyString.json', JSON.stringify(bodyString, null, 2), (err)=>{});  // Debug
+    /*
     if (bodyString.includes('"clearProblems":["')){
       winston.warn('saveEntry -> Recognizing problem status: problem message found! returnValue can\'t be true!');
       winston.warn('saveEntry -> "clearProblems" error - can\'t write to projectile - booking locked for current timeperiod.');
@@ -427,7 +429,7 @@ let saveEntry = async (cookie, employee, time, project, note) => {
         returnValue.returnValue = false;
           returnValue["errors"].push("clearProblems error, booking locked for current timeperiod");
       }
-    }
+    } */
     return returnValue;
 }
 

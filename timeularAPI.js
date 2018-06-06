@@ -698,6 +698,12 @@ async function getDistinctProjectileRange(startDate, endDate) {
 
         let TimeRangeArray = [];
         let List = await projectile.getallEntriesInTimeFrame(startDate, endDate);
+        /* TODO bugfix! we have to catch special case NextTrackingRestriction, TrackingRestrictionPeriod, "n": "TrackingRestriction",
+          "v": "Rückerfassungsgrenze: 31.05.2018",
+          --> "abgeschlosse Erfassungsperiode"
+        */
+        // DEBUG für ERFASSUNGSPROBLEM console.log('#### getDistinctProjectileRange, getallEntriesInTimeFrame ', JSON.stringify(List, null, 2), List.length)
+
         // large output!
         // winston.debug('getDistinctProjectileRange -> after getallEntriesInTimeFrame: ', JSON.stringify(List, null, 2));
         let obj = List["values"];

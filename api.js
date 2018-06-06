@@ -14,57 +14,80 @@ const bodyParser = require('body-parser');
 
 const winston = require('winston');
 
-// handle commandline parameters
+// basic config
+let config = {};
 let appPort = 3000;
 let winstonLevel = 'warn';
 let projectileOnly = false;
 
-let re = new RegExp('[0-9]{4,6}', 'g');
-process.argv.forEach(function (val, index, array) {
-  // check if parameter is a port
-  let portMatch = val.match(re);
-  if (portMatch) {
-    appPort = val;
-  } else {
-    // check if parameter is a winston debug level or help request or projectileOnly setting
-    switch (val) {
-        case 'error':
-          winstonLevel = 'error';
-          break;
-        case 'warn':
-          winstonLevel = 'warn';
-          break;
-        case 'info':
-          winstonLevel = 'info';
-          break;
-        case 'verbose':
-          winstonLevel = 'verbose';
-          break;
-        case 'debug':
-          winstonLevel = 'debug';
-          break;
-        case 'silly':
-          winstonLevel = 'silly';
-          break;
-        case 'projectileOnly':
-          projectileOnly = true;
-          console.log('### ProjectileOnly mode recognized and activated.');
-          break;
-        case 'help':
-          console.log('Help: You can provide the following parameters to the application:');
-          console.log('A port number can be set. Just provide a number between 1024 and 65335 e.g. 3000');
-          console.log('A debug level can be set. Just provide ONE of the following level names: error, warn, info, verbose, debug, silly. The verbosity increases in sequence.');
-          console.log('You can combine both parameters. e.g. "3000 error" or "silly 3333".');
-          process.exit();
-          break;
-        default:
-      }
-  }
+getConfig().then(() => {
+  appPort = config.appPort || 3000;
+  winstonLevel = config.winstonLevel || 'warn';
+  projectileOnly = config.projectileOnly || false;
+  console.log('#### config read and config set 0');
+}).then(() => {
+  readParameter();
+}).then(() => {
+  winston.level = winstonLevel;
+  // error > warn > info > verbose > debug > silly
+  console.log('Winston debug level: ' + winstonLevel);
 });
 
+// handle commandline parameters
+async function readParameter() {
+  try {
+    let re = new RegExp('[0-9]{4,6}', 'g');
+    process.argv.forEach(function (val, index, array) {
+      // check if parameter is a port
+      let portMatch = val.match(re);
+      if (portMatch) {
+        appPort = val;
+      } else {
+        // check if parameter is a winston debug level or help request or projectileOnly setting
+        switch (val.toLowerCase()) {  // make ones life easier
+            case 'error':
+              winstonLevel = 'error';
+              break;
+            case 'warn':
+              winstonLevel = 'warn';
+              break;
+            case 'info':
+              winstonLevel = 'info';
+              break;
+            case 'verbose':
+              winstonLevel = 'verbose';
+              break;
+            case 'debug':
+              winstonLevel = 'debug';
+              break;
+            case 'silly':
+              winstonLevel = 'silly';
+              break;
+            case 'projectileonly':
+              projectileOnly = true;
+              console.log('### ProjectileOnly mode recognized and activated.');
+              break;
+            case 'help':
+              console.log('Help: You can provide the following parameters to the application:');
+              console.log('A port number can be set. Just provide a number between 1024 and 65335 e.g. 3000');
+              console.log('A debug level can be set. Just provide ONE of the following level names: error, warn, info, verbose, debug, silly. The verbosity increases in sequence.');
+              console.log('You can combine both parameters. e.g. "3000 error" or "silly 3333".');
+              process.exit();
+              break;
+            default:
+          }
+      }
+    });
+  } catch (e) {
+    winston.warn('readParameter() -> Failed', e);
+  }
+}
+
+/*
 winston.level = winstonLevel;
 // error > warn > info > verbose > debug > silly
 console.log('Winston debug level: ' + winstonLevel);
+*/
 
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
@@ -78,7 +101,6 @@ let cookie = '';
 let employee = '';
 let jobList = '';
 
-let config = {};
 let defaultInterval = 300000; // 5min
 let defaultProjectileAliveInterval = 10000;
 
@@ -86,6 +108,23 @@ let credsPresent = false;
 let projectileStatus = false;
 
 let basePath = '';
+
+/**
+ *  function getConfig() to get config object from config.json or config file provided by env. variable CONFIG_FILE
+ */
+async function getConfig() {
+  try {
+    configFile = (process.env.CONFIG_FILE?process.env.CONFIG_FILE:'default.json');
+    config = JSON.parse(fs.readFileSync('./config/' + configFile));
+    winston.debug('Successfully read config.json.');
+    winston.silly(configFile+ ': ' + JSON.stringify( config, null, 2 ));
+  } catch (e) {
+    winston.warn('getConfig() -> Failed to read ' + configFile + ' configurationfile on startup. Corrupted or non existent.');
+    winston.debug(e);
+    // just in case - resetting config
+    config = {};
+  }
+}
 
 /**
  *  function init() to initialize projectile creds, timeular token, config.json and trigger necessary functions to get ready to rumble
@@ -103,7 +142,10 @@ async function init() {
         winston.error('API No usercredential file seems to be available. Please run "node userCred.js" to create a credential file.');
         // process.exit();
       }
+
+      console.log('#### 1 ', projectileOnly, config.projectileOnly);
       if (!projectileOnly) {
+        console.log('#### 2.1');
         try {
           token = JSON.parse(fs.readFileSync('timeularToken.txt'));
         } catch (e) {
@@ -111,7 +153,7 @@ async function init() {
           // process.exit();
         }
       }
-
+      console.log('#### 2.2');
       // get cookie, employee and jobList
       if ((!projectileOnly && token && user) || (projectileOnly && user)) {
         await projectile.initializeUser(user);
@@ -124,13 +166,15 @@ async function init() {
         credsPresent = true;
 
         // get config from config.json
+/*
         try {
           config = JSON.parse(fs.readFileSync('config.json'));
           winston.debug('Successfully read config.json.');
           winston.silly('config.json: ' + JSON.stringify( config, null, 2 ));
         } catch (e) {
-          winston.warn('init() -> Failed to read config.json configurationfile on startup. Corrupted or non existent.');
+          winston.warn('init() -> Failed to read config.json configurationfile on startup. Corrupted or non existent.', e);
         }
+    */
 
         try {
           // run cyclicPackageSync first time
@@ -421,21 +465,21 @@ app.post(basePath + '/start', async (req, res) => {
                     winston.debug('retrieveToken -> All credentials are available now. Initiate init sequence of api.');
                     init(); // fetch joblist, get cookie , employee
                   }
-                  res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
+                  res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent, projectileOnly: projectileOnly}));
               });
             } else {
               winston.warn('retrieveToken -> Timeular api credentials seems to be invalid.');
-              res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
+              res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent, projectileOnly: projectileOnly}));
             }
             // res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
           });
         } else {
           winston.info('ProjectileOnly mode activated. No timeular functions are going to work.');
-          res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
+          res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent, projectileOnly: projectileOnly}));
         }
     } else {
       winston.warn('Credentials json from frontend is empty or incomplete');
-      res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
+      res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent, projectileOnly: projectileOnly}));
     }
     // res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
     winston.debug('Post request to /start handled.');
@@ -472,7 +516,6 @@ app.get(basePath + '/syncbookings/:startDate/:endDate', async (req, res) => {
 app.get(basePath + '/syncbookings/:choice', async (req, res) => {
   await checkProjectile();
   if (projectileStatus && !projectileOnly){
-    console.log('WTF')
     let today = new Date();
     let startDay = new Date();
 
@@ -510,7 +553,6 @@ app.get(basePath + '/syncbookings/:choice', async (req, res) => {
     // res.status(200).send(' ' + req.params.choice )
     winston.debug('/syncbookings/:choice done');
   } else {
-    console.log('my oh my')
     if (!projectileStatus) {
       res.status(504).send(false);
     }
@@ -608,13 +650,19 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
      let time = await projectile.normalizetime(req.params.duration);
      time = parseFloat(time);
      // book in projectile
-     projectile.save(date, time, packageActivity.Package, req.params.note).then(() => {
+     /*
+     use activity directly when projectileOnly mode is active, else use Package value processed from timeular,
+     it allows to use activityId or packageId to be provided in url
+     */
+     projectile.save(date, time, (projectileOnly?req.params.activity:packageActivity.Package), req.params.note).then(() => {
        winston.debug('save for projectile successfull');
        // handle result of save request!! TODO
        res.status(200).send(date + ' ' +  req.params.duration + ' ' +  req.params.activity + ' ' +  req.params.note)
      });
    } catch (e) {
      res.status(400).send('Something went wrong - /book/:date/:duration/:activity/:note');
+     winston.error('/book/:date?/:duration/:activity/:note');
+     winston.debug(e);
    }
    winston.debug('/book/:date?/:duration/:activity/:note done');
  })
