@@ -288,6 +288,13 @@ app.get(basePath + '/projectileStatus', (req, res) => {
 });
 
 /**
+ *  route for projectile status checks
+ */
+app.get(basePath + '/projectileOnlyStatus', (req, res) => {
+  res.status(200).send({ projectileOnly: projectileOnly });
+});
+
+/**
  *  route for base website
  */
 app.get(basePath + '/', (req, res) => {
