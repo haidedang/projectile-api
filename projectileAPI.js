@@ -301,7 +301,7 @@ function escapeRegExp(str) {
   return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 }
 
-// TODO: Refactoring Neccessary 
+// TODO: Refactoring Neccessary
 // Save entry to projectile
 let saveEntry = async (cookie, employee, time, project, note) => {
     let dayList = await getDayListToday(cookie, employee);
@@ -421,16 +421,16 @@ let saveEntry = async (cookie, employee, time, project, note) => {
         errors: errorArray
       }
     }
-
-    //-------- TO BE DELETED -> Always causing an error, because successful save retunrs an object where clearProblems always is contained even if successful save!! 
-    // if (bodyString.includes('"clearProblems":["')){
-    //   winston.warn('saveEntry -> Recognizing problem status: problem message found! returnValue can\'t be true!');
-    //   winston.warn('saveEntry -> "clearProblems" error - can\'t write to projectile - booking locked for current timeperiod.');
-    //   if (returnValue.returnValue) {
-    //     returnValue.returnValue = false;
-    //       returnValue["errors"].push("clearProblems error, booking locked for current timeperiod");
-    //   }
-    // }
+    // fs.writeFile('bodyString.json', JSON.stringify(bodyString, null, 2), (err)=>{});  // Debug
+    /* TODO was always causing errors! Check for good and bad case, find single binding condition
+    if (bodyString.includes('"clearProblems":["')){
+      winston.warn('saveEntry -> Recognizing problem status: problem message found! returnValue can\'t be true!');
+      winston.warn('saveEntry -> "clearProblems" error - can\'t write to projectile - booking locked for current timeperiod.');
+      if (returnValue.returnValue) {
+        returnValue.returnValue = false;
+          returnValue["errors"].push("clearProblems error, booking locked for current timeperiod");
+      }
+    } */
     return returnValue;
 }
 
