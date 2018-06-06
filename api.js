@@ -24,7 +24,6 @@ getConfig().then(() => {
   appPort = config.appPort || 3000;
   winstonLevel = config.winstonLevel || 'warn';
   projectileOnly = config.projectileOnly || false;
-  console.log('#### config read and config set 0');
 }).then(() => {
   readParameter();
 }).then(() => {
@@ -143,9 +142,7 @@ async function init() {
         // process.exit();
       }
 
-      console.log('#### 1 ', projectileOnly, config.projectileOnly);
       if (!projectileOnly) {
-        console.log('#### 2.1');
         try {
           token = JSON.parse(fs.readFileSync('timeularToken.txt'));
         } catch (e) {
@@ -153,7 +150,6 @@ async function init() {
           // process.exit();
         }
       }
-      console.log('#### 2.2');
       // get cookie, employee and jobList
       if ((!projectileOnly && token && user) || (projectileOnly && user)) {
         await projectile.initializeUser(user);
