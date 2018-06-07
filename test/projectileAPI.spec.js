@@ -11,7 +11,7 @@ const host = "http://localhost:3001";
 chai.use(chaiHttp);
 
 before(function () {
-    config = JSON.parse(fs.readFileSync('config.json'));
+    config = JSON.parse(fs.readFileSync('./config.json'));
     activity = config.test.projectile.activity;
     date = config.test.projectile.date; 
     duration = config.test.projectile.duration; 
