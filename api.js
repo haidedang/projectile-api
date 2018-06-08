@@ -342,108 +342,154 @@ app.get(basePath + '/start', (req, res) => {
 })
 
 
-app.retrieveUserData = function ({ projectileOnly, projectileUser, projectilePassword, timeularApiKey, timeularApiSecret }) {
-  if (projectileOnly && projectileUser && projectilePassword || projectileOnly && projectileUser && projectilePassword && timeularApiKey && timeularApiSecret) {
-    winston.debug('Credentials json from frontend not empty - trying to test and store those.');
-    let user = {
-      login: json.projectileUser,
-      password: json.projectilePassword
-    }
-  }
-  return user;
-}
+let apiConfig = {
 
-app.checkUserInput = function ({ projectileOnly, projectileUser, projectilePassword, timeularApiKey, timeularApiSecret }) {
-  if (!projectileOnly && projectileUser && projectilePassword || projectileOnly && projectileUser && projectilePassword && timeularApiKey && timeularApiSecret) {
-    return true;
-  }
-}
-
-app.testCredentials = async function (user, req, res) {
-  let options = {
-    method: 'POST',
-    url: 'https://projectile.office.sevenval.de/projectile/start',
-    headers:
-      { 'content-type': 'application/x-www-form-urlencoded' },
-    form:
-      {
-        action: 'login2',
-        clientId: '0',
-        jsenabled: '1',
-        isAjax: '0',
-        develop: '0',
-        login: user.login,
-        password: user.password
-      },
-    strictSSL: false, //TODO: SSL Zertifizierung mit node.js
-    timeout: 7000
-  };
-  let result = rp(options, function (error, response, body) {
-    if (error) { winston.error('testCredentials -> Login error in projectile.'); }
-    result = response.body.substr(1, 2000).includes("Login</title>");
-    winston.debug('testCredentials -> Login keyword existence after login attempt: ', response.body.substr(1, 2000).includes("Login</title>"));
-    console.log(result)
-    return result;
-  }).then((result) => {
-    winston.debug('testCredentials -> negated result before returning from function: ', !result);
-    return !result; // reverse boolean, true = no login keyword found
-  }).catch((err) => {
-    if (!res.statusCode === 302) {
-      winston.warn('testCredentials -> Something went wrong: ', err);
-    }
-    return true;
-  });
-
-  return result;
-}
-
-app.retrieveToken = async function (json) {
-  // let timeularApi = '';
-  let timeularApi = await rp.post('https://api.timeular.com/api/v2/developer/sign-in', {
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json;charset=UTF-8'
-    },
-    json: {
-      'apiKey': json.timeularApiKey,
-      'apiSecret': json.timeularApiSecret
-    },
-  }, (err, res, body) => {
-    if (res.statusCode === 200) {
-      winston.debug('retrieveToken -> API credentials retrieved.');
-      let apiToken = res.body.token;
-      return apiToken;
-    }
-  }).catch((err) => {
-    if (!res.statusCode === 401) {
-      winston.warn('retrieveToken -> Timeular api key and/or secret seem to be invalid. ', err);
-    }
-    return null;
-  });
-  // winston.debug('retrieveToken -> Token: ' + JSON.stringify( timeularApi, null, 2 ));
-  return timeularApi;
-}
-
-function writeDataToTxtFile(data) {
-  return new Promise((resolve, reject) => {
-    let projectileCreds = false;
-    let fileName = '';
-    if (Object.keys(data)[0].includes('login')) {
-      fileName = 'user.txt'
-    } else if (Object.keys(data)[0].includes('apiToken')) {
-      fileName = 'timeularToken.txt'
-    }
-    fs.writeFile(fileName, JSON.stringify(data), (err) => {
-      if (err) {
-        throw err;
-        winston.warn(fileName + ' -> issues while writing projectile credentials to file.');
+  retrieveUserData: function ({ projectileOnly, projectileUser, projectilePassword, timeularApiKey, timeularApiSecret }) {
+    if (projectileOnly && projectileUser && projectilePassword || projectileOnly && projectileUser && projectilePassword && timeularApiKey && timeularApiSecret) {
+      winston.debug('Credentials json from frontend not empty - trying to test and store those.');
+      let user = {
+        login: json.projectileUser,
+        password: json.projectilePassword
       }
-      winston.debug(fileName + ' -> writing positivly tested projectile credentials to file ' + fileName);
-      Creds = true;
-      resolve(Creds);
+    }
+    return user;
+  },
+  checkUserInput: function ({ projectileOnly, projectileUser, projectilePassword, timeularApiKey, timeularApiSecret }) {
+    if (!projectileOnly && projectileUser && projectilePassword || projectileOnly && projectileUser && projectilePassword && timeularApiKey && timeularApiSecret) {
+      return true;
+    }
+  },
+  testCredentials: async function (user, req, res) {
+    let options = {
+      method: 'POST',
+      url: 'https://projectile.office.sevenval.de/projectile/start',
+      headers:
+        { 'content-type': 'application/x-www-form-urlencoded' },
+      form:
+        {
+          action: 'login2',
+          clientId: '0',
+          jsenabled: '1',
+          isAjax: '0',
+          develop: '0',
+          login: user.login,
+          password: user.password
+        },
+      strictSSL: false, //TODO: SSL Zertifizierung mit node.js
+      timeout: 7000
+    };
+    let result = rp(options, function (error, response, body) {
+      if (error) { winston.error('testCredentials -> Login error in projectile.'); }
+      result = response.body.substr(1, 2000).includes("Login</title>");
+      winston.debug('testCredentials -> Login keyword existence after login attempt: ', response.body.substr(1, 2000).includes("Login</title>"));
+      console.log(result)
+      return result;
+    }).then((result) => {
+      winston.debug('testCredentials -> negated result before returning from function: ', !result);
+      return !result; // reverse boolean, true = no login keyword found
+    }).catch((err) => {
+      if (!res.statusCode === 302) {
+        winston.warn('testCredentials -> Something went wrong: ', err);
+      }
+      return true;
     });
-  })
+
+    return result;
+  },
+  retrieveToken: async function (json) {
+    // let timeularApi = '';
+    let timeularApi = await rp.post('https://api.timeular.com/api/v2/developer/sign-in', {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json;charset=UTF-8'
+      },
+      json: {
+        'apiKey': json.timeularApiKey,
+        'apiSecret': json.timeularApiSecret
+      },
+    }, (err, res, body) => {
+      if (res.statusCode === 200) {
+        winston.debug('retrieveToken -> API credentials retrieved.');
+        let apiToken = res.body.token;
+        return apiToken;
+      }
+    }).catch((err) => {
+      if (!res.statusCode === 401) {
+        winston.warn('retrieveToken -> Timeular api key and/or secret seem to be invalid. ', err);
+      }
+      return null;
+    });
+    // winston.debug('retrieveToken -> Token: ' + JSON.stringify( timeularApi, null, 2 ));
+    return timeularApi;
+  },
+  writeDataToTxtFile: function (data) {
+    return new Promise((resolve, reject) => {
+      let projectileCreds = false;
+      let fileName = '';
+      if (Object.keys(data)[0].includes('login')) {
+        fileName = 'user.txt'
+      } else if (Object.keys(data)[0].includes('apiToken')) {
+        fileName = 'timeularToken.txt'
+      }
+      fs.writeFile(fileName, JSON.stringify(data), (err) => {
+        if (err) {
+          throw err;
+          winston.warn(fileName + ' -> issues while writing projectile credentials to file.');
+        }
+        winston.debug(fileName + ' -> writing positivly tested projectile credentials to file ' + fileName);
+        Creds = true;
+        resolve(Creds);
+      });
+    })
+  },
+  /**
+    * 
+    * @param {*} UserInput  JSON 
+    * return true for successfully saving creds in txt. file
+    */
+  setProjectileCreds: async function (UserInput, req, res) {
+    let user = {
+      login: UserInput.projectileUser,
+      password: UserInput.projectilePassword
+    }
+    writeToConfig('projectileOnly', UserInput.projectileOnly);
+    // do projectile credentials work?
+    let projectileCreds = false;
+
+    let testCreds = await apiConfig.testCredentials(user, req, res);
+    winston.debug('testCredentials -> executed, projectile credentials test result is: ', testCreds);
+
+    if (testCreds) {
+      projectileCreds = await apiConfig.writeDataToTxtFile(user);
+    } else {
+      winston.warn('testCredentials -> Test of projectile credentials failed - please check the input.');
+    }
+    return projectileCreds;
+  },
+  /**
+ * 
+ * @param {*} json 
+ * return true for successfully saving creds in txt. file
+ */
+  setTimeularCreds: async function (json) {
+    let timeularCreds = false;
+    let timeularApi = await apiConfig.retrieveToken(json)
+    winston.debug('retrieveToken -> executed, timeular token test result is: ' + (timeularApi ? 'token retrieved' : 'no token retrieved'));
+    if (timeularApi) {
+      let timeularApi2 = { // what happens here :o // TODO to check!
+        apiToken: timeularApi.token
+      };
+      timeularCreds = await apiConfig.writeDataToTxtFile(timeularApi2);
+    } else {
+      winston.warn('retrieveToken -> Timeular api credentials seems to be invalid.');
+      res.status(200).send(({ requestReceived: true, credsPresent: credsPresent, projectileOnly: projectileOnly }));
+    }
+    return timeularCreds;
+  }
 }
+
+// set property for Test Cases 
+app.apiConfig = apiConfig; 
 
 /**
  *  route for start website post request
@@ -455,25 +501,10 @@ app.post(basePath + '/start', async (req, res) => {
   let json = req.body;
 
   // json content not empty?
-  if (app.checkUserInput(req.body)) {
+  if (apiConfig.checkUserInput(req.body)) {
     winston.debug('Credentials json from frontend not empty - trying to test and store those.');
-    // set projectile creds
-    let user = {
-      login: json.projectileUser,
-      password: json.projectilePassword
-    }
-    writeToConfig('projectileOnly', json.projectileOnly);
-    // do projectile credentials work?
-    let projectileCreds = false;
 
-    let testCreds = await app.testCredentials(user, req, res);
-    winston.debug('testCredentials -> executed, projectile credentials test result is: ', testCreds);
-
-    if (testCreds) {
-      projectileCreds = await writeDataToTxtFile(user);
-    } else {
-      winston.warn('testCredentials -> Test of projectile credentials failed - please check the input.');
-    }
+    let projectileCreds = await apiConfig.setProjectileCreds(json, req, res);
 
     if (json.projectileOnly) {
       credsPresent = projectileCreds;
@@ -482,20 +513,7 @@ app.post(basePath + '/start', async (req, res) => {
     }
 
     if (!json.projectileOnly) {
-      let timeularCreds = false;
-      let timeularApi = await app.retrieveToken(json)
-      winston.debug('retrieveToken -> executed, timeular token test result is: ' + (timeularApi ? 'token retrieved' : 'no token retrieved'));
-      if (timeularApi) {
-        let timeularApi2 = { // what happens here :o // TODO to check!
-          apiToken: timeularApi.token
-        };
-        timeularCreds = await writeDataToTxtFile(timeularApi2);
-      } else {
-        winston.warn('retrieveToken -> Timeular api credentials seems to be invalid.');
-        res.status(200).send(({ requestReceived: true, credsPresent: credsPresent, projectileOnly: projectileOnly }));
-      }
-
-      // res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
+      let timeularCreds = await apiConfig.setTimeularCreds(json);
       console.log('projectileCreds: ' + projectileCreds);
       if (projectileCreds === true && timeularCreds === true) {
         credsPresent = true;
@@ -504,7 +522,6 @@ app.post(basePath + '/start', async (req, res) => {
       }
       res.status(200).send(({ requestReceived: true, credsPresent: credsPresent, projectileOnly: projectileOnly }));
     }
-
   } else {
     winston.warn('Credentials json from frontend is empty or incomplete');
     res.status(200).send(({ requestReceived: true, credsPresent: credsPresent, projectileOnly: projectileOnly }));
