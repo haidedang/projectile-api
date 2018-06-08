@@ -24,8 +24,8 @@ before(function () {
     date = config.test.projectile.date;
     duration = config.test.projectile.duration;
     note = config.test.projectile.note;
-/*     let user = JSON.parse(fs.readFileSync('user.txt'));
-    projectileAPI.initializeUser(user); */
+    let user = JSON.parse(fs.readFileSync('user.txt'));
+    projectileAPI.initializeUser(user);
 })
 
 describe('Login', function () {
@@ -67,7 +67,7 @@ describe('ProjectileAPI', function () {
     }) */
     describe('user setup', ()=> { 
         it('should return a User', () => {
-            let result = server.retrieveUserData({
+            let result = server.apiConfig.retrieveUserData({
                 projectileUser: config.test.projectile.projectileUser,
                 projectilePassword: config.test.projectile.projectilePassword,
                 timeularApiKey: config.test.projectile.timeularApiKey,
