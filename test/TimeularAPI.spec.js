@@ -11,14 +11,14 @@ const host = "http://localhost:3001";
 chai.use(chaiHttp);
 
 // IMPORTANT NOTE FOR TESTING:
-// Set the parameter values in config.json before running the tests! 
+// Set the parameter values in config.json before running the tests!
 
-let config = {}; 
-let activityID = null; 
+let config = {};
+let activityID = null;
 
-// Initializing parameters from config and set token 
+// Initializing parameters from config and set token
 before(function () {
-  config = JSON.parse(fs.readFileSync('./config.json'));
+  config = JSON.parse(fs.readFileSync('../config/test.json'));
   activityID = config.test.timeular.TimularActivityID;
   let token = JSON.parse(fs.readFileSync('timeularToken.txt'));
   timeularAPI.initializeToken(token);
@@ -31,7 +31,7 @@ describe('get Activites/Activity from Timeular', function () {
   })
 
   it('return specific Activity with package', async () => {
-    let result = await timeularAPI.packageActivityList(activityID); 
+    let result = await timeularAPI.packageActivityList(activityID);
     expect(result.Activity.includes(activityID)).to.be.true;
   })
 })
@@ -40,7 +40,7 @@ describe('get Activites/Activity from Timeular', function () {
 describe('book an Entry in Timeular API', function () {
   it('should save successfully', async () => {
     let response = await timeularAPI.bookActivityNG({
-      date: '2018-05-31', 
+      date: '2018-05-31',
       duration: '1',
       activityId: activityID,
       note: 'hallo'
@@ -48,5 +48,3 @@ describe('book an Entry in Timeular API', function () {
     expect(response, 'returnValue of Save function should be true').to.be.true;
   })
 })
-
-

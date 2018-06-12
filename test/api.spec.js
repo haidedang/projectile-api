@@ -11,17 +11,17 @@ const host = "http://localhost:3001";
 
 chai.use(chaiHttp);
 
-// ---- INITIAL TEST SETUP --------- 
+// ---- INITIAL TEST SETUP ---------
 
 let tempCookie = null;
 
 before(function () {
-    config = JSON.parse(fs.readFileSync('./config.json'));
-    timeularActivityID = config.test.timeular.TimularActivityID; 
+    config = JSON.parse(fs.readFileSync('../config/test.json'));
+    timeularActivityID = config.test.timeular.TimularActivityID;
     activity = config.test.projectile.activity;
-    date = config.test.projectile.date; 
-    duration = config.test.projectile.duration; 
-    note = config.test.projectile.note; 
+    date = config.test.projectile.date;
+    duration = config.test.projectile.duration;
+    note = config.test.projectile.note;
     let user = JSON.parse(fs.readFileSync('user.txt'));
     projectileAPI.initializeUser(user);
 })
@@ -35,16 +35,16 @@ describe('Login', function () {
     })
 })
 
-//------------ SERVER API TESTS 
+//------------ SERVER API TESTS
 describe('ProjectileAPI', function() { 
     this.timeout(7000);
     describe('GET ProjectileList',  (done) => { 
-        it('it should GET all the tasks', (done) => { 
+        it('it should GET all the tasks', (done) => {
           chai.request(server)
             .get('/showListProjectile')
-            .end((err, res) => { 
+            .end((err, res) => {
             res.should.have.status(200);
-            // res.body.should.be.a('string'); 
+            // res.body.should.be.a('string');
             // expect(res.body.length).to.not.equal(0);
             done()
             })
@@ -52,19 +52,14 @@ describe('ProjectileAPI', function() { 
     })
 
     describe('book an Entry in Projectile API', function() { 
-   
+
         it('it should save successfully', (done) => { 
           chai.request(server)
               .get(`/book/${date}/${duration}/${timeularActivityID}/${note}`)
-              .end((err, res) => { 
+              .end((err, res) => {
               res.should.have.status(200);
               done()
               })
         })
       })
 })
-
-
-
-
-
