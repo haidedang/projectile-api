@@ -16,7 +16,7 @@ chai.use(chaiHttp);
 let tempCookie = null;
 
 before(function () {
-    config = JSON.parse(fs.readFileSync('config.json'));
+    config = JSON.parse(fs.readFileSync('./config.json'));
     timeularActivityID = config.test.timeular.TimularActivityID; 
     activity = config.test.projectile.activity;
     date = config.test.projectile.date; 
