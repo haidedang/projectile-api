@@ -1,5 +1,5 @@
 {
   "appPort": "3000",
-  "winstonLevel": "debug",
+  "winstonLevel": "warn",
   "projectileOnly": false
 }

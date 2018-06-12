@@ -14,16 +14,18 @@ exports.initializeToken = async (tokenApi) => {
   try {
     token = tokenApi;
   } catch (e) {
-    winston.error('timeularAPI No token file seems to be available. Please run "node getTimularToken.js" to create a token file.');
+    winston.error('timeularAPI No token file seems to be available. Please run "node getTimularToken.js" to create ' +
+    'a token file.');
     // process.exit();
   }
-}
+};
 /* OLD APPROACH
 let token;
 try {
   token = JSON.parse(fs.readFileSync('timeularToken.txt'));
 } catch (e) {
-  winston.error('timeularAPI No token file seems to be available. Please run "node getTimularToken.js" to create a token file.');
+  winston.error('timeularAPI No token file seems to be available. Please run "node getTimularToken.js" to create a ' +
+  'token file.');
   // process.exit();
 }
 */
@@ -116,6 +118,7 @@ async function compareActivities() {
     projectileHasTimeularNot: projectileHasTimeularNot,
     timeularHasProjectileNot: timeularHasProjectileNot
   };
+  winston.debug('... done comparing.');
   return result;
 }
 
