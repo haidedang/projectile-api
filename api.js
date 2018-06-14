@@ -489,12 +489,14 @@ let apiConfig = {
 }
 
 // set property for Test Cases 
-app.apiConfig = apiConfig; 
+app.apiConfig = apiConfig;
 
 /**
  *  route for start website post request
  */
 app.post(basePath + '/start', async (req, res) => {
+  // set default value of credsPresent to false 
+  credsPresent = false;
   winston.debug('Post request to /start');
   // receiving post requests for base website
   // winston.debug(req.body); // shows credentials!

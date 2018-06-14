@@ -41,7 +41,7 @@ describe('Login', function () {
 describe('ProjectileAPI', function () {
     this.timeout(7000);
 
-    /* describe('GET ProjectileList', (done) => {
+    describe('GET ProjectileList', (done) => {
         it('it should GET all the tasks', (done) => {
             chai.request(server)
                 .get('/showListProjectile')
@@ -64,8 +64,8 @@ describe('ProjectileAPI', function () {
                     done()
                 })
         })
-    }) */
-    describe('user setup', ()=> { 
+    })
+    describe('user setup', () => {
         it('should return a User', () => {
             let result = server.apiConfig.retrieveUserData({
                 projectileUser: config.test.projectile.projectileUser,
@@ -73,9 +73,9 @@ describe('ProjectileAPI', function () {
                 timeularApiKey: config.test.projectile.timeularApiKey,
                 timeularApiSecret: config.test.projectile.timeularApiSecret
             })
-            expect(result).to.deep.equal({login: config.test.projectile.projectileUser, password: config.test.projectile.projectilePassword})
+            expect(result).to.deep.equal({ login: config.test.projectile.projectileUser, password: config.test.projectile.projectilePassword })
         })
-    })    
+    })
 
     describe('it should successfully set Up UserCredentials for API Usage', function () {
 
