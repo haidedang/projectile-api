@@ -18,7 +18,7 @@ let tempCookie = null;
 
 
 before(function () {
-    config = JSON.parse(fs.readFileSync('./test/config.json'));
+    config = JSON.parse(fs.readFileSync('./config/test.json'));
     timeularActivityID = config.test.timeular.TimularActivityID;
     activity = config.test.projectile.activity;
     date = config.test.projectile.date;

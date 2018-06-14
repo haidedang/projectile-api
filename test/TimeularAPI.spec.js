@@ -18,7 +18,7 @@ let activityID = null;
 
 // Initializing parameters from config and set token
 before(function () {
-  config = JSON.parse(fs.readFileSync('./test/config.json'));
+  config = JSON.parse(fs.readFileSync('./config/test.json'));
   activityID = config.test.timeular.TimularActivityID;
   let token = JSON.parse(fs.readFileSync('timeularToken.txt'));
   timeularAPI.initializeToken(token);
