@@ -600,7 +600,7 @@ app.get(basePath + '/syncbookings/:choice', async (req, res) => {
             case 'today':
                 timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then((result) => {
                     winston.debug('(api) Sync today result: ' + util.inspect(result));
-                    res.status(200).send(JSON.stringify(result)); // 'Sync done for "today".'
+                    res.status(200).send((result)); // 'Sync done for "today".'
                     winston.debug('Sync done for today ' + startDay.toISOString().substr(0, 10));
                 });
                 // timeularapi.main(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
@@ -658,7 +658,7 @@ app.get(basePath + '/showListProjectile/:pretty?', async (req, res, next) => {
             result = result + '</ul>';
             res.status(200).send(result);
         } else {
-            res.status(200).send(JSON.stringify(jobList));
+            res.status(200).send((jobList));
         }
         // res.status(200).send(JSON.stringify(jobList));
     } catch (err) {
@@ -677,7 +677,7 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
             winston.debug(timeularActivities);
             // winston.debug(timeularapi.activityList);
             // res.status(200).send(JSON.stringify(timeularapi.activityList));
-            res.status(200).send(JSON.stringify(timeularActivities));
+            res.status(200).send(timeularActivities);
         } catch (err) {
             res.status(400).send('Something went wrong - /showListProjectile');
         }
