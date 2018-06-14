@@ -11,7 +11,7 @@ const host = "http://localhost:3001";
 
 chai.use(chaiHttp);
 
-// ---- INITIAL TEST SETUP --------- 
+// ---- INITIAL TEST SETUP ---------
 
 let tempCookie = null;
 
@@ -108,8 +108,3 @@ describe('ProjectileAPI', function () {
 
     })
 })
-
-
-
-
-

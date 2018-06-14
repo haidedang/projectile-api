@@ -13,9 +13,9 @@ chai.use(chaiHttp);
 before(function () {
     config = JSON.parse(fs.readFileSync('./test/config.json'));
     activity = config.test.projectile.activity;
-    date = config.test.projectile.date; 
-    duration = config.test.projectile.duration; 
-    note = config.test.projectile.note; 
+    date = config.test.projectile.date;
+    duration = config.test.projectile.duration;
+    note = config.test.projectile.note;
     let user = JSON.parse(fs.readFileSync('user.txt'));
     projectileAPI.initializeUser(user);
   })
@@ -23,9 +23,9 @@ before(function () {
 
 describe('book an Entry in Projectile API', function() { 
     this.timeout(7000);
-   
+
     it('it should save successfully', async () => { 
-      let response = await projectileAPI.save(date,duration,activity,note); 
-      expect(response.returnValue, 'returnValue of Save fn should be true').to.be.true; 
+      let response = await projectileAPI.save(date,duration,activity,note);
+      expect(response.returnValue, 'returnValue of Save fn should be true').to.be.true;
     })
   })

@@ -3,7 +3,7 @@ const rp = require('request-promise');
 const fs = require('fs');
 const util = require('util');
 
-//const config = require('config');
+// const config = require('config');
 
 const projectile = require('./projectileAPI.js');
 const timeularapi = require('./timeularAPI.js');
@@ -35,15 +35,15 @@ getConfig().then(() => {
 // handle commandline parameters
 async function readParameter() {
   try {
-    let re = new RegExp('[0-9]{4,6}', 'g');
-    process.argv.forEach(function (val, index, array) {
+    const re = new RegExp('[0-9]{4,6}', 'g');
+    process.argv.forEach(function(val) { // index, array
       // check if parameter is a port
-      let portMatch = val.match(re);
+      const portMatch = val.match(re);
       if (portMatch) {
         appPort = val;
       } else {
         // check if parameter is a winston debug level or help request or projectileOnly setting
-        switch (val.toLowerCase()) {  // make ones life easier
+        switch (val.toLowerCase()) { // make ones life easier
           case 'error':
             winstonLevel = 'error';
             break;
@@ -69,7 +69,8 @@ async function readParameter() {
           case 'help':
             console.log('Help: You can provide the following parameters to the application:');
             console.log('A port number can be set. Just provide a number between 1024 and 65335 e.g. 3000');
-            console.log('A debug level can be set. Just provide ONE of the following level names: error, warn, info, verbose, debug, silly. The verbosity increases in sequence.');
+            console.log('A debug level can be set. Just provide ONE of the following level names: error, warn, info, ' +
+            'verbose, debug, silly. The verbosity increases in sequence.');
             console.log('You can combine both parameters. e.g. "3000 error" or "silly 3333".');
             process.exit();
             break;
@@ -91,7 +92,7 @@ console.log('Winston debug level: ' + winstonLevel);
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
-const writeFileAsync = util.promisify(fs.writeFile);
+// const writeFileAsync = util.promisify(fs.writeFile);
 
 let user;
 let token;
@@ -100,13 +101,13 @@ let cookie = '';
 let employee = '';
 let jobList = '';
 
-let defaultInterval = 300000; // 5min
-let defaultProjectileAliveInterval = 10000;
+const defaultInterval = 300000; // 5min
+const defaultProjectileAliveInterval = 10000;
 
 let credsPresent = false;
 let projectileStatus = false;
 
-let basePath = '';
+const basePath = '';
 
 /**
  *  function getConfig() to get config object from config.json or config file provided by env. variable CONFIG_FILE
@@ -118,15 +119,84 @@ async function getConfig() {
     winston.debug('Successfully read config.json.');
     winston.silly(configFile + ': ' + JSON.stringify(config, null, 2));
   } catch (e) {
-    winston.warn('getConfig() -> Failed to read ' + configFile + ' configurationfile on startup. Corrupted or non existent.');
+    winston.warn('getConfig() -> Failed to read ' + configFile + ' configurationfile on startup. Corrupted or non ' +
+    'existent.');
     winston.debug(e);
     // just in case - resetting config
     config = {};
   }
 }
 
+// declare functions
+let checkProjectile = '';
+let cyclicPackageSync = '';
+
 /**
- *  function init() to initialize projectile creds, timeular token, config.json and trigger necessary functions to get ready to rumble
+ *  function to constantly check if projectile server is reachable (vpn, lokal)
+ */
+/*
+  const checkProjectile = async function() {
+    winston.silly('checkProjectile -> Trying to reach projectile server . . .');
+    projectileStatus = await projectile.projectileAlive();
+    if (projectileStatus) {
+      winston.silly('checkProjectile -> projectile server status is true.');
+    } else {
+      winston.warn('checkProjectile -> projectile server status is false.');
+    }
+  };
+*/
+checkProjectile = async function() {
+  winston.silly('checkProjectile -> Trying to reach projectile server . . .');
+  projectileStatus = await projectile.projectileAlive();
+  if (projectileStatus) {
+    winston.silly('checkProjectile -> projectile server status is true.');
+    if(!projectileOnly) {
+      cyclicPackageSync();
+    }
+  } else {
+    winston.silly('checkProjectile -> projectile server status is still false. Keep checking ' +
+    'every', defaultProjectileAliveInterval / 1000, 's');
+    setTimeout(checkProjectile, defaultProjectileAliveInterval || 10000);
+  }
+};
+
+
+/**
+ *  function to synchronize the projectile packages to the timeular activities in intervals (default 300s)
+ */
+cyclicPackageSync = async function() {
+  try {
+    winston.debug('cyclicPackageSync -> Starting syncing packages and activities with timeout of',
+      (config.timeOutForSync ? (config.timeOutForSync / 1000) : (defaultInterval / 1000)), 's');
+    // check projectile status
+    projectileStatus = await projectile.projectileAlive();
+
+    if (projectileStatus) {
+      const result = await timeularapi.updateActivities(true, false); // (create, archive)
+      if (result) {
+        winston.silly('Automatically synced projectile packages to timeular activities.');
+      } else {
+        winston.warn('Automatic syncing of projectile packages to timeular activities failed.');
+      }
+      // continue cyclic package syncing
+      setTimeout(cyclicPackageSync, config.timeOutForSync || defaultInterval);
+    } else {
+      // projectile server not reachable? --> trigger repeated checking
+      winston.warn('cyclicPackageSync -> Projectile server seems to be unreachable. Establishing continuous checking ' +
+      'for when he\'s reachable again. Every', defaultProjectileAliveInterval / 1000, 's');
+      setTimeout(checkProjectile, defaultProjectileAliveInterval || 10000);
+      // setTimeout(cyclicPackageSync, defaultProjectileAliveInterval || 10000);
+      // set cyclicPackageSync to shorter interval
+      // likely shorter interval than cyclicPackageSync !!
+    }
+  } catch (e) {
+    winston.warn('cyclicPackageSync() -> Failed to run cyclicPackageSync() with setTimeout.');
+  }
+};
+
+/**
+ *  function init() to initialize projectile creds, timeular token, config.json and trigger necessary functions to
+ *  get ready to rumble
  */
 async function init() {
   try {
@@ -138,7 +208,8 @@ async function init() {
       try {
         user = JSON.parse(fs.readFileSync('user.txt'));
       } catch (e) {
-        winston.error('API No usercredential file seems to be available. Please run "node userCred.js" to create a credential file.');
+        winston.error('API No usercredential file seems to be available. Please run "node userCred.js" to create a ' +
+        'credential file.');
         // process.exit();
       }
 
@@ -146,7 +217,8 @@ async function init() {
         try {
           token = JSON.parse(fs.readFileSync('timeularToken.txt'));
         } catch (e) {
-          winston.error('API No token file seems to be available. Please run "node getTimularToken.js" to create a token file.');
+          winston.error('API No token file seems to be available. Please run "node getTimularToken.js" to create a ' +
+          'token file.');
           // process.exit();
         }
       }
@@ -163,28 +235,26 @@ async function init() {
 
         // get config from config.json
         /*
-                try {
-                  config = JSON.parse(fs.readFileSync('config.json'));
-                  winston.debug('Successfully read config.json.');
-                  winston.silly('config.json: ' + JSON.stringify( config, null, 2 ));
-                } catch (e) {
-                  winston.warn('init() -> Failed to read config.json configurationfile on startup. Corrupted or non existent.', e);
-                }
-            */
-
-        try {
-          // run cyclicPackageSync first time
-          if (!projectileOnly) {
-            cyclicPackageSync();
+          try {
+            config = JSON.parse(fs.readFileSync('config.json'));
+            winston.debug('Successfully read config.json.');
+            winston.silly('config.json: ' + JSON.stringify( config, null, 2 ));
+          } catch (e) {
+            winston.warn('init() -> Failed to read config.json configurationfile on startup. Corrupted or non ' +
+            'existent.', e);
           }
-        } catch (e) {
-          winston.warn('init() -> Failed to run cyclicPackageSync() with setTimeout.');
+        */
+
+        // run cyclicPackageSync first time
+        if (!projectileOnly) {
+          cyclicPackageSync();
         }
       } else {
         winston.warn('Initialization failed. token and/or user missing.');
       }
     } else { // end of if (projectileStatus) {
-      winston.warn('init -> Projectile server seems to be unreachable. Establishing continuous checking for when he\'s reachable again. Every:', defaultProjectileAliveInterval / 1000, 's');
+      winston.warn('init -> Projectile server seems to be unreachable. Establishing continuous checking for when ' +
+      'he\'s reachable again. Every:', defaultProjectileAliveInterval / 1000, 's');
       setTimeout(init, defaultProjectileAliveInterval || 10000);
     }
   } catch (e) {
@@ -242,8 +312,9 @@ let checkProjectile = async function () {
  */
 async function writeToConfig(parametername, value) {
   // read from config
+  let config = '';
   try {
-    let config = JSON.parse(fs.readFileSync('config.json'));
+    config = JSON.parse(fs.readFileSync('config.json'));
   } catch (e) {
     winston.warn('writeToConfig -> Failed to read config.json configurationfile. Corrupted or non existent.');
     if (config.length <= 0) {
@@ -271,28 +342,28 @@ async function writeToConfig(parametername, value) {
  *  route for healthstatus checks
  */
 app.get(basePath + '/healthStatus', (req, res) => {
-  res.status(200).send({ healthy: true })
-})
+  res.status(200).send({ healthy: true });
+});
 
 /**
  *  route for credentials status checks
  */
 app.get(basePath + '/credsStatus', (req, res) => {
-  res.status(200).send({ credsPresent: credsPresent });
+  res.status(200).send({ credsPresent });
 });
 
 /**
  *  route for projectile status checks
  */
 app.get(basePath + '/projectileStatus', (req, res) => {
-  res.status(200).send({ projectileStatus: projectileStatus });
+  res.status(200).send({ projectileStatus });
 });
 
 /**
  *  route for projectile status checks
  */
 app.get(basePath + '/projectileOnlyStatus', (req, res) => {
-  res.status(200).send({ projectileOnly: projectileOnly });
+  res.status(200).send({ projectileOnly });
 });
 
 /**
@@ -309,7 +380,7 @@ app.get(basePath + '/', (req, res) => {
   // delivering website with options
   // res.sendFile(__dirname + '/src/index.html');
   winston.debug('/ base website done');
-})
+});
 
 /**
  *  route for to retrieve files for base website
@@ -560,11 +631,11 @@ app.get(basePath + '/syncbookings/:startDate/:endDate', async (req, res) => {
 /**
  *  route for syncing timeular for fixed time ranges e.g. today, week, month
  */
-app.get(basePath + '/syncbookings/:choice', async (req, res) => {
-  await checkProjectile();
-  if (projectileStatus && !projectileOnly) {
-    let today = new Date();
-    let startDay = new Date();
+app.get(basePath + '/syncbookings/:choice', async(req, res) => {
+  projectileStatus = await projectile.projectileAlive(); // await checkProjectile();
+  if (projectileStatus && !projectileOnly){
+    const today = new Date();
+    const startDay = new Date();
 
     switch (req.params.choice) {
       case 'today':
@@ -581,7 +652,8 @@ app.get(basePath + '/syncbookings/:choice', async (req, res) => {
         timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then((result) => {
           winston.debug('(api) Sync week result: ' + util.inspect(result));
           res.status(200).send(JSON.stringify(result));
-          winston.debug('Sync done for week ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
+          winston.debug('Sync done for week ' +
+            startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
         });
         // winston.debug('week ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
         // res.status(200).send('Sync done for last 7 days.');
@@ -591,7 +663,8 @@ app.get(basePath + '/syncbookings/:choice', async (req, res) => {
         timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then((result) => {
           winston.debug('(api) Sync month result: ' + util.inspect(result));
           res.status(200).send(JSON.stringify(result));
-          winston.debug('Sync done for month ' + startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
+          winston.debug('Sync done for month ' +
+            startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
         });
         break;
       default:
@@ -608,19 +681,20 @@ app.get(basePath + '/syncbookings/:choice', async (req, res) => {
       winston.info('/syncbookings/:choice not executed. ProjectileOnly mode is active.');
     }
   }
-})
+});
 
 // SHOW
 /**
  *  route for retrieving package list from Projectile in JSON format
  */
-app.get(basePath + '/showListProjectile/:pretty?', async (req, res, next) => {
+app.get(basePath + '/showListProjectile/:pretty?', async(req, res, next) => {
   try {
     jobList = await projectile.fetchNewJobList();
     if (req.params.pretty) { // any value for pretty should be ok
       let result = '<ul>';
       jobList.forEach((item) => {
-        result = result + '<li>Name: ' + item.name + ' - No.: ' + item.no + ' - remaining Time: ' + item.remainingTime + ' - Time limit: ' + item.limitTime + ' - Total booked time: ' + item.Totaltime + '</li>';
+        result = result + '<li>Name: ' + item.name + ' - No.: ' + item.no + ' - remaining Time: ' + item.remainingTime +
+          ' - Time limit: ' + item.limitTime + ' - Total booked time: ' + item.Totaltime + '</li>';
       });
       result = result + '</ul>';
       res.status(200).send(result);
@@ -632,15 +706,15 @@ app.get(basePath + '/showListProjectile/:pretty?', async (req, res, next) => {
     res.status(400).send('Something went wrong - /showListProjectile');
   }
   winston.debug('/showListProjectile done');
-})
+});
 
 /**
  *  route for retrieving package list from timeular in JSON format
  */
-app.get(basePath + '/showListTimeular', async (req, res, next) => {
+app.get(basePath + '/showListTimeular', async(req, res, next) => {
   if (!projectileOnly) {
     try {
-      let timeularActivities = await timeularapi.getActivities();
+      const timeularActivities = await timeularapi.getActivities();
       winston.debug(timeularActivities);
       // winston.debug(timeularapi.activityList);
       // res.status(200).send(JSON.stringify(timeularapi.activityList));
@@ -653,22 +727,22 @@ app.get(basePath + '/showListTimeular', async (req, res, next) => {
     res.status(200).send('API in projectileOnly mode - function currently not available.');
     winston.info('/showListTimeular can\'t work. API started in projectileOnly mode.');
   }
-})
+});
 
 // BOOK
 /**
  *  route for booking (date, duration, activity, note provided)
  */
-app.get(basePath + '/book/:date?/:duration/:activity/:note', async (req, res) => { // whats the spec duration format - 1,75? 1:45?
+app.get(basePath + '/book/:date?/:duration/:activity/:note', async(req, res) => {
+  // whats the spec duration format - 1,75? 1:45?
   try {
 
-    /// WRONG --> activity has to be TimularActivity ID otherwise function won't work
     /*   e.g.
-         http://localhost:3000/book/1/2788-3/testing
-         http://localhost:3000/book/2018-05-23/1.5/2788-3/testing
+     http://localhost:3000/book/1/2788-3/testing
+     http://localhost:3000/book/2018-05-23/1.5/2788-3/testing
     */
-    // books in timeular and projectile!)
-    // TODO check validity of date, duration, activitiy and note?
+    // books in timeular and projectile!
+    // TODO: check validity of date, duration, activitiy and note?
 
     // check if date parameter is present or use current date
     let date = '';
@@ -680,18 +754,17 @@ app.get(basePath + '/book/:date?/:duration/:activity/:note', async (req, res) =>
     // create package/activity table
     // analyse the provided "activity" parameter and find the fitting package or activity id pair
     if (!projectileOnly) {
-      let packageActivity = await timeularapi.packageActivityList(req.params.activity);
+      const packageActivity = await timeularapi.packageActivityList(req.params.activity);
       winston.debug('Debug packageActivity result: ' + packageActivity.Package, packageActivity.Activity);
 
       // book in TIMEULAR
-      // OBOSLETE??  ENTSCHÄRFT timeularapi.bookActivity(req.params.date, req.params.duration, req.params.activity, req.params.note);
-      let response = await timeularapi.bookActivityNG({
-        date: date,
-        duration: req.params.duration,
+      await timeularapi.bookActivityNG({
+        date,
+        duration:req.params.duration,
         activityId: packageActivity.Activity,
-        note: req.params.note
+        note: req.params.note,
       }).then((response) => {
-        if (response) {
+        if(response) {
           winston.debug('bookActivity for timeular successfull');
         }
         return response;
@@ -702,13 +775,14 @@ app.get(basePath + '/book/:date?/:duration/:activity/:note', async (req, res) =>
       time = parseFloat(time);
       // book in projectile
       /*
-      use activity directly when projectileOnly mode is active, else use Package value processed from timeular,
-      it allows to use activityId or packageId to be provided in url
-      */
-      projectile.save(date, time, (projectileOnly ? req.params.activity : packageActivity.Package), req.params.note).then(() => {
+     use activity directly when projectileOnly mode is active, else use Package value processed from timeular,
+     it allows to use activityId or packageId to be provided in url
+     */
+      projectile.save(date, time,
+        (projectileOnly ? req.params.activity : packageActivity.Package), req.params.note).then(() => {
         winston.debug('save for projectile successfull');
         // handle result of save request!! TODO
-        res.status(200).send(date + ' ' + req.params.duration + ' ' + req.params.activity + ' ' + req.params.note)
+        res.status(200).send(date + ' ' + req.params.duration + ' ' + req.params.activity + ' ' + req.params.note);
       });
 
     } else {
@@ -721,18 +795,18 @@ app.get(basePath + '/book/:date?/:duration/:activity/:note', async (req, res) =>
     winston.debug(e);
   }
   winston.debug('/book/:date?/:duration/:activity/:note done');
-})
+});
 
 // SYNC ACTIVITIES
 /**
- *  route for syncing activities of projectile and timeular
- */
-app.get(basePath + '/syncactivities', async (req, res) => {
-  if (projectileStatus && !projectileOnly) {
+   *  route for syncing activities of projectile and timeular
+   */
+app.get(basePath + '/syncactivities', async(req, res) => {
+  if (projectileStatus && !projectileOnly){
     try {
       winston.debug('trying to sync activities and projectile packages...');
       // just creating, no archiving ATM as requested by Jan!
-      let result = await timeularapi.updateActivities(true, false); // (create, archive)
+      const result = await timeularapi.updateActivities(true, false); // (create, archive)
       winston.debug('synactivities synchronized: ' + result);
       await res.status(200).send(result);
     } catch (e) {
@@ -751,9 +825,9 @@ app.get(basePath + '/syncactivities', async (req, res) => {
 });
 
 /**
- *  route for setting syncing interval for activities of projectile and timeular in seconds
- */
-app.get(basePath + '/syncinterval/:interval', async (req, res) => {
+    *  route for setting syncing interval for activities of projectile and timeular in seconds
+    */
+app.get(basePath + '/syncinterval/:interval', async(req, res) => {
   try {
     winston.debug('Setting interval for auto syncing of activities... Value: ' + req.params.interval + 's');
     // timeOutForSync = req.params.interval * 1000;
@@ -769,15 +843,16 @@ app.get(basePath + '/syncinterval/:interval', async (req, res) => {
     res.status(400).send(false);
   }
   winston.debug('/syncinterval/:interval done');
-})
+});
 
 /**
- *  route for getting syncing interval for activities of projectile and timeular in seconds
- */
-app.get(basePath + '/syncinterval', async (req, res) => {
+     *  route for getting syncing interval for activities of projectile and timeular in seconds
+     */
+app.get(basePath + '/syncinterval', async(req, res) => {
   try {
-    winston.debug('/syncinterval -> Getting interval for auto syncing of activities... Value: ' + (config.timeOutForSync ? (config.timeOutForSync / 1000) : (defaultInterval / 1000)) + 's');
-    //await res.status(200).send((config.timeOutForSync?(config.timeOutForSync/1000):(defaultInterval/1000)));
+    winston.debug('/syncinterval -> Getting interval for auto syncing of activities... Value: ' +
+    (config.timeOutForSync ? (config.timeOutForSync / 1000) : (defaultInterval / 1000)) + 's');
+    // await res.status(200).send((config.timeOutForSync?(config.timeOutForSync/1000):(defaultInterval/1000)));
     res.send('' + (config.timeOutForSync ? (config.timeOutForSync / 1000) : (defaultInterval / 1000)));
   } catch (e) {
     res.status(400).send('Something went wrong - /syncinterval');
@@ -795,9 +870,9 @@ app.use(function (req, res, next) {
  *  get default reaction to undefined routes
  */
 app.get('*', (req, res) => {
-  winston.error(`Error: default routing error - invalid request.`)
-  res.sendStatus(500)
-})
+  winston.error('Error: default routing error - invalid request.');
+  res.sendStatus(500);
+});
 
 /*
 app.listen(config.get('appPort'), () => {
