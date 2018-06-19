@@ -150,7 +150,7 @@ checkProjectile = async function() {
   projectileStatus = await projectile.projectileAlive();
   if (projectileStatus) {
     winston.silly('checkProjectile -> projectile server status is true.');
-    if(!projectileOnly) {
+    if (!projectileOnly) {
       cyclicPackageSync();
     }
   } else {
@@ -286,7 +286,7 @@ async function writeToConfig(parametername, value) {
   config[parametername] = value;
   // write to config
   try {
-    fs.writeFile('config.json', JSON.stringify(config), (err)=>{
+    fs.writeFile('config.json', JSON.stringify(config), (err) => {
       if (err){
         winston.warn('writeToConfig -> writing to file ->', err);
       } else {
