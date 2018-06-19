@@ -330,7 +330,7 @@ app.get(basePath + '/projectileOnlyStatus', (req, res) => {
  *  route for projectile status checks
  */
 app.get(basePath + '/projectileOnlyStatus', (req, res) => {
-  res.status(200).send({ projectileOnly: projectileOnly });
+  res.status(200).send({ projectileOnly });
 });
 
 /**
@@ -418,7 +418,7 @@ app.post(basePath + '/start', async(req, res) => {
         strictSSL: false, // TODO: SSL Zertifizierung mit node.js
         timeout: 7000,
       };
-      let result = rp(options, function(error, response, body) {
+      let result = rp(options, function(error, response) { // , body
         if (error) { winston.error('testCredentials -> Login error in projectile.'); }
         result = response.body.substr(1, 2000).includes('Login</title>');
         winston.debug('testCredentials -> Login keyword existence after login attempt: ',
@@ -447,7 +447,7 @@ app.post(basePath + '/start', async(req, res) => {
           'apiKey': json.timeularApiKey,
           'apiSecret': json.timeularApiSecret,
         },
-      }, (err, res, body) => {
+      }, (err, res) => { // , body
         if (res.statusCode === 200) {
           winston.debug('retrieveToken -> API credentials retrieved.');
           const apiToken = res.body.token;
@@ -618,7 +618,7 @@ app.get(basePath + '/syncbookings/:choice', async(req, res) => {
 /**
  *  route for retrieving package list from Projectile in JSON format
  */
-app.get(basePath + '/showListProjectile/:pretty?', async(req, res, next) => {
+app.get(basePath + '/showListProjectile/:pretty?', async(req, res) => { // , next
   try {
     jobList = await projectile.fetchNewJobList();
     if (req.params.pretty) { // any value for pretty should be ok
@@ -642,7 +642,7 @@ app.get(basePath + '/showListProjectile/:pretty?', async(req, res, next) => {
 /**
  *  route for retrieving package list from timeular in JSON format
  */
-app.get(basePath + '/showListTimeular', async(req, res, next) => {
+app.get(basePath + '/showListTimeular', async(req, res) => { // , next
   if (!projectileOnly) {
     try {
       const timeularActivities = await timeularapi.getActivities();
@@ -792,7 +792,7 @@ app.get(basePath + '/syncinterval', async(req, res) => {
 });
 
 // new default? old one acted weird
-app.use(function(req, res, next){
+app.use(function(req, res) { // , next
   res.status(404);
   winston.debug('default route done');
 });
@@ -810,7 +810,7 @@ app.listen(config.get('appPort'), () => {
   logger.info(`HDI CMS static content app listening on port ${config.get('appPort')}!`)
 })
 */
-if(!module.parent){
+if (!module.parent) {
   app.listen(appPort, () => {
     console.log(`Projectile-Timeular API / APP is listenning on port ${appPort}!` +
   ` - Open http://localhost:${appPort}/ in your browser to access it.`);

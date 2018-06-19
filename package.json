@@ -6,7 +6,8 @@
   "scripts": {
     "lint": "./node_modules/.bin/eslint *.js",
     "prepush": "yarn lint",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test2": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha"
   },
   "author": "Hai Dang",
   "contributors": {
@@ -21,8 +22,6 @@
     "co": "^4.6.0",
     "co-prompt": "^1.0.0",
     "commander": "^2.13.0",
-    "config": "^1.30.0",
-    "csvtojson": "^1.1.9",
     "express": "^4.16.2",
     "request": "^2.83.0",
     "request-promise": "^4.2.2",
