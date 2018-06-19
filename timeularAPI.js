@@ -322,7 +322,8 @@ exports.bookActivityNG = async({date, duration, activityId, note}) => {
   const antwort2 = await book0(startTime, endTime);
   const timeEntries = JSON.parse(antwort2).timeEntries;
 
-  // get last Entry of day, get stoppedAt time, use as new startedAt - if there is no entry for date, startedAt = 9:00
+  // get last Entry of day, get stoppedAt time, use as new startedAt - if there is no entry for date, startedAt
+  // (could be set to 9:00)
   let latestStoppedAt = new Date(startTime + 'Z');
   if (timeEntries && timeEntries.length > 0) {
     timeEntries.forEach((item) => {
@@ -360,7 +361,7 @@ exports.bookActivityNG = async({date, duration, activityId, note}) => {
     return sumMinutes;
   }
 
-  const sumMinutes = getSumMinutes(duration);
+  const sumMinutes = await getSumMinutes(duration);
 
   // create timeEntry and post it
   // latestStoppedAt = new Date(latestStoppedAt.setMinutes(latestStoppedAt.getMinutes() + 60));
@@ -854,7 +855,7 @@ async function deleteDepreceated(monthDay, dayList) {
       finalresult.push(monthDay[i]);
       // after one iteration , a day is compared. I need then to delete that shit , get the date
       // delete, when entry exists but is FALSE.
-      for (letj = 0; j < res.length; j++) {
+      for (let j = 0; j < res.length; j++) {
         if (res[j] === false && dayList[i][j].Duration !== null) {
           await projectile.delete(dayList[i][j].StartDate, j);
           res.splice(j, 1);

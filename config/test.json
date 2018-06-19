@@ -2,13 +2,16 @@
     "projectileOnly": "false",
     "test": {
         "timeular": {
-            "TimularActivityID": "106114"
+            "TimularActivityID": "127170",
+            "date": "2018-06-19",
+            "duration": "1",
+            "note":"hallo"
         },
         "projectile":{
-            "date": "2018-06-01", 
-            "duration": "1", 
+            "date": "2018-06-19",
+            "duration": "1",
             "note":"hallo",
-            "activity":"2759-327"
+            "activity":"2759-62"
         }
     }
 }

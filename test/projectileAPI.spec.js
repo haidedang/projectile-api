@@ -1,31 +1,31 @@
-let chai = require('chai');
-var assert = require('assert');
-let expect = chai.expect;
-let projectileAPI = require('../projectileAPI');
-let fs = require('fs');
+const chai = require('chai');
+// const assert = require('assert');
+const expect = chai.expect;
+const projectileAPI = require('../projectileAPI');
+const fs = require('fs');
 
-let chaiHttp = require('chai-http');
-let should = chai.should();
-const host = "http://localhost:3001";
+const chaiHttp = require('chai-http');
+// const should = chai.should();
+// const host = 'http://localhost:3001';
 
 chai.use(chaiHttp);
 
-before(function () {
-    config = JSON.parse(fs.readFileSync('../config/test.json'));
-    activity = config.test.projectile.activity;
-    date = config.test.projectile.date;
-    duration = config.test.projectile.duration;
-    note = config.test.projectile.note;
-    let user = JSON.parse(fs.readFileSync('user.txt'));
-    projectileAPI.initializeUser(user);
-  })
+before(function() {
+  config = JSON.parse(fs.readFileSync('./config/test.json'));
+  activity = config.test.projectile.activity;
+  date = config.test.projectile.date;
+  duration = config.test.projectile.duration;
+  note = config.test.projectile.note;
+  const user = JSON.parse(fs.readFileSync('user.txt'));
+  projectileAPI.initializeUser(user);
+});
 
 
-describe('book an Entry in Projectile API', function() { 
-    this.timeout(7000);
+describe('book an Entry in Projectile save function', function() {
+  this.timeout(7000);
 
-    it('it should save successfully', async () => { 
-      let response = await projectileAPI.save(date,duration,activity,note);
-      expect(response.returnValue, 'returnValue of Save fn should be true').to.be.true;
-    })
-  })
+  it('it should save successfully', async() => {
+    const response = await projectileAPI.save(date, duration, activity, note);
+    expect(response.returnValue, 'returnValue of Save fn should be true').to.be.true; // eslint-disable-line
+  });
+});
