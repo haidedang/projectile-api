@@ -4,6 +4,8 @@
   "description": "booking hours for projectile",
   "main": "projectileCli.js",
   "scripts": {
+    "start": "node api.js",
+    "start+debug": "node api.js debug",
     "lint": "./node_modules/.bin/eslint *.js",
     "prepush": "yarn lint",
     "test2": "echo \"Error: no test specified\" && exit 1",
