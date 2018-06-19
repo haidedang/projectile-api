@@ -1,1 +1,19 @@
-{"appPort":"3000","winstonLevel":"debug"}
+{
+    "projectileOnly": "false",
+    "test": {
+        "timeular": {
+            "TimularActivityID": "106114"
+        },
+        "projectile":{
+            "date": "2018-06-01", 
+            "duration": "1", 
+            "note":"hallo",
+            "activity":"2759-327",
+            "projectileUser": "",
+            "projectilePassword": "",
+            "timeularApiKey":"",
+            "timeularApiSecret": ""
+        }
+        
+    }
+}

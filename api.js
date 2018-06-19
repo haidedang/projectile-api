@@ -600,7 +600,7 @@ app.get(basePath + '/syncbookings/:choice', async (req, res) => {
             case 'today':
                 timeularapi.merge(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10)).then((result) => {
                     winston.debug('(api) Sync today result: ' + util.inspect(result));
-                    res.status(200).send((result)); // 'Sync done for "today".'
+                    res.status(200).send(JSON.stringify(result)); // 'Sync done for "today".'
                     winston.debug('Sync done for today ' + startDay.toISOString().substr(0, 10));
                 });
                 // timeularapi.main(startDay.toISOString().substr(0, 10), today.toISOString().substr(0, 10));
