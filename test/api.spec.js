@@ -54,8 +54,9 @@ describe('ProjectileAPI', function() {
     });
   });
 
-  describe('book an Entry via Projectile API call', function() {
+  describe('book an Entry in Projectle and Timeular via Projectile API call', function() {
     this.timeout(7000);
+    projectileAPI.projectileOnly = false;
     it('it should save successfully, returning status 200 and the booked parameters as json', (done) => {
       chai.request(server)
         .get(`/book/${date}/${duration}/${timeularActivityID}/${note}`)
@@ -71,4 +72,24 @@ describe('ProjectileAPI', function() {
         });
     });
   });
+
+  describe('book an Entry in Projectile only via Projectile API call', function() {
+    this.timeout(7000);
+    projectileAPI.projectileOnly = true;
+    it('it should save successfully, returning status 200 and the booked parameters as json', (done) => {
+      chai.request(server)
+        .get(`/book/${date}/${duration}/${timeularActivityID}/${note}`)
+        .end((err, res) => {
+          // res.should.have.status(200);
+          res.text.should.equal('2018-06-19 1 127170 hallo');
+          res.status.should.equal(200);
+          if (err) {
+            console.log('ProjectileAPI -> /book/${date}/${duration}/${timeularActivityID}/${note}: An error ' +
+              'occured while testing. ', err);
+          }
+          done();
+        });
+    });
+  });
+
 });
