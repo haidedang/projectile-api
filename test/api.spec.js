@@ -41,7 +41,7 @@ describe('Login', function () {
 describe('ProjectileAPI', function () {
     this.timeout(7000);
 
-    describe('GET ProjectileList', (done) => {
+    describe('GET ProjectileList', () => {
         it('it should GET all the tasks', (done) => {
             chai.request(server)
                 .get('/showListProjectile')
