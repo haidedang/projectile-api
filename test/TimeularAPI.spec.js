@@ -2,15 +2,13 @@ let chai = require('chai');
 var assert = require('assert');
 let expect = chai.expect;
 let timeularAPI = require('../timeularAPI');
+const projectile = require('../projectileAPI')
 let fs = require('fs');
 
 let chaiHttp = require('chai-http');
 let should = chai.should();
 const host = "http://localhost:3001";
 const winston = require('winston');
-
- // import Timeular MockObject 
- let timeList = JSON.parse(fs.readFileSync('./test/mocks/timeularList.json'));
 
 chai.use(chaiHttp);
 
@@ -27,6 +25,7 @@ before(function () {
     let token = JSON.parse(fs.readFileSync('timeularToken.txt'));
     config.token = token;
     timeularAPI.initializeToken(token);
+
 })
 
 describe('get Activites/Activity from Timeular', function () {
@@ -57,13 +56,18 @@ describe('get Activites/Activity from Timeular', function () {
 
 describe('UNIT TESTS FOR MERGING', function () {
 
-  
-    this.month = []; 
-    this.monthCleaned= []; 
+    // import Timeular MockObject 
+    let timeList = JSON.parse(fs.readFileSync('./test/mocks/timeularList.json'));
+    let projectileList = require('./mocks/projectileList');
+
+
+    this.month = [];
+    this.monthCleaned = [];
+    this.startDate = '2018-06-18'
+    this.endDate = '2018-06-24'
 
     it('should return a List of TimeularBookings within specified time Range', (done) => {
-        this.startDate = '2018-06-18'
-        this.endDate = '2018-06-24'
+
 
         let timeperiod = this.startDate + 'T00:00:00.000/' + this.endDate + 'T23:59:59.999';
         chai.request('https://api.timeular.com')
@@ -80,17 +84,17 @@ describe('UNIT TESTS FOR MERGING', function () {
     })
 
     it('should sort a List of TimeularBookings after ascending dates and times', () => {
-       
+
         timeList.timeEntries.sort(function (a, b) { return (new Date(a.duration.startedAt) - new Date(b.duration.startedAt)) });
         expect(timeList.timeEntries[0].duration.startedAt).to.include(this.startDate)
     })
 
-    it('should prepare and modify the timeular List accordingly and save it to an array', () => { 
+    it('should prepare and modify the timeular List accordingly and save it to an array', () => {
         /**
          * input: Timeluar Range List 
          * output: Array with formatted Objects 
          */
-       
+
         for (let i = 0; i < timeList.timeEntries.length; i++) {
             let day = {};
             day["StartDate"] = timeList.timeEntries[i].duration.startedAt.substring(0, timeList.timeEntries[i].duration.startedAt.indexOf("T"));
@@ -103,14 +107,14 @@ describe('UNIT TESTS FOR MERGING', function () {
             day["Activity"] = timeList.timeEntries[i].activity.name.substring(timeList.timeEntries[i].activity.name.lastIndexOf("[") + 1, timeList.timeEntries[i].activity.name.lastIndexOf("]"));
             // collision detection through improved Notes containing timeular id of entry
             if (timeList.timeEntries[i].note.text !== null) {
-              day["Note"] = timeList.timeEntries[i].note.text; // add timeular id of entry here
-              day["Note"] = day["Note"] + ' #['  + timeList.timeEntries[i].id + ']'; // creating new style note entries for collision detecting
+                day["Note"] = timeList.timeEntries[i].note.text; // add timeular id of entry here
+                day["Note"] = day["Note"] + ' #[' + timeList.timeEntries[i].id + ']'; // creating new style note entries for collision detecting
             } else {
-              day["Note"] = '';
+                day["Note"] = '';
             }
             // keep the original complete date, to provide improved sorting of results for frontend
             day["startedAt"] = timeList.timeEntries[i].duration.startedAt;
-  
+
             // "normalize" note - Q'n'D fix for projectile.js to avoid malformed characters in projectile
             // !!! TODO CHECK - final clean solution in saveEntry necessary!
             day["Note"] = day["Note"].replace(/ä/g, "ae").replace(/Ä/g, "Ae").replace(/ü/g, "ue").replace(/Ü/g, "Ue").replace(/ö/g, "oe").replace(/Ö/g, "Oe").replace(/ß/g, "ss");
@@ -120,15 +124,15 @@ describe('UNIT TESTS FOR MERGING', function () {
             this.month.push(day);
         }
 
-        expect(this.month[0]).to.be.an('object')         
+        expect(this.month[0]).to.be.an('object')
     })
 
-    it('should merge Duration Time of duplicated Notes of entries in the same day', () => { 
-        let actual = timeList; 
+    it('should merge Duration Time of duplicated Notes of entries in the same day', () => {
+        let actual = timeList;
 
         for (var i = 0; i < this.month.length; i++) {
             for (var j = i + 1; j < this.month.length; j++) { // j = i + 1 because .csv is sorted!
-              // winston.debug( i + "#" + j);
+                // winston.debug( i + "#" + j);
                 if ((this.month[i]["StartDate"] === this.month[j]["StartDate"]) && (this.month[i]["Note"].substring(0, this.month[i]["Note"].lastIndexOf(" #[")) === this.month[j]["Note"].substring(0, this.month[j]["Note"].lastIndexOf(" #["))) && (this.month[i]["Activity"] === this.month[j]["Activity"])) {
                     this.month[i]["Duration"] = (this.month[i]["Duration"] * 60 + this.month[j]["Duration"] * 60) / 60;
                     // add new extended note to "new" merged entry
@@ -151,7 +155,7 @@ describe('UNIT TESTS FOR MERGING', function () {
         // expect duplicated notes to be merged  -> true but yet to define as function statement 
     })
 
-    it('should group Objects to an Array with same Date', () => { 
+    it('should group Objects to an Array with same Date', () => {
         function splitintoSeperateDays(array) {
             try {
                 let temp = array.map((item) => item["StartDate"]);
@@ -165,12 +169,11 @@ describe('UNIT TESTS FOR MERGING', function () {
             }
         }
 
-        let result = splitintoSeperateDays(this.monthCleaned); 
+        let result = splitintoSeperateDays(this.monthCleaned);
 
-       for (var i = 0; i< result.length-1; i++) { 
-            assert.notEqual(result[i][0].StartDate, result[i+1][0].StartDate, 'should not be the same')
-       }
+        for (var i = 0; i < result.length - 1; i++) {
+            assert.notEqual(result[i][0].StartDate, result[i + 1][0].StartDate, 'should not be the same')
+        }
     })
-
 
 })
