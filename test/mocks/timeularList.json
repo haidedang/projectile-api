@@ -1,0 +1,166 @@
+{
+    "timeEntries": [
+        {
+            "id": "2595254",
+            "activity": {
+                "id": "106114",
+                "name": "Interne Organisation [2759-327]",
+                "color": "#673bb5",
+                "integration": "zei"
+            },
+            "duration": {
+                "startedAt": "2018-06-23T04:00:00.000",
+                "stoppedAt": "2018-06-23T10:00:00.000"
+            },
+            "note": {
+                "text": "lambo 2000",
+                "tags": [],
+                "mentions": []
+            }
+        },
+        {
+            "id": "2594892",
+            "activity": {
+                "id": "106114",
+                "name": "Interne Organisation [2759-327]",
+                "color": "#673bb5",
+                "integration": "zei"
+            },
+            "duration": {
+                "startedAt": "2018-06-21T04:00:00.000",
+                "stoppedAt": "2018-06-21T10:00:00.000"
+            },
+            "note": {
+                "text": "projectile Testing",
+                "tags": [],
+                "mentions": []
+            }
+        },
+        {
+            "id": "2594887",
+            "activity": {
+                "id": "106114",
+                "name": "Interne Organisation [2759-327]",
+                "color": "#673bb5",
+                "integration": "zei"
+            },
+            "duration": {
+                "startedAt": "2018-06-20T04:00:00.225",
+                "stoppedAt": "2018-06-20T10:00:00.225"
+            },
+            "note": {
+                "text": "projectile testing",
+                "tags": [],
+                "mentions": []
+            }
+        },
+        {
+            "id": "2596707",
+            "activity": {
+                "id": "106114",
+                "name": "Interne Organisation [2759-327]",
+                "color": "#673bb5",
+                "integration": "zei"
+            },
+            "duration": {
+                "startedAt": "2018-06-21T11:00:00.000",
+                "stoppedAt": "2018-06-21T13:59:00.000"
+            },
+            "note": {
+                "text": "projectile Testing",
+                "tags": [],
+                "mentions": []
+            }
+        },
+        {
+            "id": "2596701",
+            "activity": {
+                "id": "106114",
+                "name": "Interne Organisation [2759-327]",
+                "color": "#673bb5",
+                "integration": "zei"
+            },
+            "duration": {
+                "startedAt": "2018-06-20T11:00:00.000",
+                "stoppedAt": "2018-06-20T12:59:00.000"
+            },
+            "note": {
+                "text": "projectile testing",
+                "tags": [],
+                "mentions": []
+            }
+        },
+        {
+            "id": "2595239",
+            "activity": {
+                "id": "113344",
+                "name": "Einarbeitung Hai [2788-4]",
+                "color": "#f2483f",
+                "integration": "zei"
+            },
+            "duration": {
+                "startedAt": "2018-06-20T10:00:00.225",
+                "stoppedAt": "2018-06-20T11:00:00.000"
+            },
+            "note": {
+                "text": "Testing",
+                "tags": [],
+                "mentions": []
+            }
+        },
+        {
+            "id": "2595257",
+            "activity": {
+                "id": "113344",
+                "name": "Einarbeitung Hai [2788-4]",
+                "color": "#f2483f",
+                "integration": "zei"
+            },
+            "duration": {
+                "startedAt": "2018-06-24T10:00:00.000",
+                "stoppedAt": "2018-06-24T11:00:00.000"
+            },
+            "note": {
+                "text": "getting up to speed",
+                "tags": [],
+                "mentions": []
+            }
+        },
+        {
+            "id": "2595265",
+            "activity": {
+                "id": "149664",
+                "name": "Meeting Allgemein 2018 [2759-321]",
+                "color": "#7d5767",
+                "integration": "zei"
+            },
+            "duration": {
+                "startedAt": "2018-06-18T04:00:00.000",
+                "stoppedAt": "2018-06-18T10:00:00.000"
+            },
+            "note": {
+                "text": "i hate meetings",
+                "tags": [],
+                "mentions": []
+            }
+        },
+        {
+            "id": "2595247",
+            "activity": {
+                "id": "149668",
+                "name": "Events und Feiern 2018 [2759-328]",
+                "color": "#d2d679",
+                "integration": "zei"
+            },
+            "duration": {
+                "startedAt": "2018-06-21T10:00:00.000",
+                "stoppedAt": "2018-06-21T11:00:00.000"
+            },
+            "note": {
+                "text": "Party Hard",
+                "tags": [],
+                "mentions": []
+            }
+        }
+    ]
+}
