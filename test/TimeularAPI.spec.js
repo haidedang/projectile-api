@@ -1,6 +1,7 @@
 let chai = require('chai');
-var assert = require('assert');
 let expect = chai.expect;
+var assert = require('assert');
+
 let timeularAPI = require('../timeularAPI');
 const projectile = require('../projectileAPI')
 let fs = require('fs');
@@ -10,7 +11,11 @@ let should = chai.should();
 const host = "http://localhost:3001";
 const winston = require('winston');
 
+
+
+
 chai.use(chaiHttp);
+
 
 // IMPORTANT NOTE FOR TESTING:
 // Set the parameter values in config.json before running the tests!
@@ -22,7 +27,7 @@ let activityID = null;
 before(function () {
     config = JSON.parse(fs.readFileSync('./config/test.json'));
     activityID = config.test.timeular.TimularActivityID;
-    let token = JSON.parse(fs.readFileSync('timeularToken.txt'));
+    token = JSON.parse(fs.readFileSync('timeularToken.txt'));
     config.token = token;
     timeularAPI.initializeToken(token);
 
@@ -56,6 +61,11 @@ describe('get Activites/Activity from Timeular', function () {
 
 describe('UNIT TESTS FOR MERGING', function () {
 
+    const Merge = require('./TimeularAPI/Merge');
+    const merge = new Merge([], [], token.apiToken);
+
+    const Normalize = require('./TimeularAPI/Normalize'); 
+
     // import Timeular MockObject 
     let timeList = JSON.parse(fs.readFileSync('./test/mocks/timeularList.json'));
     let projectileList = require('./mocks/projectileList');
@@ -66,27 +76,19 @@ describe('UNIT TESTS FOR MERGING', function () {
     this.startDate = '2018-06-18'
     this.endDate = '2018-06-24'
 
-    it('should return a List of TimeularBookings within specified time Range', (done) => {
 
+    it('should return a List of TimeularBookings within specified time Range', async () => {
 
-        let timeperiod = this.startDate + 'T00:00:00.000/' + this.endDate + 'T23:59:59.999';
-        chai.request('https://api.timeular.com')
-            .get('/api/v2/time-entries/' + timeperiod)
-            .set({
-                Authorization: 'Bearer ' + config.token.apiToken,
-                Accept: 'application/json;charset=UTF-8'
-            })
-            .end((err, res) => {
-                // fs.writeFileSync('./test/mocks/timeularList.json', JSON.stringify(res.body))
-                res.should.have.status(200);
-                done()
-            })
+        /* let result = await merge.fetchTimeList(this.startDate, this.endDate); 
+        let timeList = JSON.parse(result.body);
+         */
+        
     })
 
     it('should sort a List of TimeularBookings after ascending dates and times', () => {
 
-        timeList.timeEntries.sort(function (a, b) { return (new Date(a.duration.startedAt) - new Date(b.duration.startedAt)) });
-        expect(timeList.timeEntries[0].duration.startedAt).to.include(this.startDate)
+        expect(merge.sort(timeList).timeEntries[0].duration.startedAt).to.include(this.startDate)  // Function sort produces a side effect. It sort my initial array. 
+       
     })
 
     it('should prepare and modify the timeular List accordingly and save it to an array', () => {
@@ -124,11 +126,17 @@ describe('UNIT TESTS FOR MERGING', function () {
             this.month.push(day);
         }
 
-        expect(this.month[0]).to.be.an('object')
+        merge.format(merge.getTimeList());
+        assert.deepEqual(merge.getMonth()[0], this.month[0])
+        assert.deepEqual(merge.getMonth(), this.month)
+
+        /*  console.log(merge.getMonth());
+         console.log(this.month[0]) */
+
+        // expect(this.month[0]).to.be.an('object')
     })
 
     it('should merge Duration Time of duplicated Notes of entries in the same day', () => {
-        let actual = timeList;
 
         for (var i = 0; i < this.month.length; i++) {
             for (var j = i + 1; j < this.month.length; j++) { // j = i + 1 because .csv is sorted!
@@ -139,7 +147,7 @@ describe('UNIT TESTS FOR MERGING', function () {
                     let monthIId = this.month[i]["Note"].substring(this.month[i]["Note"].lastIndexOf(' #[') + 3, this.month[i]["Note"].lastIndexOf(']'));
                     let monthJId = this.month[j]["Note"].substring(this.month[j]["Note"].lastIndexOf(' #[') + 3, this.month[j]["Note"].lastIndexOf(']'));
                     this.month[i]["Note"] = this.month[i]["Note"].substring(0, this.month[i]["Note"].lastIndexOf(' #['));
-                    this.month[i]["Note"] = this.month[i]["Note"] + ' #[' + this.monthIId + ',' + this.monthJId + ']';
+                    this.month[i]["Note"] = this.month[i]["Note"] + ' #[' + monthIId + ',' + monthJId + ']';
                     // all fine?
                     winston.debug('Merge (Range) -> merging bookings --> new Note: ' + this.month[i]["Note"] + ' for ', this.month[i]["StartDate"], this.month[i]["Activity"], this.month[i]["Duration"]);
                     // winston.debug("merging durations, compare activity: " + this.month[i]["Activity"] + " " + this.month[j]["Activity"] + " " + this.month[i]["Note"]);
@@ -151,9 +159,16 @@ describe('UNIT TESTS FOR MERGING', function () {
             }
             this.monthCleaned.push(this.month[i]); // output the merged day entry to clean array
         }
-        //console.log(this.monthCleaned)
-        // expect duplicated notes to be merged  -> true but yet to define as function statement 
+
+        merge.mergeDurationTime(merge.getMonth());
+        assert.deepEqual(merge.getMonthCleaned(), this.monthCleaned)
+
     })
+
+    /* it('should run through all functions with ease', async () => { 
+        
+        assert.deepEqual(await timeularAPI.merge(this.startDate,this.endDate), this.monthCleaned);
+    }) */
 
     it('should group Objects to an Array with same Date', () => {
         function splitintoSeperateDays(array) {
@@ -168,12 +183,61 @@ describe('UNIT TESTS FOR MERGING', function () {
                 winston.error(err);
             }
         }
+        /* this.client = splitintoSeperateDays(this.monthCleaned);
+        this.server = splitintoSeperateDays(projectileList); */
 
-        let result = splitintoSeperateDays(this.monthCleaned);
+        this.client = Normalize.splitIntoSeperateDays(merge.getMonthCleaned())
+        this.server = Normalize.splitIntoSeperateDays(merge.getMonthCleaned())
 
-        for (var i = 0; i < result.length - 1; i++) {
-            assert.notEqual(result[i][0].StartDate, result[i + 1][0].StartDate, 'should not be the same')
+
+        for (var i = 0; i < this.client.length - 1; i++) {
+            assert.notEqual(this.client[i][0].StartDate, this.client[i + 1][0].StartDate, 'should not be the same')
         }
+
+        for (var i = 0; i < this.server.length - 1; i++) {
+            assert.notEqual(this.server[i][0].StartDate, this.server[i + 1][0].StartDate, 'should not be the same')
+        }
+
+    })
+
+    it('should get all entries of Serverlist which the same Date as Client', () => {
+        let clientDaysInProjectile = [];
+        this.client.forEach((item) => {
+            clientDaysInProjectile.push(this.server.filterAdvanced((obj) => obj[0].StartDate == item[0].StartDate, (temp) => this.server.indexOf(temp)))
+        });
+
+        assert(Normalize.getIndexesOfSameDateInClient(this.client, this.server), clientDaysInProjectile)
+        console.log(clientDaysInProjectile)
+        console.log(Normalize.getIndexesOfSameDateInClient(this.client, this.server))
+    })
+
+    it('should split the serverArray into one containing the client dates and one with the rest', () => {
+        function prepareForSaveAndDeleting(serverDays, serverDaysInProjectile) {
+            let obj = {};
+            obj.cleanProjectileList = [];
+            obj.dayList = [];
+
+            let Overalllist = [];
+            serverDays.forEach((item) => {
+                Overalllist.push(false);
+            });
+
+            // set Overall list index , where serverDay exists in timular to true !
+            //serverDaysInProjectile contains all Indices to Day Arrays which exists in Timular
+            serverDaysInProjectile.forEach((item) => Overalllist[item] = true);
+            // winston.debug(Overalllist);
+
+            // Push into Projectile List with same days as Timular List , if false push to List to delete out of Projectile
+            for (var i = 0; i < Overalllist.length; i++) {
+                if (Overalllist[i] == true) {
+                    obj.dayList.push(serverDays[i]);
+                } else {
+                    obj.cleanProjectileList.push(serverDays[i]);
+                }
+            }
+            return obj;
+        }
+        prepareForSaveAndDeleting
     })
 
 })
