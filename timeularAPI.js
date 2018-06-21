@@ -2,6 +2,8 @@ const request = require('request');
 const rp = require('request-promise');
 const projectile = require('./projectileAPI.js');
 const fs = require('fs');
+const Merge = require('./test/TimeularAPI/Merge');
+
 
 const util = require('util'); // for Debug only --> util.inspect()
 
@@ -11,13 +13,13 @@ const winston = require('winston');
 
 let token;
 exports.initializeToken = async (tokenApi) => {
-  try {
-    token = tokenApi;
-  } catch (e) {
-    winston.error('timeularAPI No token file seems to be available. Please run "node getTimularToken.js" to create ' +
-    'a token file.');
-    // process.exit();
-  }
+    try {
+        token = tokenApi;
+    } catch (e) {
+        winston.error('timeularAPI No token file seems to be available. Please run "node getTimularToken.js" to create ' +
+            'a token file.');
+        // process.exit();
+    }
 };
 /* OLD APPROACH
 let token;
@@ -42,23 +44,23 @@ let monthCleaned = []; */
  *
  */
 exports.getActivities = async () => {
-  let result = await rp({
-    method: 'GET',
-    uri: 'https://api.timeular.com/api/v2/activities',
-    resolveWithFullResponse: true,
-    headers: {
-      Authorization:'Bearer ' + token.apiToken,
-      Accept: 'application/json;charset=UTF-8'
-    }
-  }).then(function (res) {
-      if (res.statusCode === 200) {
-        return JSON.parse(res.body);
-      }
-  }).catch(function (err) {
-      throw new Error("An error occured. ", err);
-      return res.body;
-  });
-  return result;
+    let result = await rp({
+        method: 'GET',
+        uri: 'https://api.timeular.com/api/v2/activities',
+        resolveWithFullResponse: true,
+        headers: {
+            Authorization: 'Bearer ' + token.apiToken,
+            Accept: 'application/json;charset=UTF-8'
+        }
+    }).then(function (res) {
+        if (res.statusCode === 200) {
+            return JSON.parse(res.body);
+        }
+    }).catch(function (err) {
+        throw new Error("An error occured. ", err);
+        return res.body;
+    });
+    return result;
 }
 
 
@@ -70,56 +72,56 @@ exports.getActivities = async () => {
  *
  */
 async function compareActivities() {
-  let timeularActivities = await exports.getActivities();
-  let projectileJobList = await projectile.fetchNewJobList();
-  let timeularHasProjectileNot = []; // List what activities to archive in timeular
-  let projectileHasTimeularNot = []; // List what activities to create in timeular
+    let timeularActivities = await exports.getActivities();
+    let projectileJobList = await projectile.fetchNewJobList();
+    let timeularHasProjectileNot = []; // List what activities to archive in timeular
+    let projectileHasTimeularNot = []; // List what activities to create in timeular
 
-  // to archive
-  winston.debug('starting comparing.....');
-  let activityList = await exports.getActivities();
-  activityList.activities.forEach((item) => {
-    let matchChecker = false;
-    let entryObj = {};
-    projectileJobList.forEach((item2) => {
-      let timeularActivityID = item.name.substring(item.name.lastIndexOf("[") + 1, item.name.lastIndexOf("]"));
-      let projectilePackageID = item2.no;
-      // winston.debug('testing: ' + timeularActivityID, projectilePackageID);
-      if (timeularActivityID === projectilePackageID) {
-        matchChecker = true;
-        // winston.debug('match: ' + timeularActivityID, projectilePackageID);
-      }
+    // to archive
+    winston.debug('starting comparing.....');
+    let activityList = await exports.getActivities();
+    activityList.activities.forEach((item) => {
+        let matchChecker = false;
+        let entryObj = {};
+        projectileJobList.forEach((item2) => {
+            let timeularActivityID = item.name.substring(item.name.lastIndexOf("[") + 1, item.name.lastIndexOf("]"));
+            let projectilePackageID = item2.no;
+            // winston.debug('testing: ' + timeularActivityID, projectilePackageID);
+            if (timeularActivityID === projectilePackageID) {
+                matchChecker = true;
+                // winston.debug('match: ' + timeularActivityID, projectilePackageID);
+            }
+        })
+        if (!matchChecker) {
+            timeularHasProjectileNot.push(item);  // to archive!!
+        }
     })
-    if (!matchChecker) {
-      timeularHasProjectileNot.push(item);  // to archive!!
-    }
-  })
-  // winston.debug('to archive: ' + util.inspect(timeularHasProjectileNot));
+    // winston.debug('to archive: ' + util.inspect(timeularHasProjectileNot));
 
-  // to create
-  projectileJobList.forEach((item) => {
-    let missingChecker = true;
-    let entryObj = {};
-    activityList.activities.forEach((item2) => {
-      let timeularActivityID = item2.name.substring(item2.name.lastIndexOf("[") + 1, item2.name.lastIndexOf("]"));
-      let projectilePackageID = item.no;
-      // winston.debug('testing: ' + timeularActivityID, projectilePackageID);
-      if (timeularActivityID === projectilePackageID) {
-        missingChecker = false;
-        // winston.debug('match: ' + timeularActivityID, projectilePackageID);
-      }
+    // to create
+    projectileJobList.forEach((item) => {
+        let missingChecker = true;
+        let entryObj = {};
+        activityList.activities.forEach((item2) => {
+            let timeularActivityID = item2.name.substring(item2.name.lastIndexOf("[") + 1, item2.name.lastIndexOf("]"));
+            let projectilePackageID = item.no;
+            // winston.debug('testing: ' + timeularActivityID, projectilePackageID);
+            if (timeularActivityID === projectilePackageID) {
+                missingChecker = false;
+                // winston.debug('match: ' + timeularActivityID, projectilePackageID);
+            }
+        })
+        if (missingChecker) {
+            projectileHasTimeularNot.push(item);  // to archive!!
+        }
     })
-    if (missingChecker) {
-      projectileHasTimeularNot.push(item);  // to archive!!
-    }
-  })
-  // winston.debug('to create: ' + util.inspect(projectileHasTimeularNot));
-  let result = {
-    projectileHasTimeularNot: projectileHasTimeularNot,
-    timeularHasProjectileNot: timeularHasProjectileNot
-  };
-  winston.debug('... done comparing.');
-  return result;
+    // winston.debug('to create: ' + util.inspect(projectileHasTimeularNot));
+    let result = {
+        projectileHasTimeularNot: projectileHasTimeularNot,
+        timeularHasProjectileNot: timeularHasProjectileNot
+    };
+    winston.debug('... done comparing.');
+    return result;
 }
 
 
@@ -131,37 +133,37 @@ async function compareActivities() {
  *
  */
 exports.packageActivityList = async (id) => {
-  // collect activities (and package names) from timeular
-  let timeularActivities = await exports.getActivities();
-  let packageActivity = [];
-  timeularActivities.activities.forEach((item) => {
-    let obj = {};
-    obj["Activity"] = item.id;
-    obj["Package"] = item.name.substring(item.name.lastIndexOf("[") + 1, item.name.lastIndexOf("]"));
-    packageActivity.push(obj);
-  })
-  // find fitting id's and return them
-  let activtiyId = '';
-  let packageId = '';
-  if (id.includes('-')) { // projectile package format --> translate to activity
-    packageId = id;
-    packageActivity.forEach((item) => {
-      if (item.Package === packageId) {
-        activityId = item.Activity;
-      }
+    // collect activities (and package names) from timeular
+    let timeularActivities = await exports.getActivities();
+    let packageActivity = [];
+    timeularActivities.activities.forEach((item) => {
+        let obj = {};
+        obj["Activity"] = item.id;
+        obj["Package"] = item.name.substring(item.name.lastIndexOf("[") + 1, item.name.lastIndexOf("]"));
+        packageActivity.push(obj);
     })
-  } else { // timeular package format --> translate to package
-    activityId = id;
-    packageActivity.forEach((item) => {
-      if (item.Activity === activityId) {
-        packageId = item.Package;
-      }
-    })
-  }
-  return {
-    'Activity': activityId,
-    'Package': packageId
-  }
+    // find fitting id's and return them
+    let activtiyId = '';
+    let packageId = '';
+    if (id.includes('-')) { // projectile package format --> translate to activity
+        packageId = id;
+        packageActivity.forEach((item) => {
+            if (item.Package === packageId) {
+                activityId = item.Activity;
+            }
+        })
+    } else { // timeular package format --> translate to package
+        activityId = id;
+        packageActivity.forEach((item) => {
+            if (item.Activity === activityId) {
+                packageId = item.Package;
+            }
+        })
+    }
+    return {
+        'Activity': activityId,
+        'Package': packageId
+    }
 }
 
 /**
@@ -173,31 +175,31 @@ exports.packageActivityList = async (id) => {
  *
  */
 exports.updateActivities = async (create, archive) => {
-  let resultState = true;
-  // compare jobList and activityList
-  let result = await compareActivities();
+    let resultState = true;
+    // compare jobList and activityList
+    let result = await compareActivities();
 
-  // create - contains projectile objects -> convert and create
-  if (create) {
-    result.projectileHasTimeularNot.forEach((item) => {
-      winston.debug('Starting creating activities...', item.name, item.no);
-      if (!createActivity(item.name, item.no)) {
-        winston.error('Error: Creating activity for ' + item.name, item.no + ' failed.');
-        resultState = false;
-      }
-    });
-  }
-  // archive - contains timeular objects -> archive those
-  if (archive) {
-    result.timeularHasProjectileNot.forEach((item) => {
-      winston.debug('Starting archiving activities...', item.name, item.id);
-      if (!archiveActivity(item.id)) {
-        winston.error('Error: Archiving of activity ' + item.name, item.id + ' failed.');
-        resultState = false;
-      }
-    });
-  }
-  return (resultState);
+    // create - contains projectile objects -> convert and create
+    if (create) {
+        result.projectileHasTimeularNot.forEach((item) => {
+            winston.debug('Starting creating activities...', item.name, item.no);
+            if (!createActivity(item.name, item.no)) {
+                winston.error('Error: Creating activity for ' + item.name, item.no + ' failed.');
+                resultState = false;
+            }
+        });
+    }
+    // archive - contains timeular objects -> archive those
+    if (archive) {
+        result.timeularHasProjectileNot.forEach((item) => {
+            winston.debug('Starting archiving activities...', item.name, item.id);
+            if (!archiveActivity(item.id)) {
+                winston.error('Error: Archiving of activity ' + item.name, item.id + ' failed.');
+                resultState = false;
+            }
+        });
+    }
+    return (resultState);
 }
 
 /**
@@ -209,32 +211,32 @@ exports.updateActivities = async (create, archive) => {
  *
  */
 async function createActivity(name, no) {
-  let activityName = name + ' [' + no + ']';
-  // generate color dynamically
-  let color = '#' + Math.floor((Math.random() * 255) + 1).toString(16) + Math.floor((Math.random() * 255) + 1).toString(16) + Math.floor((Math.random() * 255) + 1).toString(16);
+    let activityName = name + ' [' + no + ']';
+    // generate color dynamically
+    let color = '#' + Math.floor((Math.random() * 255) + 1).toString(16) + Math.floor((Math.random() * 255) + 1).toString(16) + Math.floor((Math.random() * 255) + 1).toString(16);
 
-  let result = await rp({
-    method: 'POST',
-    uri: 'https://api.timeular.com/api/v2/activities',
-    resolveWithFullResponse: true,
-    headers: {
-      Authorization:'Bearer ' + token.apiToken,
-      Accept: 'application/json;charset=UTF-8',
-      'content-type': 'application/json;charset=UTF-8'
-    },
-    json: {
-        "name": activityName,
-        "color": color,
-        "integration": "zei"
-    }
-  }).then(function (res) {
+    let result = await rp({
+        method: 'POST',
+        uri: 'https://api.timeular.com/api/v2/activities',
+        resolveWithFullResponse: true,
+        headers: {
+            Authorization: 'Bearer ' + token.apiToken,
+            Accept: 'application/json;charset=UTF-8',
+            'content-type': 'application/json;charset=UTF-8'
+        },
+        json: {
+            "name": activityName,
+            "color": color,
+            "integration": "zei"
+        }
+    }).then(function (res) {
         if (res.statusCode === '201' || res.statusCode === 201) {
-        return true;
-      }
-  }).catch(function (err) {
-      throw new Error("An error occured. ", err);
-      return false;
-  });
+            return true;
+        }
+    }).catch(function (err) {
+        throw new Error("An error occured. ", err);
+        return false;
+    });
 }
 
 /**
@@ -245,22 +247,22 @@ async function createActivity(name, no) {
  *
  */
 async function archiveActivity(activityId) {
-  let result = await rp({
-    method: 'DELETE',
-    uri: 'https://api.timeular.com/api/v2/activities/' + activityId,
-    resolveWithFullResponse: true,
-    headers: {
-      Authorization:'Bearer ' + token.apiToken,
-      Accept: 'application/json;charset=UTF-8',
-    }
-  }).then(function (res) {
+    let result = await rp({
+        method: 'DELETE',
+        uri: 'https://api.timeular.com/api/v2/activities/' + activityId,
+        resolveWithFullResponse: true,
+        headers: {
+            Authorization: 'Bearer ' + token.apiToken,
+            Accept: 'application/json;charset=UTF-8',
+        }
+    }).then(function (res) {
         if (res.statusCode === '200' || res.statusCode === 200) {
-        return true;
-      }
-  }).catch(function (err) {
-      throw new Error("An error occured. ", err, res.body.errors);
-      return false;
-  });
+            return true;
+        }
+    }).catch(function (err) {
+        throw new Error("An error occured. ", err, res.body.errors);
+        return false;
+    });
 }
 
 
@@ -276,289 +278,210 @@ async function archiveActivity(activityId) {
  *   // OBSOLETE? currently not used! bookActivityNG is used!
  */  // WIP!!! Alternative with time like 9:00 as minimum start time?!
 exports.bookActivity = async (date, duration, activityId, note) => {
-  // get all entries for date
-  let startTime = date + 'T00:00:00.000'; // set minimum time here :)
-  let endTime = date + 'T23:59:59.999';
-  await request.get('https://api.timeular.com/api/v2/time-entries/' + startTime + '/' + endTime,{
-    headers: {
-      Authorization:'Bearer ' + token.apiToken,
-      Accept: 'application/json;charset=UTF-8'
+    // get all entries for date
+    let startTime = date + 'T00:00:00.000'; // set minimum time here :)
+    let endTime = date + 'T23:59:59.999';
+    await request.get('https://api.timeular.com/api/v2/time-entries/' + startTime + '/' + endTime, {
+        headers: {
+            Authorization: 'Bearer ' + token.apiToken,
+            Accept: 'application/json;charset=UTF-8'
+        }
+    }, (err, res) => {
+        let timeEntries = JSON.parse(res.body).timeEntries;
+
+        // get last Entry of day, get stoppedAt time, use as new startedAt - if there is no entry for date, startedAt = 9:00
+        let latestStoppedAt = new Date(startTime + 'Z');
+        if (timeEntries && timeEntries.length > 0) {
+            timeEntries.forEach((item) => {
+                if (new Date(item.duration.stoppedAt + 'Z') > latestStoppedAt) {
+                    winston.debug('Debug bookActivity -> lastestStoppedAt -> neuer gefunden!');
+                    latestStoppedAt = new Date(item.duration.stoppedAt + 'Z');
+                }
+            });
+        }
+        // normalize duration (get sum of minutes): valid input x:xx and x,xx and x.xx
+        let sumMinutes = 0;
+        if (duration.includes(":")) {
+            let durSplit = duration.split(":");
+            let durHours = parseInt(durSplit[0]);
+            let durMinutes = 0;
+            if (durSplit[1].length === 2) {
+                durMinutes = parseInt(durSplit[1]);
+            }
+            sumMinutes = durHours * 60 + durMinutes;
+        } else if (duration.includes(",")) {
+            let durSplit = duration.split(",");
+            let durHours = parseInt(durSplit[0]);
+            let durMinutes = parseFloat('0.' + parseInt(durSplit[1])) * 60;
+            sumMinutes = durHours * 60 + durMinutes
+        } else if (duration.includes(".")) {
+            let durSplit = duration.split(".");
+            let durHours = parseInt(durSplit[0]);
+            let durMinutes = parseFloat('0.' + parseInt(durSplit[1])) * 60;
+            sumMinutes = durHours * 60 + durMinutes
+        } else {
+            sumMinutes = duration * 60;  // asuming flat hours are provided
+            // throw new Error('bookActivity - duration argument seems broken! ' + duration);
+        }
+        // create timeEntry and post it
+        // latestStoppedAt = new Date(latestStoppedAt.setMinutes(latestStoppedAt.getMinutes() + 60)); // NOTE +60 due to timezone issues, in timeluar then offset of 60mins... weird!
+        let newStoppedAt = new Date(latestStoppedAt);
+        newStoppedAt = new Date(newStoppedAt.setMinutes(newStoppedAt.getMinutes() + sumMinutes));
+        winston.debug(latestStoppedAt.toISOString().substr(0, 23), newStoppedAt.toISOString().substr(0, 23));
+        // remove z from end of date string!
+        let timeEntry = {
+            "activityId": activityId, // id of activity to book on.
+            "startedAt": latestStoppedAt.toISOString().substr(0, 23),  // hard to create automatically....depends on other activities of the day --> calculate from duration
+            "stoppedAt": newStoppedAt.toISOString().substr(0, 23),
+            "note": {
+                "text": note,
+                "tags": [],
+                "mentions": []
+            }
+        };
+
+        request.post('https://api.timeular.com/api/v2/time-entries', {
+            headers: {
+                Authorization: 'Bearer ' + token.apiToken,
+                Accept: 'application/json;charset=UTF-8',
+                'content-type': 'application/json;charset=UTF-8'
+            },
+            json: timeEntry
+        }, (err, res) => {
+            winston.debug(res.body, res.statusCode);
+            if (err) {
+                throw new Error("An error occured. ", err);
+                return false;
+            }
+            if (res.statusCode == '201' || res.statusCode == 201) {
+                return true;
+            }
+            return false;
+        });
+
+    })
+}
+
+// WIP - successor to bookActivity
+exports.bookActivityNG = async ({ date, duration, activityId, note }) => {
+    // get all entries for date
+    let startTime = date + 'T00:00:00.000'; // set minimum time here :)
+    let endTime = date + 'T23:59:59.999';
+
+    async function book1(timeEntry) {
+        let statusCode = '';
+        await rp({
+            method: 'POST',
+            uri: 'https://api.timeular.com/api/v2/time-entries',
+            resolveWithFullResponse: true,
+            headers: {
+                Authorization: 'Bearer ' + token.apiToken,
+                Accept: 'application/json;charset=UTF-8',
+                'content-type': 'application/json;charset=UTF-8'
+            },
+            json: timeEntry
+        }).then(function (res) {
+            statusCode = res.statusCode;
+        });
+        return statusCode;
     }
-  }, (err, res) => {
-    let timeEntries = JSON.parse(res.body).timeEntries;
+
+    async function book0(date, duration, activityId, note, startTime, endTime) {
+        let antwort = '';
+        await rp({
+            method: 'GET',
+            uri: 'https://api.timeular.com/api/v2/time-entries/' + startTime + '/' + endTime,
+            resolveWithFullResponse: true,
+            headers: {
+                Authorization: 'Bearer ' + token.apiToken,
+                Accept: 'application/json;charset=UTF-8'
+            }
+        }).then(function (res) {
+            antwort = res.body;
+        });
+        return antwort;
+    }
+
+    let antwort2 = await book0(date, duration, activityId, note, startTime, endTime);
+    let timeEntries = JSON.parse(antwort2).timeEntries;
 
     // get last Entry of day, get stoppedAt time, use as new startedAt - if there is no entry for date, startedAt = 9:00
     let latestStoppedAt = new Date(startTime + 'Z');
     if (timeEntries && timeEntries.length > 0) {
-      timeEntries.forEach((item) => {
-        if (new Date(item.duration.stoppedAt + 'Z') > latestStoppedAt) {
-          winston.debug('Debug bookActivity -> lastestStoppedAt -> neuer gefunden!');
-          latestStoppedAt = new Date(item.duration.stoppedAt + 'Z');
-        }
-      });
+        timeEntries.forEach((item) => {
+            if (new Date(item.duration.stoppedAt + 'Z') > latestStoppedAt) {
+                winston.debug('Debug bookActivity -> lastestStoppedAt -> neuer gefunden!');
+                latestStoppedAt = new Date(item.duration.stoppedAt + 'Z');
+            }
+        });
     }
     // normalize duration (get sum of minutes): valid input x:xx and x,xx and x.xx
     let sumMinutes = 0;
     if (duration.includes(":")) {
-      let durSplit = duration.split(":");
-      let durHours = parseInt(durSplit[0]);
-      let durMinutes = 0;
-      if (durSplit[1].length === 2) {
-        durMinutes = parseInt(durSplit[1]);
-      }
-      sumMinutes = durHours * 60 + durMinutes;
+        let durSplit = duration.split(":");
+        let durHours = parseInt(durSplit[0]);
+        let durMinutes = 0;
+        if (durSplit[1].length === 2) {
+            durMinutes = parseInt(durSplit[1]);
+        }
+        sumMinutes = durHours * 60 + durMinutes;
     } else if (duration.includes(",")) {
-      let durSplit = duration.split(",");
-      let durHours = parseInt(durSplit[0]);
-      let durMinutes = parseFloat('0.' + parseInt(durSplit[1]))*60;
-      sumMinutes = durHours * 60 + durMinutes
+        let durSplit = duration.split(",");
+        let durHours = parseInt(durSplit[0]);
+        let durMinutes = parseFloat('0.' + parseInt(durSplit[1])) * 60;
+        sumMinutes = durHours * 60 + durMinutes
     } else if (duration.includes(".")) {
-      let durSplit = duration.split(".");
-      let durHours = parseInt(durSplit[0]);
-      let durMinutes = parseFloat('0.' + parseInt(durSplit[1]))*60;
-      sumMinutes = durHours * 60 + durMinutes
+        let durSplit = duration.split(".");
+        let durHours = parseInt(durSplit[0]);
+        let durMinutes = parseFloat('0.' + parseInt(durSplit[1])) * 60;
+        sumMinutes = durHours * 60 + durMinutes
     } else {
-      sumMinutes = duration * 60;  // asuming flat hours are provided
-      // throw new Error('bookActivity - duration argument seems broken! ' + duration);
+        sumMinutes = duration * 60;  // asuming flat hours are provided
+        // throw new Error('bookActivity - duration argument seems broken! ' + duration);
     }
     // create timeEntry and post it
     // latestStoppedAt = new Date(latestStoppedAt.setMinutes(latestStoppedAt.getMinutes() + 60)); // NOTE +60 due to timezone issues, in timeluar then offset of 60mins... weird!
     let newStoppedAt = new Date(latestStoppedAt);
     newStoppedAt = new Date(newStoppedAt.setMinutes(newStoppedAt.getMinutes() + sumMinutes));
-    winston.debug(latestStoppedAt.toISOString().substr(0,23), newStoppedAt.toISOString().substr(0,23) );
+    winston.debug(latestStoppedAt.toISOString().substr(0, 23), newStoppedAt.toISOString().substr(0, 23));
     // remove z from end of date string!
     let timeEntry = {
-      "activityId": activityId, // id of activity to book on.
-      "startedAt": latestStoppedAt.toISOString().substr(0,23),  // hard to create automatically....depends on other activities of the day --> calculate from duration
-      "stoppedAt": newStoppedAt.toISOString().substr(0,23),
-      "note": {
-        "text": note,
-        "tags": [],
-        "mentions": []
-      }
+        "activityId": activityId, // id of activity to book on.
+        "startedAt": latestStoppedAt.toISOString().substr(0, 23),  // hard to create automatically....depends on other activities of the day --> calculate from duration
+        "stoppedAt": newStoppedAt.toISOString().substr(0, 23),
+        "note": {
+            "text": note,
+            "tags": [],
+            "mentions": []
+        }
     };
 
-    request.post('https://api.timeular.com/api/v2/time-entries',{
-      headers: {
-        Authorization:'Bearer ' + token.apiToken,
-        Accept: 'application/json;charset=UTF-8',
-        'content-type': 'application/json;charset=UTF-8'
-      },
-      json: timeEntry
-    }, (err, res) => {
-      winston.debug(res.body, res.statusCode);
-      if (err) {
-        throw new Error("An error occured. ", err);
-        return false;
-      }
-      if (res.statusCode == '201' || res.statusCode == 201) {
+    let antwort = await book1(timeEntry);
+    if (antwort === 201 || antwort === '201') {
         return true;
-      }
-      return false;
-    });
-
-  })
-}
-
-// WIP - successor to bookActivity
-exports.bookActivityNG = async ({date, duration, activityId, note}) => {
-  // get all entries for date
-  let startTime = date + 'T00:00:00.000'; // set minimum time here :)
-  let endTime = date + 'T23:59:59.999';
-
-  async function book1(timeEntry) {
-    let statusCode = '';
-    await rp({
-      method: 'POST',
-      uri: 'https://api.timeular.com/api/v2/time-entries',
-      resolveWithFullResponse: true,
-      headers: {
-        Authorization:'Bearer ' + token.apiToken,
-        Accept: 'application/json;charset=UTF-8',
-        'content-type': 'application/json;charset=UTF-8'
-      },
-      json: timeEntry
-    }).then(function (res) {
-      statusCode = res.statusCode;
-    });
-    return statusCode;
-  }
-
-  async function book0(date, duration, activityId, note, startTime, endTime) {
-    let antwort = '';
-    await rp({
-      method: 'GET',
-      uri: 'https://api.timeular.com/api/v2/time-entries/' + startTime + '/' + endTime,
-      resolveWithFullResponse: true,
-      headers: {
-        Authorization:'Bearer ' + token.apiToken,
-        Accept: 'application/json;charset=UTF-8'
-      }
-    }).then(function (res) {
-      antwort = res.body;
-    });
-    return antwort;
-  }
-
-  let antwort2 = await book0(date, duration, activityId, note, startTime, endTime);
-  let timeEntries = JSON.parse(antwort2).timeEntries;
-
-  // get last Entry of day, get stoppedAt time, use as new startedAt - if there is no entry for date, startedAt = 9:00
-  let latestStoppedAt = new Date(startTime + 'Z');
-  if (timeEntries && timeEntries.length > 0) {
-    timeEntries.forEach((item) => {
-      if (new Date(item.duration.stoppedAt + 'Z') > latestStoppedAt) {
-        winston.debug('Debug bookActivity -> lastestStoppedAt -> neuer gefunden!');
-        latestStoppedAt = new Date(item.duration.stoppedAt + 'Z');
-      }
-    });
-  }
-  // normalize duration (get sum of minutes): valid input x:xx and x,xx and x.xx
-  let sumMinutes = 0;
-  if (duration.includes(":")) {
-    let durSplit = duration.split(":");
-    let durHours = parseInt(durSplit[0]);
-    let durMinutes = 0;
-    if (durSplit[1].length === 2) {
-      durMinutes = parseInt(durSplit[1]);
     }
-    sumMinutes = durHours * 60 + durMinutes;
-  } else if (duration.includes(",")) {
-    let durSplit = duration.split(",");
-    let durHours = parseInt(durSplit[0]);
-    let durMinutes = parseFloat('0.' + parseInt(durSplit[1]))*60;
-    sumMinutes = durHours * 60 + durMinutes
-  } else if (duration.includes(".")) {
-    let durSplit = duration.split(".");
-    let durHours = parseInt(durSplit[0]);
-    let durMinutes = parseFloat('0.' + parseInt(durSplit[1]))*60;
-    sumMinutes = durHours * 60 + durMinutes
-  } else {
-    sumMinutes = duration * 60;  // asuming flat hours are provided
-    // throw new Error('bookActivity - duration argument seems broken! ' + duration);
-  }
-  // create timeEntry and post it
-  // latestStoppedAt = new Date(latestStoppedAt.setMinutes(latestStoppedAt.getMinutes() + 60)); // NOTE +60 due to timezone issues, in timeluar then offset of 60mins... weird!
-  let newStoppedAt = new Date(latestStoppedAt);
-  newStoppedAt = new Date(newStoppedAt.setMinutes(newStoppedAt.getMinutes() + sumMinutes));
-  winston.debug(latestStoppedAt.toISOString().substr(0,23), newStoppedAt.toISOString().substr(0,23) );
-  // remove z from end of date string!
-  let timeEntry = {
-    "activityId": activityId, // id of activity to book on.
-    "startedAt": latestStoppedAt.toISOString().substr(0,23),  // hard to create automatically....depends on other activities of the day --> calculate from duration
-    "stoppedAt": newStoppedAt.toISOString().substr(0,23),
-    "note": {
-      "text": note,
-      "tags": [],
-      "mentions": []
-    }
-  };
-
-  let antwort = await book1(timeEntry);
-  if (antwort === 201 || antwort === '201') {
-    return true;
-  }
-  return false;
+    return false;
 }
 
 
 // ehemals exports.main //  better naming of funct?
 // synchronize/merge timeular bookings to projectile withing a date range. date -> YYYY-MM-DD
 exports.merge = async (startDate, endDate) => {
+    const merge = new Merge([], [], token.apiToken);
     let returnResponse = '';
     let listentry = 0;
-    let month = [];
-    let monthCleaned = [];
-    // timeperiod structure --> 2017-01-01T00:00:00.000/2018-01-31T00:00:00.000
-    let timeperiod = startDate + 'T00:00:00.000/' + endDate + 'T23:59:59.999';
-    // get timeular entries
-    let result = await rp({
-      method: 'GET',
-      uri: 'https://api.timeular.com/api/v2/time-entries/' + timeperiod,
-      resolveWithFullResponse: true,
-      headers: {
-          Authorization:'Bearer ' + token.apiToken,
-          Accept: 'application/json;charset=UTF-8'
-      }
-    }).then(function (res) {
-      let timeList = JSON.parse(res.body);
-
-      winston.debug('Merge (Range, retrieved) -> timeList: ', JSON.stringify( timeList, null, 2 ));
-
-      // sort the retrieved unsorted list of Timular Entries after ascending dates and times --> easier handling from now on
-      // (keep the booking order)
-      timeList.timeEntries.sort(function (a, b) { return (new Date(a.duration.startedAt) - new Date(b.duration.startedAt)) });
-
-      winston.debug('Merge (Range, sorted) -> timeList: ', JSON.stringify( timeList, null, 2 ));
-
-      for (let i = 0; i < timeList.timeEntries.length; i++) {
-          let day = {};
-          day["StartDate"] = timeList.timeEntries[i].duration.startedAt.substring(0, timeList.timeEntries[i].duration.startedAt.indexOf("T"));
-          /*
-          timestamp from timeular is not accurate. sometimes 2h = 120min has a value thats != 120min. To solve that I cut the
-          seconds and milliseconds from the timestamp. Decreases precision --> alternative would be to round values
-          */
-          day["Duration"] = ((Date.parse(timeList.timeEntries[i].duration.stoppedAt.substring(0, timeList.timeEntries[i].duration.stoppedAt.lastIndexOf(":"))) - Date.parse(timeList.timeEntries[i].duration.startedAt.substring(0, timeList.timeEntries[i].duration.startedAt.lastIndexOf(":")))) / 60000) / 60;
-          // get projectile packagename from timeular activity name e.g. "name": "Interne Organisation 2018 [2759-62]"
-          day["Activity"] = timeList.timeEntries[i].activity.name.substring(timeList.timeEntries[i].activity.name.lastIndexOf("[") + 1, timeList.timeEntries[i].activity.name.lastIndexOf("]"));
-          // collision detection through improved Notes containing timeular id of entry
-          if (timeList.timeEntries[i].note.text !== null) {
-            day["Note"] = timeList.timeEntries[i].note.text; // add timeular id of entry here
-            day["Note"] = day["Note"] + ' #['  + timeList.timeEntries[i].id + ']'; // creating new style note entries for collision detecting
-          } else {
-            day["Note"] = '';
-          }
-          // keep the original complete date, to provide improved sorting of results for frontend
-          day["startedAt"] = timeList.timeEntries[i].duration.startedAt;
-
-          // "normalize" note - Q'n'D fix for projectile.js to avoid malformed characters in projectile
-          // !!! TODO CHECK - final clean solution in saveEntry necessary!
-          day["Note"] = day["Note"].replace(/ä/g, "ae").replace(/Ä/g, "Ae").replace(/ü/g, "ue").replace(/Ü/g, "Ue").replace(/ö/g, "oe").replace(/Ö/g, "Oe").replace(/ß/g, "ss");
-          // remove newlines,... \n \r from notes
-          day["Note"] = day["Note"].replace(/\r?\n|\r/g, " ");
-          // end
-          month.push(day);
-      }
-      winston.debug('Merge (Range) -> resulting month size: ' + month.length);
-
-      winston.debug("Merge (Range) -> month before merge: " + JSON.stringify(month, null, 2));
-
-      // merging Duration time of dup Note lines for entries from same day
-      for (var i = 0; i < month.length; i++) {
-          for (var j = i + 1; j < month.length; j++) { // j = i + 1 because .csv is sorted!
-            // winston.debug( i + "#" + j);
-              if ((month[i]["StartDate"] === month[j]["StartDate"]) && (month[i]["Note"].substring(0, month[i]["Note"].lastIndexOf(" #[")) === month[j]["Note"].substring(0, month[j]["Note"].lastIndexOf(" #["))) && (month[i]["Activity"] === month[j]["Activity"])) {
-                  month[i]["Duration"] = (month[i]["Duration"] * 60 + month[j]["Duration"] * 60) / 60;
-                  // add new extended note to "new" merged entry
-                  let monthIId = month[i]["Note"].substring(month[i]["Note"].lastIndexOf(' #[') + 3, month[i]["Note"].lastIndexOf(']'));
-                  let monthJId = month[j]["Note"].substring(month[j]["Note"].lastIndexOf(' #[') + 3, month[j]["Note"].lastIndexOf(']'));
-                  month[i]["Note"] = month[i]["Note"].substring(0, month[i]["Note"].lastIndexOf(' #['));
-                  month[i]["Note"] = month[i]["Note"] + ' #[' + monthIId + ',' + monthJId + ']';
-                  // all fine?
-                  winston.debug('Merge (Range) -> merging bookings --> new Note: ' + month[i]["Note"] + ' for ', month[i]["StartDate"], month[i]["Activity"], month[i]["Duration"]);
-                  // winston.debug("merging durations, compare activity: " + month[i]["Activity"] + " " + month[j]["Activity"] + " " + month[i]["Note"]);
-                  month.splice(j, 1); // remove merged entry from original array, to avoid recounting them in next i increment
-                  j--; // as one entry is spliced, the next candidate has the same j index number!
-              } else if (month[i]["StartDate"] !== month[j]["StartDate"]) {
-                  break; // Date matches no longer? input is sorted, break the comparison loop
-              }
-          }
-          monthCleaned.push(month[i]); // output the merged day entry to clean array
-      }
-      winston.debug('Merge (Range) -> (after merge) monthCleaned size: ' + monthCleaned.length);
-    }).catch(function (err) {
-      return false; // Crawling failed...
-    });
+    
+    let monthCleaned = merge.cleanArray(startDate,endDate)
 
     await normalizeUP(startDate, endDate, monthCleaned).then(async (result) => {
-      winston.debug('Merge (Range) -> monthCleaned size in normalizeUP: ' + monthCleaned.length);
-      winston.debug('Merge (Range) -> normalizeUP: ');
-      winston.debug('Merge (Range) -> Input: ' + util.inspect(result));
-      if (result && result.length <= 0) { // nothing to do, no need to call saveToProjectile
-        winston.debug('Merge (Range) -> normalized list empty - nothing to do.');
-        return ('Nothing to do.');
-      }
-      returnResponse = await saveToProjectile(result);
+        winston.debug('Merge (Range) -> monthCleaned size in normalizeUP: ' + monthCleaned.length);
+        winston.debug('Merge (Range) -> normalizeUP: ');
+        winston.debug('Merge (Range) -> Input: ' + util.inspect(result));
+        if (result && result.length <= 0) { // nothing to do, no need to call saveToProjectile
+            winston.debug('Merge (Range) -> normalized list empty - nothing to do.');
+            return ('Nothing to do.');
+        }
+        returnResponse = await saveToProjectile(result);
     });
     return (returnResponse); // pos und neg results
 }
@@ -582,9 +505,9 @@ async function markEntriesWithLimit(monthArray, limitPackageArrayFromServer) {
             winston.debug(JSON.stringify(monthArray[j], null, 2));
             winston.debug('CHECK: ' + monthArray[j]["Activity"], limitPackageArrayFromServer[i]["no"], (monthArray[j]["Activity"] == limitPackageArrayFromServer[i]["no"]));
             if (monthArray[j]["Activity"] == limitPackageArrayFromServer[i]["no"]) {
-              obj["Limit"] = true;
+                obj["Limit"] = true;
             } else {
-              obj["Limit"] = false;
+                obj["Limit"] = false;
             }
             packageReply.push(obj);
         }
@@ -636,12 +559,12 @@ async function saveToProjectile(monthArray) {
                     winston.debug('saving w/ limit: ' + packageReply[i]["StartDate"], packageReply[i]["Duration"], packageReply[i]["Activity"], packageReply[i]["Note"]);
                     winston.debug('response: ' + response.returnValue + '\n');
                     if (response.returnValue) {
-                      obj['Result'] = 'positive';
+                        obj['Result'] = 'positive';
                     } else {
-                      obj['Result'] = 'negative';
-                      if (response.errors) {
-                        obj['Errors'] = response.errors;
-                      }
+                        obj['Result'] = 'negative';
+                        if (response.errors) {
+                            obj['Errors'] = response.errors;
+                        }
                     }
                 } else {
                     obj['LimitHit'] = 'yes';
@@ -656,12 +579,12 @@ async function saveToProjectile(monthArray) {
                     obj = packageReply[i];
                     obj['LimitHit'] = 'noLimit';
                     if (response.returnValue) {
-                      obj['Result'] = 'positive';
+                        obj['Result'] = 'positive';
                     } else {
-                      obj['Result'] = 'negative';
-                      if (response.errors) {
-                        obj['Errors'] = response.errors;
-                      }
+                        obj['Result'] = 'negative';
+                        if (response.errors) {
+                            obj['Errors'] = response.errors;
+                        }
                     }
                 } else {
                     // empty Activity deleteDepreceated - return entry to frontend with notification
@@ -680,7 +603,7 @@ async function saveToProjectile(monthArray) {
     // no sorting necessary, items kept in order with new approach
     winston.debug('saveToProjectile -> after everything -> gesResult: ', JSON.stringify(gesResult, null, 2));
     return ({
-      gesResult: gesResult
+        gesResult: gesResult
     });
 }
 
@@ -779,17 +702,17 @@ async function normalizeUP(startDate, endDate, MonthCleaned) {
 
     // obj.dayList, remove all non #[] pattern matching entries! to avoid messing with existing projectile entries, not written by timeular sync
 
-/*    last version.....
-      obj.dayList[0] = obj.dayList[0].filter(item => {
-      console.log(item["Note"]);
-      if (item["Note"] && item["Note"].includes(" #[")) {
-        return true;
-      } else if (!item["Note"]) {
-        return true;
-      }
-      return false;
-    });  // works correctly?... also korrekte Zeile wird erfasst usw?!...obwohl Eintrag gelöscht wurde?!
-*/
+    /*    last version.....
+          obj.dayList[0] = obj.dayList[0].filter(item => {
+          console.log(item["Note"]);
+          if (item["Note"] && item["Note"].includes(" #[")) {
+            return true;
+          } else if (!item["Note"]) {
+            return true;
+          }
+          return false;
+        });  // works correctly?... also korrekte Zeile wird erfasst usw?!...obwohl Eintrag gelöscht wurde?!
+    */
     // AUF FEHLER TESTEN
     // doesnt work...deletes "dont delete" and inserts duplicate of test entry! :/
     // check logic!
@@ -797,16 +720,16 @@ async function normalizeUP(startDate, endDate, MonthCleaned) {
     // iterate through every element of every day, check for Note not NULL and pattern " #[" to be NOT present in a Note
     // --> thats an entry from projectile only! manipulate entry so it doesn't get deleted!
     obj.dayList.forEach(async (day) => {
-      day.forEach(async (item) => {
-        winston.debug('normalizeUP -> obj.dayList day item: ', item, (item["Note"]?item["Note"].includes(" #["):''));
+        day.forEach(async (item) => {
+            winston.debug('normalizeUP -> obj.dayList day item: ', item, (item["Note"] ? item["Note"].includes(" #[") : ''));
             if (item["Note"] && !item["Note"].includes(" #[")) {
-          winston.debug('normalizeUP -> Item not matching " #[" found! - booking in projectile only: ,  ', item["Note"]);
-          // Null everything so it doesn't get deleted in deleteDepreceated() - TODO improve the approach
-          item["Duration"] = null;
-          item["Activity"] = null;
-          item["Note"] = null;
-        }
-      });
+                winston.debug('normalizeUP -> Item not matching " #[" found! - booking in projectile only: ,  ', item["Note"]);
+                // Null everything so it doesn't get deleted in deleteDepreceated() - TODO improve the approach
+                item["Duration"] = null;
+                item["Activity"] = null;
+                item["Note"] = null;
+            }
+        });
     });
 
     winston.debug('normalizeUP -> list w/ preserved projectile only entries: ', JSON.stringify(obj.dayList, null, 2));
@@ -828,7 +751,6 @@ function splitintoSeperateDays(array) {
     } catch (err) {
         winston.error(err);
     }
-
 }
 
 function compareV2(clientArray, serverArray) {
@@ -846,15 +768,15 @@ function compareV2(clientArray, serverArray) {
                  break;
              } */
             for (var j = 0; j < clientArray.length; j++) {
-              // too mutch output -> silly
-              winston.silly('compareV2 -> Strings getting compared: ', JSON.stringify(clientArray[j]), JSON.stringify(serverArray[i]));
-              // to avoid startedAt entry to destroy matching capabilities
-              let tempClientArrayEntry = {
-                StartDate: clientArray[j].StartDate,
-                Duration: clientArray[j].Duration,
-                Activity: clientArray[j].Activity,
-                Note: clientArray[j].Note
-              };
+                // too mutch output -> silly
+                winston.silly('compareV2 -> Strings getting compared: ', JSON.stringify(clientArray[j]), JSON.stringify(serverArray[i]));
+                // to avoid startedAt entry to destroy matching capabilities
+                let tempClientArrayEntry = {
+                    StartDate: clientArray[j].StartDate,
+                    Duration: clientArray[j].Duration,
+                    Activity: clientArray[j].Activity,
+                    Note: clientArray[j].Note
+                };
                 if (JSON.stringify(tempClientArrayEntry) == JSON.stringify(serverArray[i])) {
                     winston.silly('compareV2 -> Match: -> arr[] = true ');
                     clientArray.splice(j, 1);
@@ -919,7 +841,7 @@ async function deleteProjectileEmptySlots(cleanProjectileList) {
         for (var j = 0; j < cleanProjectileList[i].length; j++) {
             if (cleanProjectileList[i][j].Duration !== null) {
                 // DEBUG
-                winston.debug("Delete " + cleanProjectileList[i][j].Note );
+                winston.debug("Delete " + cleanProjectileList[i][j].Note);
                 await projectile.delete(cleanProjectileList[i][j].StartDate, j);
                 cleanProjectileList[i].splice(j, 1);  // isn't it enough to just run through the list and deleting the entries without splice?
                 j = j - 1;
