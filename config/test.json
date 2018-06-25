@@ -3,12 +3,12 @@
     "test": {
         "timeular": {
             "TimularActivityID": "127170",
-            "date": "2018-06-19",
+            "date": "2018-06-25",
             "duration": "1",
             "note":"hallo"
         },
         "projectile":{
-            "date": "2018-06-19",
+            "date": "2018-06-25",
             "duration": "1",
             "note":"hallo",
             "activity":"2759-62"
