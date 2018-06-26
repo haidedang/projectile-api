@@ -8,6 +8,7 @@ const projectile = require('./projectileAPI.js');
 const winston = require('winston');
 // error > warn > info > verbose > debug > silly
 
+/* TODO seems obsolete, justcopies value locally, not returning a value
 let token;
 exports.initializeToken = async(tokenApi) => {
   try {
@@ -18,6 +19,7 @@ exports.initializeToken = async(tokenApi) => {
     // process.exit();
   }
 };
+*/
 /* OLD APPROACH
 let token;
 try {

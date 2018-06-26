@@ -224,10 +224,12 @@ async function init() {
       }
       // get cookie, employee and jobList
       if ((!projectileOnly && token && user) || (projectileOnly && user)) {
+        /* TODO not neccessary, initializing just copies
         await projectile.initializeUser(user);
         if (!projectileOnly) {
           await timeularapi.initializeToken(token);
         }
+        */
         cookie = await projectile.login();
         employee = await projectile.getEmployee(cookie);
         jobList = await projectile.jobList(cookie, employee);
