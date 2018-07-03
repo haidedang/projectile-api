@@ -10,17 +10,14 @@
         "projectile":{
             "date": "2018-06-25",
             "duration": "1",
-            "note":"hallo",
-<<<<<<< HEAD
-            "activity":"2759-62"
-=======
-            "activity":"2759-327",
+            "note": "hallo",
+            "activity": "2759-62",
             "projectileUser": "",
             "projectilePassword": "",
-            "timeularApiKey":"",
+            "timeularApiKey": "",
             "timeularApiSecret": ""
->>>>>>> Refactoring
+
         }
-        
+
     }
 }
