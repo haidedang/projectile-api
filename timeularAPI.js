@@ -5,12 +5,12 @@ const projectile = require('./projectileAPI.js');
 const Merge = require('./TimeularApi/Merge');
 
 
-// const util = require('util'); // for Debug only --> util.inspect()
+const util = require('util'); // for Debug only --> util.inspect()
 
 const winston = require('winston');
 // error > warn > info > verbose > debug > silly
 
-/* TODO seems obsolete, justcopies value locally, not returning a value
+// TODO seems obsolete, justcopies value locally, not returning a value
 let token;
 exports.initializeToken = async(tokenApi) => {
   try {
@@ -21,7 +21,7 @@ exports.initializeToken = async(tokenApi) => {
     // process.exit();
   }
 };
-*/
+
 /* OLD APPROACH
 let token;
 try {
