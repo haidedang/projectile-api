@@ -2,7 +2,7 @@ const request = require('request');
 const rp = require('request-promise');
 const projectile = require('./projectileAPI.js');
 const fs = require('fs');
-const Merge = require('./test/TimeularAPI/Merge');
+const Merge = require('./TimeularApi/Merge');
 
 
 const util = require('util'); // for Debug only --> util.inspect()
@@ -470,9 +470,11 @@ exports.merge = async (startDate, endDate) => {
     const merge = new Merge([], [], token.apiToken);
     let returnResponse = '';
     let listentry = 0;
-    
-    let monthCleaned = merge.cleanArray(startDate,endDate)
 
+    let result = await merge.fetchTimeList(startDate, endDate);
+    let timeList = JSON.parse(result.body);
+    let monthCleaned = merge.cleanArray(timeList); 
+   
     await normalizeUP(startDate, endDate, monthCleaned).then(async (result) => {
         winston.debug('Merge (Range) -> monthCleaned size in normalizeUP: ' + monthCleaned.length);
         winston.debug('Merge (Range) -> normalizeUP: ');
