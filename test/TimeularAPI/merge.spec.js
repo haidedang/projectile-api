@@ -1,10 +1,10 @@
 
 let chai = require('chai');
 let expect = chai.expect;
-const Merge = require('./Merge');
+const Merge = require('../../TimeularApi/Merge');
 const fs = require('fs')
 let token = JSON.parse(fs.readFileSync('timeularToken.txt'));
-
+let sinon = require('sinon')
 const merge = new Merge([], [], token.apiToken); //Object Instance will remain across functions
 
 let timeList = JSON.parse(fs.readFileSync('./test/mocks/timeularList.json'));
@@ -34,9 +34,12 @@ describe('UNIT TESTS MERGE', function () { 
        expect(monthCleaned.length).to.not.equal(0);
     })
 
-    it('should setup the Array properly', async () => {
-        let monthCleaned = await merge.cleanArray('2018-06-18','2018-06-24'); 
+    it('should setup the Array properly',  () => {
+      /*   let fetch = sinon.stub(merge, 'fetchTimeList'); 
+        let result = fetch.resolves({body:JSON.stringify(timeList)}); 
+        sinon.assert.calledOnce(fetch);  
+        fetch.restore(); */
+        let monthCleaned = merge.cleanArray(timeList);
         expect(monthCleaned.length).to.not.equal(0);
     })
-
 })
