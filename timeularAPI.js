@@ -22,8 +22,9 @@ exports.initializeToken = async(tokenApi) => {
   }
 };
 
-/* OLD APPROACH
-let token;
+// OLD APPROACH
+/*
+const token;
 try {
   token = JSON.parse(fs.readFileSync('timeularToken.txt'));
 } catch (e) {
@@ -32,6 +33,7 @@ try {
   // process.exit();
 }
 */
+
 /*
 let listentry = 0;
 let month = [];
@@ -72,6 +74,7 @@ exports.getActivities = async() => {
  * @returns two arrays listing what packages have to be created in timeular and what activities have to be archived
  *
  */
+// exports.compareActivities = async() => { // exported for testing :/ better way to use rewire?
 async function compareActivities() {
   // const timeularActivities = await exports.getActivities(); FIXME unused here, 7 rows lower same data gets retrieved
   const projectileJobList = await projectile.fetchNewJobList();
@@ -181,7 +184,6 @@ exports.updateActivities = async(create, archive) => {
   let resultState = true;
   // compare jobList and activityList
   const result = await compareActivities();
-
   // create - contains projectile objects -> convert and create
   if (create) {
     result.projectileHasTimeularNot.forEach((item) => {
@@ -271,6 +273,59 @@ async function archiveActivity(activityId) {
   });
 }
 
+/**
+ *
+ * helper function for bookActivityNG to book and entry to timeular
+ *
+ */
+async function bookEntry(timeEntry) {
+  let statusCode = '';
+  await rp({
+    method: 'POST',
+    uri: 'https://api.timeular.com/api/v2/time-entries',
+    resolveWithFullResponse: true,
+    headers: {
+      Authorization:'Bearer ' + token.apiToken,
+      Accept: 'application/json;charset=UTF-8',
+      'content-type': 'application/json;charset=UTF-8'
+    },
+    json: timeEntry
+  }).then(function(res) {
+    statusCode = res.statusCode;
+  });
+  return statusCode;
+}
+
+/**
+ *
+ * helper function for bookActivityNG to normalize duration (get sum of minutes): valid input x:xx and x,xx and x.xx
+ *
+ */
+async function getSumMinutes(duration) {
+  let sumMinutes = 0;
+  if (duration.includes(':')) {
+    const durSplit = duration.split(':');
+    const durHours = parseInt(durSplit[0]);
+    let durMinutes = 0;
+    if (durSplit[1].length === 2) {
+      durMinutes = parseInt(durSplit[1]);
+    }
+    sumMinutes = durHours * 60 + durMinutes;
+  } else if (duration.includes(',')) {
+    const durSplit = duration.split(',');
+    const durHours = parseInt(durSplit[0]);
+    const durMinutes = parseFloat('0.' + parseInt(durSplit[1])) * 60;
+    sumMinutes = durHours * 60 + durMinutes;
+  } else if (duration.includes('.')) {
+    const durSplit = duration.split('.');
+    const durHours = parseInt(durSplit[0]);
+    const durMinutes = parseFloat('0.' + parseInt(durSplit[1])) * 60;
+    sumMinutes = durHours * 60 + durMinutes;
+  } else {
+    sumMinutes = duration * 60; // asuming flat hours are provided
+  }
+  return sumMinutes;
+}
 
 /**
  *
@@ -287,44 +342,12 @@ async function archiveActivity(activityId) {
 exports.bookActivityNG = async({date, duration, activityId, note}) => {
   // get all entries for date
   const startTime = date + 'T00:00:00.000'; // set minimum time here :)
-  const endTime = date + 'T23:59:59.999';
+  // const endTime = date + 'T23:59:59.999';
 
-  async function book1(timeEntry) {
-    let statusCode = '';
-    await rp({
-      method: 'POST',
-      uri: 'https://api.timeular.com/api/v2/time-entries',
-      resolveWithFullResponse: true,
-      headers: {
-        Authorization:'Bearer ' + token.apiToken,
-        Accept: 'application/json;charset=UTF-8',
-        'content-type': 'application/json;charset=UTF-8'
-      },
-      json: timeEntry
-    }).then(function(res) {
-      statusCode = res.statusCode;
-    });
-    return statusCode;
-  }
-
-  async function book0(startTime, endTime) {
-    let antwort = '';
-    await rp({
-      method: 'GET',
-      uri: 'https://api.timeular.com/api/v2/time-entries/' + startTime + '/' + endTime,
-      resolveWithFullResponse: true,
-      headers: {
-        Authorization:'Bearer ' + token.apiToken,
-        Accept: 'application/json;charset=UTF-8'
-      }
-    }).then(function(res) {
-      antwort = res.body;
-    });
-    return antwort;
-  }
-
-  const antwort2 = await book0(startTime, endTime);
-  const timeEntries = JSON.parse(antwort2).timeEntries;
+  // use existing functions from Merge.js
+  const merge = new Merge([], [], token.apiToken);
+  const antwort2 = await merge.fetchTimeList(date, date);
+  const timeEntries = JSON.parse(antwort2.body).timeEntries; // .body is important!
 
   // get last Entry of day, get stoppedAt time, use as new startedAt - if there is no entry for date, startedAt
   // (could be set to 9:00)
@@ -336,33 +359,6 @@ exports.bookActivityNG = async({date, duration, activityId, note}) => {
         latestStoppedAt = new Date(item.duration.stoppedAt + 'Z');
       }
     });
-  }
-
-  // normalize duration (get sum of minutes): valid input x:xx and x,xx and x.xx
-  async function getSumMinutes(duration) {
-    let sumMinutes = 0;
-    if (duration.includes(':')) {
-      const durSplit = duration.split(':');
-      const durHours = parseInt(durSplit[0]);
-      let durMinutes = 0;
-      if (durSplit[1].length === 2) {
-        durMinutes = parseInt(durSplit[1]);
-      }
-      sumMinutes = durHours * 60 + durMinutes;
-    } else if (duration.includes(',')) {
-      const durSplit = duration.split(',');
-      const durHours = parseInt(durSplit[0]);
-      const durMinutes = parseFloat('0.' + parseInt(durSplit[1])) * 60;
-      sumMinutes = durHours * 60 + durMinutes;
-    } else if (duration.includes('.')) {
-      const durSplit = duration.split('.');
-      const durHours = parseInt(durSplit[0]);
-      const durMinutes = parseFloat('0.' + parseInt(durSplit[1])) * 60;
-      sumMinutes = durHours * 60 + durMinutes;
-    } else {
-      sumMinutes = duration * 60; // asuming flat hours are provided
-    }
-    return sumMinutes;
   }
 
   const sumMinutes = await getSumMinutes(duration);
@@ -386,7 +382,7 @@ exports.bookActivityNG = async({date, duration, activityId, note}) => {
     }
   };
 
-  const antwort = await book1(timeEntry);
+  const antwort = await bookEntry(timeEntry);
   if (antwort === 201 || antwort === '201') {
     return true;
   }
