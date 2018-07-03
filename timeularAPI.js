@@ -1,7 +1,7 @@
-const request = require('request');
+// const request = require('request');
 const rp = require('request-promise');
 const projectile = require('./projectileAPI.js');
-const fs = require('fs');
+// const fs = require('fs');
 const Merge = require('./TimeularApi/Merge');
 
 
@@ -396,27 +396,26 @@ exports.bookActivityNG = async({date, duration, activityId, note}) => {
 
 // ehemals exports.main //  better naming of funct?
 // synchronize/merge timeular bookings to projectile withing a date range. date -> YYYY-MM-DD
-exports.merge = async (startDate, endDate) => {
-    const merge = new Merge([], [], token.apiToken);
-    let returnResponse = '';
-    let listentry = 0;
+exports.merge = async(startDate, endDate) => {
+  const merge = new Merge([], [], token.apiToken);
+  let returnResponse = '';
 
-    let result = await merge.fetchTimeList(startDate, endDate);
-    let timeList = JSON.parse(result.body);
-    let monthCleaned = merge.cleanArray(timeList); 
-   
-    await normalizeUP(startDate, endDate, monthCleaned).then(async (result) => {
-        winston.debug('Merge (Range) -> monthCleaned size in normalizeUP: ' + monthCleaned.length);
-        winston.debug('Merge (Range) -> normalizeUP: ');
-        winston.debug('Merge (Range) -> Input: ' + util.inspect(result));
-        if (result && result.length <= 0) { // nothing to do, no need to call saveToProjectile
-            winston.debug('Merge (Range) -> normalized list empty - nothing to do.');
-            return ('Nothing to do.');
-        }
-        returnResponse = await saveToProjectile(result);
-    });
-    return (returnResponse); // pos und neg results
-}
+  const result = await merge.fetchTimeList(startDate, endDate);
+  const timeList = JSON.parse(result.body);
+  const monthCleaned = merge.cleanArray(timeList);
+
+  await normalizeUP(startDate, endDate, monthCleaned).then(async(result) => {
+    winston.debug('Merge (Range) -> monthCleaned size in normalizeUP: ' + monthCleaned.length);
+    winston.debug('Merge (Range) -> normalizeUP: ');
+    winston.debug('Merge (Range) -> Input: ' + util.inspect(result));
+    if (result && result.length <= 0) { // nothing to do, no need to call saveToProjectile
+      winston.debug('Merge (Range) -> normalized list empty - nothing to do.');
+      return ('Nothing to do.');
+    }
+    returnResponse = await saveToProjectile(result);
+  });
+  return (returnResponse); // pos und neg results
+};
 
 
 // after that function , monthcleaned contains only limitless packages
