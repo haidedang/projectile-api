@@ -7,7 +7,7 @@ const rp = require('request-promise');
 const winston = require('winston');
 // winston.level set in api.js!
 
-/* TODO seems obsolete, justcopies value locally, not returning a value
+// TODO seems obsolete, justcopies value locally, not returning a value
 let user;
 exports.initializeUser = async(userApi) => {
   try {
@@ -18,7 +18,7 @@ exports.initializeUser = async(userApi) => {
     // process.exit();
   }
 };
-*/
+
 /*
 try {
   user = JSON.parse(fs.readFileSync('user.txt'));

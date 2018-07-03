@@ -224,12 +224,14 @@ async function init() {
       }
       // get cookie, employee and jobList
       if ((!projectileOnly && token && user) || (projectileOnly && user)) {
-        /* TODO not neccessary, initializing just copies
+        // TODO not neccessary, initializing just copies
+        await projectile.initializeUser(user);
+        /*
         await projectile.initializeUser(user);
         if (!projectileOnly) {
           await timeularapi.initializeToken(token);
-        }
-        */
+        }*/
+
         cookie = await projectile.login();
         employee = await projectile.getEmployee(cookie);
         jobList = await projectile.jobList(cookie, employee);
@@ -624,12 +626,21 @@ app.get(basePath + '/showListProjectile/:pretty?', async(req, res) => { // , nex
   try {
     jobList = await projectile.fetchNewJobList();
     if (req.params.pretty) { // any value for pretty should be ok
-      let result = '<ul>';
+      let result = `<table border="1">
+        <tbody>
+          <tr>
+            <th>Paketname</td>
+            <th>Paketnummer</td>
+            <th>verfügbare Zeit</td>
+            <th>Zeit Limit</td>
+            <th>gebuchte Zeit</td>
+          </tr>`;
       jobList.forEach((item) => {
-        result = result + '<li>Name: ' + item.name + ' - No.: ' + item.no + ' - remaining Time: ' + item.remainingTime +
-          ' - Time limit: ' + item.limitTime + ' - Total booked time: ' + item.Totaltime + '</li>';
+        result = result + '<tr><td>' + item.name + '</td><td>' + item.no + '</td><td>' + item.remainingTime +
+          '</td><td>' + item.limitTime + '</td><td>' + item.Totaltime + '</td></tr>';
       });
-      result = result + '</ul>';
+      result = result + `</table>
+        </tbody>`;
       res.status(200).send(result);
     } else {
       res.status(200).send(JSON.stringify(jobList));
