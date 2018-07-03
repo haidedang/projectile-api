@@ -54,7 +54,7 @@ describe('ProjectileAPI', function () {
         })
     })
 
-    describe('book an Entry in Projectile API', function () {
+   /*  describe('book an Entry in Projectile API', function () {
 
         it('it should save successfully', (done) => {
             chai.request(server)
@@ -64,7 +64,7 @@ describe('ProjectileAPI', function () {
                     done()
                 })
         })
-    })
+    }) */
     describe('user setup', () => {
         it('should return a User', () => {
             let result = server.apiConfig.retrieveUserData({
