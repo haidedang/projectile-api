@@ -154,7 +154,7 @@ checkProjectile = async function() {
       cyclicPackageSync();
     }
 };
-
+}
 
 /**
  *  function to synchronize the projectile packages to the timeular activities in intervals (default 300s)

@@ -57,6 +57,7 @@ describe('ProjectileAPI', function() {
         });
     });
   });
+})
 
 //------------ SERVER API TESTS 
 describe('ProjectileAPI', function () {
