@@ -46,7 +46,6 @@
     "no-empty-function": "error",
     "no-eq-null": "error",
     "no-eval": "error",
-    "no-extend-native": 2,
     "no-extra-label": "error",
     "no-extra-semi": "error",
     "no-fallthrough": 1,
