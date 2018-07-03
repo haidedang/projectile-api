@@ -1,7 +1,9 @@
 const request = require('request');
 const rp = require('request-promise');
 const projectile = require('./projectileAPI.js');
-// const fs = require('fs'); //never used here
+const fs = require('fs');
+const Merge = require('./TimeularApi/Merge');
+
 
 // const util = require('util'); // for Debug only --> util.inspect()
 
@@ -394,121 +396,27 @@ exports.bookActivityNG = async({date, duration, activityId, note}) => {
 
 // ehemals exports.main //  better naming of funct?
 // synchronize/merge timeular bookings to projectile withing a date range. date -> YYYY-MM-DD
-exports.merge = async(startDate, endDate) => {
-  let returnResponse = '';
-  constlistentry = 0;
-  const month = [];
-  const monthCleaned = [];
-  // timeperiod structure --> 2017-01-01T00:00:00.000/2018-01-31T00:00:00.000
-  const timeperiod = startDate + 'T00:00:00.000/' + endDate + 'T23:59:59.999';
-  // get timeular entries
-  await rp({
-    method: 'GET',
-    uri: 'https://api.timeular.com/api/v2/time-entries/' + timeperiod,
-    resolveWithFullResponse: true,
-    headers: {
-      Authorization:'Bearer ' + token.apiToken,
-      Accept: 'application/json;charset=UTF-8'
-    }
-  }).then(function(res) {
-    const timeList = JSON.parse(res.body);
+exports.merge = async (startDate, endDate) => {
+    const merge = new Merge([], [], token.apiToken);
+    let returnResponse = '';
+    let listentry = 0;
 
-    winston.debug('Merge (Range, retrieved) -> timeList: ', JSON.stringify(timeList, null, 2));
-
-    // sort retrieved unsorted list of Timular Entries after ascending dates and times --> easier handling from now on
-    // (keep the booking order)
-    timeList.timeEntries.sort(function(a, b) {
-      return (new Date(a.duration.startedAt) - new Date(b.duration.startedAt));
-    });
-
-    winston.debug('Merge (Range, sorted) -> timeList: ', JSON.stringify(timeList, null, 2));
-
-    for (let i = 0; i < timeList.timeEntries.length; i++) {
-      const day = {};
-      day['StartDate'] = timeList.timeEntries[i].duration.startedAt
-        .substring(0, timeList.timeEntries[i].duration.startedAt.indexOf('T'));
-      /*
-      timestamp from timeular is not accurate. sometimes 2h = 120min has value thats != 120min. To solve that I cut the
-      seconds and milliseconds from the timestamp. Decreases precision --> alternative would be to round values
-      */
-      day['Duration'] = ((Date.parse(timeList.timeEntries[i].duration.stoppedAt.substring(0, timeList.timeEntries[i]
-        .duration.stoppedAt.lastIndexOf(':'))) - Date.parse(timeList.timeEntries[i].duration.startedAt
-        .substring(0, timeList.timeEntries[i].duration.startedAt.lastIndexOf(':')))) / 60000) / 60;
-      // get projectile packagename from timeular activity name e.g. 'name': 'Interne Organisation 2018 [2759-62]'
-      day['Activity'] = timeList.timeEntries[i].activity.name.substring(timeList.timeEntries[i].activity.name
-        .lastIndexOf('[') + 1, timeList.timeEntries[i].activity.name.lastIndexOf(']'));
-      // collision detection through improved Notes containing timeular id of entry
-      if (timeList.timeEntries[i].note.text !== null) {
-        day['Note'] = timeList.timeEntries[i].note.text; // add timeular id of entry here
-        day['Note'] = day['Note'] + ' #[' + timeList.timeEntries[i].id + ']';
-        // creating new style note entries for collision detecting
-      } else {
-        day['Note'] = '';
-      }
-      // keep the original complete date, to provide improved sorting of results for frontend
-      day['startedAt'] = timeList.timeEntries[i].duration.startedAt;
-
-      // 'normalize' note - Q'n'D fix for projectile.js to avoid malformed characters in projectile
-      // !!! TODO CHECK - final clean solution in saveEntry necessary!
-      day['Note'] = day['Note'].replace(/ä/g, 'ae').replace(/Ä/g, 'Ae').replace(/ü/g, 'ue').replace(/Ü/g, 'Ue')
-        .replace(/ö/g, 'oe').replace(/Ö/g, 'Oe').replace(/ß/g, 'ss');
-      // remove newlines,... \n \r from notes
-      day['Note'] = day['Note'].replace(/\r?\n|\r/g, ' ');
-      // end
-      month.push(day);
-    }
-    winston.debug('Merge (Range) -> resulting month size: ' + month.length);
-
-    winston.debug('Merge (Range) -> month before merge: ' + JSON.stringify(month, null, 2));
-
-    // merging Duration time of dup Note lines for entries from same day
-    async function mergeDuration() {
-      for (let i = 0; i < month.length; i++) {
-        for (let j = i + 1; j < month.length; j++) { // j = i + 1 because input is sorted!
-          // winston.debug( i + '#' + j);
-          if ((month[i]['StartDate'] === month[j]['StartDate']) && (month[i]['Note'].substring(0, month[i]['Note']
-            .lastIndexOf(' #[')) === month[j]['Note'].substring(0, month[j]['Note'].lastIndexOf(' #['))) &&
-            (month[i]['Activity'] === month[j]['Activity'])) {
-
-            month[i]['Duration'] = (month[i]['Duration'] * 60 + month[j]['Duration'] * 60) / 60;
-            // add new extended note to 'new' merged entry
-            const monthIId = month[i]['Note'].substring(month[i]['Note'].lastIndexOf(' #[') + 3, month[i]['Note']
-              .lastIndexOf(']'));
-            const monthJId = month[j]['Note'].substring(month[j]['Note'].lastIndexOf(' #[') + 3, month[j]['Note']
-              .lastIndexOf(']'));
-            month[i]['Note'] = month[i]['Note'].substring(0, month[i]['Note'].lastIndexOf(' #['));
-            month[i]['Note'] = month[i]['Note'] + ' #[' + monthIId + ',' + monthJId + ']';
-            // all fine?
-            winston.debug('Merge (Range) -> merging bookings --> new Note: ' + month[i]['Note'] + ' for ',
-              month[i]['StartDate'], month[i]['Activity'], month[i]['Duration']);
-            month.splice(j, 1); // remove merged entry from original array, to avoid recounting them in next i increment
-            j--; // as one entry is spliced, the next candidate has the same j index number!
-          } else if (month[i]['StartDate'] !== month[j]['StartDate']) {
-            break; // Date matches no longer? input is sorted, break the comparison loop
-          }
+    let result = await merge.fetchTimeList(startDate, endDate);
+    let timeList = JSON.parse(result.body);
+    let monthCleaned = merge.cleanArray(timeList); 
+   
+    await normalizeUP(startDate, endDate, monthCleaned).then(async (result) => {
+        winston.debug('Merge (Range) -> monthCleaned size in normalizeUP: ' + monthCleaned.length);
+        winston.debug('Merge (Range) -> normalizeUP: ');
+        winston.debug('Merge (Range) -> Input: ' + util.inspect(result));
+        if (result && result.length <= 0) { // nothing to do, no need to call saveToProjectile
+            winston.debug('Merge (Range) -> normalized list empty - nothing to do.');
+            return ('Nothing to do.');
         }
-        monthCleaned.push(month[i]); // output the merged day entry to clean array
-      }
-    }
-    mergeDuration();
-    winston.debug('Merge (Range) -> (after merge) monthCleaned size: ' + monthCleaned.length);
-  }).catch(function(err) {
-    winston.error('An error occured: ', err);
-    return false; // Crawling failed...
-  });
-
-  await normalizeUP(startDate, endDate, monthCleaned).then(async(result) => {
-    winston.debug('Merge (Range) -> monthCleaned size in normalizeUP: ' + monthCleaned.length);
-    winston.debug('Merge (Range) -> normalizeUP: ');
-    winston.debug('Merge (Range) -> Input: ' + JSON.stringify(result, null, 2));
-    if (result && result.length <= 0) { // nothing to do, no need to call saveToProjectile
-      winston.debug('Merge (Range) -> normalized list empty - nothing to do.');
-      return ('Nothing to do.');
-    }
-    returnResponse = await saveToProjectile(result);
-  });
-  return (returnResponse); // pos und neg results
-};
+        returnResponse = await saveToProjectile(result);
+    });
+    return (returnResponse); // pos und neg results
+}
 
 
 // after that function , monthcleaned contains only limitless packages
