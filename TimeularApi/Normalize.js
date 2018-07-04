@@ -1,3 +1,4 @@
+/* eslint-disable */
 const winston = require('winston')
 
 class Normalize {
@@ -7,7 +8,7 @@ class Normalize {
     // sorting is now done right after generating month array
 
     // group Objects to Array with same Date
-    let monthDay = await this.splitintoSeperateDays(MonthCleaned);
+    let monthDay = await this.splitintoSeperateDays(monthCleaned);
     winston.debug('normalizeUP -> after splitintoSeperateDays: ', JSON.stringify(monthDay, null, 2));
     // get DateRange of Projectile  [ [Day1],[Day2] ]
     let serverDays = await this.getDistinctProjectileRange(startDate, endDate);
@@ -25,6 +26,8 @@ class Normalize {
     winston.debug('normalizeUP -> prepareForSaveAndDeleting: ', JSON.stringify(obj, null, 2));
 
     // delete the empty slots which are not in date  // what is it good for? -> Deleting depreceated projectile Slots
+    // Deletes Projectile Entries with Dates which are not contained in Timeluar
+    // CASE: Delete a whole Entry out of Timeular. Should be reflected also In Projectile!
     await this.deleteProjectileEmptySlots(obj.cleanProjectileList);
 
     obj.dayList.forEach(async (day) => {
@@ -68,7 +71,9 @@ class Normalize {
 
   static prepareForSaveAndDeleting(serverDays, serverDaysInProjectile) {
     let obj = {};
+    // contains all Elements
     obj.cleanProjectileList = [];
+    // contains all Elements from Projectile with same Date as in Timeular entries.
     obj.dayList = [];
 
     let Overalllist = [];
