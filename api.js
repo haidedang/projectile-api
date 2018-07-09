@@ -440,7 +440,7 @@ const apiConfig = {
         'apiKey': json.timeularApiKey,
         'apiSecret': json.timeularApiSecret
       },
-    }, (res) => { // body
+    }, (err, res) => { // eslint-disable-line
       if (res.statusCode === 200) {
         winston.debug('retrieveToken -> API credentials retrieved.');
         const apiToken = res.body.token;
@@ -535,6 +535,7 @@ app.post(basePath + '/start', async(req, res) => {
   // receiving post requests for base website
   // winston.debug(req.body); // shows credentials!
   const json = req.body;
+  json.projectileOnly = json.projectileOnly === 'true';
 
   // json content not empty?
   if (apiConfig.checkUserInput(req.body)) {

@@ -258,7 +258,6 @@ async function checkProblems(bodyString, returnValue) {
   return returnValue;
 }
 
-
 // FIXME too many statements
 const saveEntry = async(cookie, employee, time, project, note) => {
   const dayList = await getDayListToday(cookie, employee);
