@@ -430,6 +430,7 @@ const apiConfig = {
     return result;
   },
   async retrieveToken(json) {
+    console.log(json)
     // let timeularApi = '';
     const timeularApi = await rp.post('https://api.timeular.com/api/v2/developer/sign-in', {
       headers: {
@@ -440,7 +441,7 @@ const apiConfig = {
         'apiKey': json.timeularApiKey,
         'apiSecret': json.timeularApiSecret
       },
-    }, (res) => { // body
+    }, (err, res) => { // eslint-disable-line
       if (res.statusCode === 200) {
         winston.debug('retrieveToken -> API credentials retrieved.');
         const apiToken = res.body.token;
@@ -535,22 +536,29 @@ app.post(basePath + '/start', async(req, res) => {
   // receiving post requests for base website
   // winston.debug(req.body); // shows credentials!
   const json = req.body;
+  json.projectileOnly = json.projectileOnly === 'true';
+
 
   // json content not empty?
   if (apiConfig.checkUserInput(req.body)) {
     winston.debug('Credentials json from frontend not empty - trying to test and store those.');
 
+
     const projectileCreds = await apiConfig.setProjectileCreds(json, req, res);
+    console.log('ProjectileONly', json.projectileOnly, projectileOnly);
 
     if (json.projectileOnly) {
+      console.log('LOL',  json.projectileOnly)
       credsPresent = projectileCreds;
       winston.info('ProjectileOnly mode activated. No timeular functions are going to work.');
       res.status(200).send({ requestReceived: true, credsPresent, projectileOnly });
     }
 
     if (!json.projectileOnly) {
+      console.log('reached')
       const timeularCreds = await apiConfig.setTimeularCreds(json);
       console.log('projectileCreds: ' + projectileCreds);
+      console.log('timeularCreds', timeularCreds)
       if (projectileCreds === true && timeularCreds === true) {
         credsPresent = true;
         winston.debug('retrieveToken -> All credentials are available now. Initiate init sequence of api.');
