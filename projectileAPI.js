@@ -376,9 +376,9 @@ const saveEntry = async(cookie, employee, time, project, note) => {
 
 // FIXME - external function
   // TEST ME!!!! DO I GET EXECUTED, WHAT HAPPENS?!?!?!?
-  returnValue = await checkProblems(bodyString);
+  // // returnValue = await checkProblems(bodyString);
   // check for problems that indicate saving was NOT successfull
-  /*
+
   if (bodyString.includes('"problems":[{"ref"')) {
     winston.warn('saveEntry -> Recognizing problem status: problem message found! returnValue can\'t be true!');
     const indexOfErrorArrayStart = bodyString.lastIndexOf('problems":[');
@@ -397,7 +397,7 @@ const saveEntry = async(cookie, employee, time, project, note) => {
       returnValue: false,
       errors: errorArray
     };
-  } */
+  }
 
   // fs.writeFile('bodyString.json', JSON.stringify(bodyString, null, 2), (err)=>{});  // Debug
   /* TODO was always causing errors! Check for good and bad case, find single binding condition
