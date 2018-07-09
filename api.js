@@ -116,7 +116,7 @@ async function getConfig() {
   try {
     configFile = (process.env.CONFIG_FILE ? process.env.CONFIG_FILE : 'default.json');
     config = JSON.parse(fs.readFileSync('./config/' + configFile));
-    winston.debug('Successfully read config.json.');
+    winston.debug('Successfully read default.json.');
     winston.silly(configFile + ': ' + JSON.stringify(config, null, 2));
   } catch (e) {
     winston.warn('getConfig() -> Failed to read ' + configFile + ' configurationfile on startup. Corrupted or non ' +
@@ -268,21 +268,25 @@ init();
  */
 async function writeToConfig(parametername, value) {
   // read from config
-  let config = '';
+  // let config = '';
   try {
-    config = JSON.parse(fs.readFileSync('config.json'));
+    config = JSON.parse(fs.readFileSync('./config/default.json'));
   } catch (e) {
-    winston.warn('writeToConfig -> Failed to read config.json configurationfile. Corrupted or non existent.');
+    winston.warn('writeToConfig -> Failed to read default.json configurationfile. Corrupted or non existent.');
     if (config.length <= 0) {
       winston.debug('writeToConfig -> Config json variable is empty, initialize it cleanly.');
-      config = {};
+      config = {
+        'appPort': '3000',
+        'winstonLevel': 'warn',
+        'projectileOnly': false
+      };
     }
   }
   // set value
   config[parametername] = value;
   // write to config
   try {
-    fs.writeFile('config.json', JSON.stringify(config), (err) => {
+    fs.writeFile('./config/default.json', JSON.stringify(config), (err) => {
       if (err) {
         winston.warn('writeToConfig -> writing to file ->', err);
       } else {
@@ -313,13 +317,6 @@ app.get(basePath + '/credsStatus', (req, res) => {
  */
 app.get(basePath + '/projectileStatus', (req, res) => {
   res.status(200).send({ projectileStatus });
-});
-
-/**
- *  route for projectile status checks
- */
-app.get(basePath + '/projectileOnlyStatus', (req, res) => {
-  res.status(200).send({ projectileOnly });
 });
 
 /**
@@ -418,9 +415,7 @@ const apiConfig = {
     let result = rp(options, function(error, response) { // body
       if (error) { winston.error('testCredentials -> Login error in projectile.'); }
       result = response.body.substr(1, 2000).includes('Login</title>');
-      winston.debug('testCredentials -> Login keyword existence after login attempt: ', response.body.substr(1, 2000).
-        includes('Login</title>'));
-      console.log(result);
+      winston.debug('testCredentials -> Login keyword existence after login attempt: ', result);
       return result;
     }).then((result) => {
       winston.debug('testCredentials -> negated result before returning from function: ', !result);

@@ -229,6 +229,37 @@ function escapeRegExp(str) {
 // TODO: Refactoring Neccessary
 // Save entry to projectile
 
+
+/**
+ *
+ * helper function for saveEntry - check for problems that indicate saving was NOT successfull
+ *
+ */
+async function checkProblems(bodyString) {
+  let returnValue = {};
+  if (bodyString.includes('"problems":[{"ref"')) {
+    winston.warn('saveEntry -> Recognizing problem status: problem message found! returnValue can\'t be true!');
+    const indexOfErrorArrayStart = bodyString.lastIndexOf('problems":[');
+    const indexOfErrorArrayEnd = bodyString.slice(indexOfErrorArrayStart).indexOf('"}],');
+    winston.warn('saveEntry -> Error array: ', 'Start: ', indexOfErrorArrayStart, 'length:', indexOfErrorArrayEnd,
+      bodyString.slice(indexOfErrorArrayStart + 10, indexOfErrorArrayStart + indexOfErrorArrayEnd + 3));
+    const errorArray = JSON.parse(bodyString.slice(indexOfErrorArrayStart + 10, indexOfErrorArrayStart +
+           indexOfErrorArrayEnd + 3));
+    winston.warn('saveEntry -> Error array itms: ', errorArray.length);
+    errorArray.forEach((item) => {
+      winston.warn(item.message, item.severity);
+    });
+    // array contains: ref, message, severity
+    // error message should be returned!
+    returnValue = {
+      returnValue: false,
+      errors: errorArray
+    };
+  }
+  return returnValue;
+}
+
+
 // FIXME too many statements
 const saveEntry = async(cookie, employee, time, project, note) => {
   const dayList = await getDayListToday(cookie, employee);
@@ -282,6 +313,7 @@ const saveEntry = async(cookie, employee, time, project, note) => {
   let bodyString = JSON.stringify(body);
   const entries = [];
 
+// FIXME - external function
   // check for successfull saving
   // pattern to matches within a note! e.g.: 2 tesing vs. testing vs. testing 2
   // " gets stored as \" in projectile json
@@ -342,7 +374,11 @@ const saveEntry = async(cookie, employee, time, project, note) => {
     }
   });
 
+// FIXME - external function
+  // TEST ME!!!! DO I GET EXECUTED, WHAT HAPPENS?!?!?!?
+  returnValue = await checkProblems(bodyString);
   // check for problems that indicate saving was NOT successfull
+  /*
   if (bodyString.includes('"problems":[{"ref"')) {
     winston.warn('saveEntry -> Recognizing problem status: problem message found! returnValue can\'t be true!');
     const indexOfErrorArrayStart = bodyString.lastIndexOf('problems":[');
@@ -361,7 +397,8 @@ const saveEntry = async(cookie, employee, time, project, note) => {
       returnValue: false,
       errors: errorArray
     };
-  }
+  } */
+
   // fs.writeFile('bodyString.json', JSON.stringify(bodyString, null, 2), (err)=>{});  // Debug
   /* TODO was always causing errors! Check for good and bad case, find single binding condition
     if (bodyString.includes('"clearProblems":["')){
