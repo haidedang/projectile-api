@@ -713,7 +713,6 @@ app.get(basePath + '/showListTimeular', async(req, res) => { // next
 app.get(basePath + '/book/:date?/:duration/:activity/:note', async(req, res) => {
   // whats the spec duration format - 1,75? 1:45?
   try {
-
     /*   e.g.
          http://localhost:3000/book/1/2788-3/testing
          http://localhost:3000/book/2018-05-23/1.5/2788-3/testing
@@ -756,12 +755,23 @@ app.get(basePath + '/book/:date?/:duration/:activity/:note', async(req, res) => 
            it allows to use activityId or packageId to be provided in url
            */
       projectile.save(date, time,
-        (projectileOnly ? req.params.activity : packageActivity.Package), req.params.note).then(() => {
+        (projectileOnly ? req.params.activity : packageActivity.Package), req.params.note).then((result) => {
+          console.log('SAVING RESULT',result);
         winston.debug('save for projectile successfull');
         // handle result of save request!! TODO
-        res.status(200).send(date + ' ' + req.params.duration + ' ' + req.params.activity + ' ' + req.params.note);
+        if (result.returnValue == false){ 
+          res.status(400).send(result);
+        }   else { 
+          res.status(200).send(
+            {bookedEntry: {
+              date: date,
+              duration:req.params.duration,
+              activity: req.params.activity,
+              note: req.params.note
+            }}
+            );
+        }
       });
-
     } else {
       winston.info('bookActivity for timeular not executed. ProjectileOnly mode is active.');
     }
