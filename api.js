@@ -430,7 +430,6 @@ const apiConfig = {
     return result;
   },
   async retrieveToken(json) {
-    console.log(json)
     // let timeularApi = '';
     const timeularApi = await rp.post('https://api.timeular.com/api/v2/developer/sign-in', {
       headers: {
@@ -476,11 +475,12 @@ const apiConfig = {
       });
     });
   },
+
   /**
-      *
-      * @param {*} UserInput  JSON
-      * return true for successfully saving creds in txt. file
-      */
+   *
+   * @param {*} UserInput  JSON
+   * return true for successfully saving creds in txt. file
+   */
   async setProjectileCreds(UserInput, req, res) {
     const user = {
       login: UserInput.projectileUser,
@@ -542,22 +542,16 @@ app.post(basePath + '/start', async(req, res) => {
   if (apiConfig.checkUserInput(req.body)) {
     winston.debug('Credentials json from frontend not empty - trying to test and store those.');
 
-
     const projectileCreds = await apiConfig.setProjectileCreds(json, req, res);
-    console.log('ProjectileONly', json.projectileOnly, projectileOnly);
 
     if (json.projectileOnly) {
-      console.log('LOL',  json.projectileOnly)
       credsPresent = projectileCreds;
       winston.info('ProjectileOnly mode activated. No timeular functions are going to work.');
       res.status(200).send({ requestReceived: true, credsPresent, projectileOnly });
     }
 
     if (!json.projectileOnly) {
-      console.log('reached')
       const timeularCreds = await apiConfig.setTimeularCreds(json);
-      console.log('projectileCreds: ' + projectileCreds);
-      console.log('timeularCreds', timeularCreds)
       if (projectileCreds === true && timeularCreds === true) {
         credsPresent = true;
         winston.debug('retrieveToken -> All credentials are available now. Initiate init sequence of api.');
@@ -572,7 +566,6 @@ app.post(basePath + '/start', async(req, res) => {
   // res.status(200).send(JSON.stringify({requestReceived: true, credsPresent: credsPresent}));
   winston.debug('Post request to /start handled.');
 });
-
 
 
 // SYNC BOOKINGS
