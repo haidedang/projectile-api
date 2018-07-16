@@ -60,7 +60,7 @@ $(document).ready(function() {
     console.log(url);
 
     let $currentJson = {
-      projectileOnly: true,
+      projectileOnly: false,
       date,
       duration,
       packageNo,
