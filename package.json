@@ -23,6 +23,7 @@
     "co": "^4.6.0",
     "co-prompt": "^1.0.0",
     "commander": "^2.13.0",
+    "encoding": "^0.1.12",
     "express": "^4.16.2",
     "request": "^2.83.0",
     "request-promise": "^4.2.2",

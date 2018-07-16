@@ -701,6 +701,21 @@ app.get(basePath + '/showListTimeular', async(req, res) => { // next
   }
 });
 
+/**
+ *  route for booking website
+ */
+app.get(basePath + '/booking', (req, res) => {
+  winston.debug('booking website entered.');
+  let html = fs.readFileSync(__dirname + '/src/booking.html', { encoding: 'utf8' });
+  html = html.replace(/\{port\}/g, appPort);
+  // delivering website with options
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+  res.end(html);
+  // delivering website with options
+  // res.sendFile(__dirname + '/src/start.html');
+  winston.debug('/booking website done');
+});
+
 // BOOK
 /**
  *  route for booking (date, duration, activity, note provided)
@@ -741,25 +756,25 @@ app.get(basePath + '/book/:date?/:duration/:activity/:note', async(req, res) => 
         }
         return response;
       });
-
-      // normalizing duration time if necessary (to x.xx and parse as float to avoid weird duration lengths)
-      let time = await projectile.normalizetime(req.params.duration);
-      time = parseFloat(time);
-      // book in projectile
-      /*
-           use activity directly when projectileOnly mode is active, else use Package value processed from timeular,
-           it allows to use activityId or packageId to be provided in url
-           */
-      projectile.save(date, time,
-        (projectileOnly ? req.params.activity : packageActivity.Package), req.params.note).then(() => {
-        winston.debug('save for projectile successfull');
-        // handle result of save request!! TODO
-        res.status(200).send(date + ' ' + req.params.duration + ' ' + req.params.activity + ' ' + req.params.note);
-      });
-
     } else {
       winston.info('bookActivity for timeular not executed. ProjectileOnly mode is active.');
     }
+
+    // normalizing duration time if necessary (to x.xx and parse as float to avoid weird duration lengths)
+    let time = await projectile.normalizetime(req.params.duration);
+    time = parseFloat(time);
+    // book in projectile
+    /*
+         use activity directly when projectileOnly mode is active, else use Package value processed from timeular,
+         it allows to use activityId or packageId to be provided in url
+         */
+    projectile.save(date, time,
+      (projectileOnly ? req.params.activity : packageActivity.Package), req.params.note).then((result) => {
+      winston.debug('save for projectile successfull');
+      // handle result of save request!! TODO
+      // res.status(200).send(date + ' ' + req.params.duration + ' ' + req.params.activity + ' ' + req.params.note);
+      res.status(200).send(result);
+    });
 
   } catch (e) {
     res.status(400).send('Something went wrong - /book/:date/:duration/:activity/:note');
@@ -767,6 +782,72 @@ app.get(basePath + '/book/:date?/:duration/:activity/:note', async(req, res) => 
     winston.debug(e);
   }
   winston.debug('/book/:date?/:duration/:activity/:note done');
+});
+
+/**
+ *  route for booking (date, duration, activity, note provided) NG !
+ */
+app.post(basePath + '/book', async(req, res) => {
+  // whats the spec duration format - 1,75? 1:45?
+  try {
+    const json = req.body;
+
+    // check if date parameter is present or use current date
+    let date = '';
+    if (!json.date) {
+      date = new Date().toISOString().substr(0, 10); // YYYY/MM/DD
+    } else {
+      date = json.date;
+    }
+    // create package/activity table
+    // analyse the provided "activity" parameter and find the fitting package or activity id pair
+    if (!projectileOnly && 'projectileOnly' in json && !json.projectileOnly) {
+      const packageActivity = await timeularapi.packageActivityList(json.packageNo);
+      winston.debug('Debug packageActivity result: ' + packageActivity.Package, packageActivity.Activity);
+
+      // book in TIMEULAR
+      await timeularapi.bookActivityNG({
+        date,
+        duration: json.duration,
+        activityId: packageActivity.Activity,
+        note: json.comment,
+      }).then((response) => {
+        if (response) {
+          winston.debug('bookActivity for timeular successfull');
+        }
+        return response;
+      });
+    } else {
+      winston.info('bookActivity for timeular not executed. ProjectileOnly mode is active.');
+    }
+
+    // normalizing duration time if necessary (to x.xx and parse as float to avoid weird duration lengths)
+    let time = await projectile.normalizetime(json.duration);
+    time = parseFloat(time);
+    // book in projectile
+    /*
+         use activity directly when projectileOnly mode is active, else use Package value processed from timeular,
+         it allows to use activityId or packageId to be provided in url
+         */
+    // some cleaning up of comment string
+    // FIXME fix encoding issue!
+    const comment = json.comment.replace(/ä/g, 'ae').replace(/Ä/g, 'Ae').replace(/ü/g, 'ue').replace(/Ü/g, 'Ue')
+      .replace(/ö/g, 'oe').replace(/Ö/g, 'Oe').replace(/ß/g, 'ss').replace(/\r?\n|\r/g, ' ');
+
+    projectile.save(date, time,
+      (projectileOnly ? json.packageNo : packageActivity.Package), comment).then((result) => { // json.comment
+      winston.debug('save for projectile successfull');
+      // handle result of save request!! TODO
+      // res.status(200).send(date + ' ' + req.params.duration + ' ' + req.params.activity + ' ' + req.params.note);
+      res.status(200).send(result);
+    });
+
+  } catch (e) {
+    res.status(400).send('Something went wrong - post /book');
+    winston.error('post /book');
+    winston.debug(e);
+  }
+  winston.debug('post /book done');
 });
 
 // SYNC ACTIVITIES
