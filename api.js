@@ -835,7 +835,7 @@ app.post(basePath + '/book', async(req, res) => {
       .replace(/ö/g, 'oe').replace(/Ö/g, 'Oe').replace(/ß/g, 'ss').replace(/\r?\n|\r/g, ' ');
 
     projectile.save(date, time,
-      (projectileOnly ? json.packageNo : packageActivity.Package), comment).then((result) => { // json.comment
+      (projectileOnly ? json.packageNo : packageActivity.Activity), comment).then((result) => { // json.comment
       winston.debug('save for projectile successfull');
       // handle result of save request!! TODO
       // res.status(200).send(date + ' ' + req.params.duration + ' ' + req.params.activity + ' ' + req.params.note);
