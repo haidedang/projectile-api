@@ -801,7 +801,7 @@ app.post(basePath + '/book', async(req, res) => {
     }
     // create package/activity table
     // analyse the provided "activity" parameter and find the fitting package or activity id pair
-    const packageActivity;
+    let packageActivity = {};
     if (!projectileOnly && 'projectileOnly' in json && !json.projectileOnly) {
       packageActivity = await timeularapi.packageActivityList(json.packageNo);
       winston.debug('Debug packageActivity result: ' + packageActivity.Package, packageActivity.Activity);
