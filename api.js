@@ -801,8 +801,9 @@ app.post(basePath + '/book', async(req, res) => {
     }
     // create package/activity table
     // analyse the provided "activity" parameter and find the fitting package or activity id pair
+    const packageActivity;
     if (!projectileOnly && 'projectileOnly' in json && !json.projectileOnly) {
-      const packageActivity = await timeularapi.packageActivityList(json.packageNo);
+      packageActivity = await timeularapi.packageActivityList(json.packageNo);
       winston.debug('Debug packageActivity result: ' + packageActivity.Package, packageActivity.Activity);
 
       // book in TIMEULAR
@@ -835,7 +836,7 @@ app.post(basePath + '/book', async(req, res) => {
       .replace(/ö/g, 'oe').replace(/Ö/g, 'Oe').replace(/ß/g, 'ss').replace(/\r?\n|\r/g, ' ');
 
     projectile.save(date, time,
-      (projectileOnly ? json.packageNo : packageActivity.Activity), comment).then((result) => { // json.comment
+      (projectileOnly ? json.packageNo : packageActivity.Package), comment).then((result) => { // json.comment
       winston.debug('save for projectile successfull');
       // handle result of save request!! TODO
       // res.status(200).send(date + ' ' + req.params.duration + ' ' + req.params.activity + ' ' + req.params.note);
