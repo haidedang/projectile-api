@@ -44,6 +44,7 @@ $(document).ready(function() {
    *  Book
    */
   $('#buttonBook').click(function(e) {
+    $('.syncOutput').remove();
     const date = $('#Date').val() ? $('#Date').val() : new Date().toISOString().substr(0, 10);
     let duration = $('#Duration').val();
     duration = normalizeDuration(duration);
@@ -74,7 +75,13 @@ $(document).ready(function() {
       dataType: 'json',
       contentType: 'application/json; charset=utf-8',
       success: function(data){
-        console.log(data);
+        if (data) {
+          $('#results').append('<li class="list-group-item list-group-item-success syncOutput"><div class="row">' +
+            '<div class="col-md-3">' + date + '</div>' +
+            '<div class="col-md-2">' + duration + '</div>' +
+            '<div class="col-md-2">' + packageNo + '</div>' +
+            '<div class="col-md">' + comment + '</div></div></li>');
+        }
       }
     });
 

@@ -835,6 +835,7 @@ app.post(basePath + '/book', async(req, res) => {
     const comment = json.comment.replace(/ä/g, 'ae').replace(/Ä/g, 'Ae').replace(/ü/g, 'ue').replace(/Ü/g, 'Ue')
       .replace(/ö/g, 'oe').replace(/Ö/g, 'Oe').replace(/ß/g, 'ss').replace(/\r?\n|\r/g, ' ');
 
+    // comment depends on projectileOnly status!! if false --> comment has to be expanded by #[id] signature
     projectile.save(date, time,
       (projectileOnly ? json.packageNo : packageActivity.Package), comment).then((result) => { // json.comment
       winston.debug('save for projectile successfull');
