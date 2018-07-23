@@ -646,39 +646,7 @@ app.get(basePath + '/syncbookings/:choice', async(req, res) => {
   }
 });
 
-// SHOW
-/**
- *  route for retrieving package list from Projectile in JSON format
- */
-app.get(basePath + '/showListProjectile/:pretty?', async(req, res) => { // , next
-  try {
-    jobList = await projectile.fetchNewJobList();
-    if (req.params.pretty) { // any value for pretty should be ok
-      let result = `<table border="1">
-        <tbody>
-          <tr>
-            <th>Paketname</td>
-            <th>Paketnummer</td>
-            <th>verfügbare Zeit</td>
-            <th>Zeit Limit</td>
-            <th>gebuchte Zeit</td>
-          </tr>`;
-      jobList.forEach((item) => {
-        result = result + '<tr><td>' + item.name + '</td><td>' + item.no + '</td><td>' + item.remainingTime +
-          '</td><td>' + item.limitTime + '</td><td>' + item.Totaltime + '</td></tr>';
-      });
-      result = result + `</table>
-        </tbody>`;
-      res.status(200).send(result);
-    } else {
-      res.status(200).send(JSON.stringify(jobList));
-    }
-    winston.debug('/showListProjectile done');
-  }catch(err){
-    res.status(400).send('Something went wrong - /showListProjectile');
-  }
-  winston.debug('/showListProjectile done');
-});
+
 
 /**
  *  route for retrieving package list from timeular in JSON format

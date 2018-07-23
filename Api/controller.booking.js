@@ -1,16 +1,12 @@
-let BookController = {};
 const api = require('../api');
 const timeularapi = require('../timeularAPI');
 const winston = require('winston');
 
 const projectile = require('../projectileAPI.js');
 
-
-let projectileOnly = false;
-let projectileStatus = false;
-
-BookController.bookEntry = async (req, res) => { 
-    console.log('reached Controller')
+module.exports = {
+  async bookEntry(req, res) {
+    console.log('reached Controller');
     try {
       /*   e.g.
            http://localhost:3000/book/1/2788-3/testing
@@ -35,32 +31,62 @@ BookController.bookEntry = async (req, res) => { 
            use activity directly when projectileOnly mode is active, else use Package value processed from timeular,
            it allows to use activityId or packageId to be provided in url
            */
-      projectile.save(date, time, req.params.activity, req.params.note).then((result) => {
-        winston.debug('save for projectile successfull');
-        // handle result of save request!! TODO
-        // res.status(200).send(date + ' ' + req.params.duration + ' ' + req.params.activity + ' ' + req.params.note);
-        if (result.resultValue == false) {
-          res.status(200).send(result);
-        } else {
-          res.status(200).send(
-            {
+      projectile
+        .save(date, time, req.params.activity, req.params.note)
+        .then(result => {
+          winston.debug('save for projectile successfull');
+          // handle result of save request!! TODO
+          // res.status(200).send(date + ' ' + req.params.duration + ' ' + req.params.activity + ' ' + req.params.note);
+          if (result.resultValue == false) {
+            res.status(200).send(result);
+          } else {
+            res.status(200).send({
               bookedEntry: {
                 date: date,
-                duration:req.params.duration,
+                duration: req.params.duration,
                 activity: req.params.activity,
                 note: req.params.note
               }
-            }
-          );
-        }
-      });
-
+            });
+          }
+        });
     } catch (e) {
-      res.status(400).send('Something went wrong - /book/:date/:duration/:activity/:note');
+      res
+        .status(400)
+        .send('Something went wrong - /book/:date/:duration/:activity/:note');
       winston.error('/book/:date?/:duration/:activity/:note');
       winston.debug(e);
     }
     winston.debug('/book/:date?/:duration/:activity/:note done');
-}
+  },
+  async showList(req, res){
+    try {
+      jobList = await projectile.fetchNewJobList();
+      if (req.params.pretty) { // any value for pretty should be ok
+        let result = `<table border="1">
+          <tbody>
+            <tr>
+              <th>Paketname</td>
+              <th>Paketnummer</td>
+              <th>verfügbare Zeit</td>
+              <th>Zeit Limit</td>
+              <th>gebuchte Zeit</td>
+            </tr>`;
+        jobList.forEach((item) => {
+          result = result + '<tr><td>' + item.name + '</td><td>' + item.no + '</td><td>' + item.remainingTime +
+            '</td><td>' + item.limitTime + '</td><td>' + item.Totaltime + '</td></tr>';
+        });
+        result = result + `</table>
+          </tbody>`;
+        res.status(200).send(result);
+      } else {
+        res.status(200).send(JSON.stringify(jobList));
+      }
+      winston.debug('/showListProjectile done');
+    }catch(err){
+      res.status(400).send('Something went wrong - /showListProjectile');
+    }
+    winston.debug('/showListProjectile done');
+  }
+};
 
-module.exports = BookController;
