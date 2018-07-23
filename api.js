@@ -716,85 +716,13 @@ app.get(basePath + '/booking', (req, res) => {
   winston.debug('/booking website done');
 });
 
-// BOOK
-/**
- *  route for booking (date, duration, activity, note provided)
- */
-app.get(basePath + '/book/:date?/:duration/:activity/:note', async(req, res) => {
-  // whats the spec duration format - 1,75? 1:45?
-  try {
-    /*   e.g.
-         http://localhost:3000/book/1/2788-3/testing
-         http://localhost:3000/book/2018-05-23/1.5/2788-3/testing
-        */
-    // books in timeular and projectile!
-    // TODO: check validity of date, duration, activitiy and note?
 
-    // check if date parameter is present or use current date
-    let date = '';
-    if (!req.params.date) {
-      date = new Date().toISOString().substr(0, 10); // YYYY/MM/DD
-    } else {
-      date = req.params.date;
-    }
-    // create package/activity table
-    // analyse the provided "activity" parameter and find the fitting package or activity id pair
-    if (!projectileOnly) {
-      const packageActivity = await timeularapi.packageActivityList(req.params.activity);
-      winston.debug('Debug packageActivity result: ' + packageActivity.Package, packageActivity.Activity);
+require('./Api/routes.booking')(app)
 
-      // book in TIMEULAR
-      await timeularapi.bookActivityNG({
-        date,
-        duration: req.params.duration,
-        activityId: packageActivity.Activity,
-        note: req.params.note,
-      }).then((response) => {
-        if (response) {
-          winston.debug('bookActivity for timeular successfull');
-        }
-        return response;
-      });
-    } else {
-      winston.info('bookActivity for timeular not executed. ProjectileOnly mode is active.');
-    }
 
-    // normalizing duration time if necessary (to x.xx and parse as float to avoid weird duration lengths)
-    let time = await projectile.normalizetime(req.params.duration);
-    time = parseFloat(time);
-    // book in projectile
-    /*
-         use activity directly when projectileOnly mode is active, else use Package value processed from timeular,
-         it allows to use activityId or packageId to be provided in url
-         */
-    projectile.save(date, time,
-      (projectileOnly ? req.params.activity : packageActivity.Package), req.params.note).then((result) => {
-      winston.debug('save for projectile successfull');
-      // handle result of save request!! TODO
-      // res.status(200).send(date + ' ' + req.params.duration + ' ' + req.params.activity + ' ' + req.params.note);
-      if (result.resultValue == false) {
-        res.status(200).send(result);
-      } else {
-        res.status(200).send(
-          {
-            bookedEntry: {
-              date: date,
-              duration:req.params.duration,
-              activity: req.params.activity,
-              note: req.params.note
-            }
-          }
-        );
-      }
-    });
 
-  } catch (e) {
-    res.status(400).send('Something went wrong - /book/:date/:duration/:activity/:note');
-    winston.error('/book/:date?/:duration/:activity/:note');
-    winston.debug(e);
-  }
-  winston.debug('/book/:date?/:duration/:activity/:note done');
-});
+
+
 
 /**
  *  route for booking (date, duration, activity, note provided) NG !
