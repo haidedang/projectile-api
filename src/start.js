@@ -49,5 +49,22 @@ $(document).ready(function() {
     });
   });
 
+  let projectileOnly = document.getElementById('projectileOnly');
+
+  $('#projectileOnly').click( (event) => { 
+    /* console.log(event.target.getAttribute('aria-pressed')) */
+    if(event.target.getAttribute('aria-pressed') === 'false'){
+      event.target.style.backgroundColor= 'blue'
+      console.log('Projectile Mode Only activated');
+      event.target.setAttribute('aria-pressed', 'true')
+      $('#apiKey').hide();
+      $('#apiSecret').hide();
+    } else  if (event.target.getAttribute('aria-pressed') === 'true'){ 
+      event.target.style.backgroundColor = 'grey'
+      $('#apiKey').show();
+      $('#apiSecret').show();
+    }
+  })
+
 // master end
 });

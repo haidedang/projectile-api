@@ -17,7 +17,7 @@ exports.initializeToken = async(tokenApi) => {
     token = tokenApi;
   } catch (e) {
     winston.error('timeularAPI No token file seems to be available. Please run "hostname:port/start" to create ' +
-    'a token file.');
+      'a token file.');
     // process.exit();
   }
 };
@@ -52,7 +52,7 @@ exports.getActivities = async() => {
     uri: 'https://api.timeular.com/api/v2/activities',
     resolveWithFullResponse: true,
     headers: {
-      Authorization:'Bearer ' + token.apiToken,
+      Authorization: 'Bearer ' + token.apiToken,
       Accept: 'application/json;charset=UTF-8'
     }
   }).then(function(res) {
@@ -226,7 +226,7 @@ async function createActivity(name, no) {
     uri: 'https://api.timeular.com/api/v2/activities',
     resolveWithFullResponse: true,
     headers: {
-      Authorization:'Bearer ' + token.apiToken,
+      Authorization: 'Bearer ' + token.apiToken,
       Accept: 'application/json;charset=UTF-8',
       'content-type': 'application/json;charset=UTF-8'
     },
@@ -259,7 +259,7 @@ async function archiveActivity(activityId) {
     uri: 'https://api.timeular.com/api/v2/activities/' + activityId,
     resolveWithFullResponse: true,
     headers: {
-      Authorization:'Bearer ' + token.apiToken,
+      Authorization: 'Bearer ' + token.apiToken,
       Accept: 'application/json;charset=UTF-8',
     }
   }).then(function(res) {
@@ -285,7 +285,7 @@ async function bookEntry(timeEntry) {
     uri: 'https://api.timeular.com/api/v2/time-entries',
     resolveWithFullResponse: true,
     headers: {
-      Authorization:'Bearer ' + token.apiToken,
+      Authorization: 'Bearer ' + token.apiToken,
       Accept: 'application/json;charset=UTF-8',
       'content-type': 'application/json;charset=UTF-8'
     },
@@ -339,7 +339,7 @@ async function getSumMinutes(duration) {
  *
  */ // WIP!!! Alternative with time like 9:00 as minimum start time?!
 // WIP - successor to bookActivity
-exports.bookActivityNG = async({date, duration, activityId, note}) => {
+exports.bookActivityNG = async ({ date, duration, activityId, note }) => {
   // get all entries for date
   const startTime = date + 'T00:00:00.000'; // set minimum time here :)
   // const endTime = date + 'T23:59:59.999';
@@ -634,6 +634,8 @@ async function normalizeUP(startDate, endDate, MonthCleaned) {
   winston.debug('normalizeUP -> prepareForSaveAndDeleting: ', JSON.stringify(obj, null, 2));
 
   // delete the empty slots which are not in date  // what is it good for?
+  // __ IMPORTANT __
+
   await deleteProjectileEmptySlots(obj.cleanProjectileList);
 
   // delete changedayentries from projectile with same day as in timeluar
@@ -661,8 +663,8 @@ async function normalizeUP(startDate, endDate, MonthCleaned) {
 
   // iterate through every element of every day, check for Note not NULL and pattern ' #[' to be NOT present in a Note
   // --> thats an entry from projectile only! manipulate entry so it doesn't get deleted!
-  obj.dayList.forEach(async(day) => {
-    day.forEach(async(item) => {
+  obj.dayList.forEach(async (day) => {
+    day.forEach(async (item) => {
       winston.debug('normalizeUP -> obj.dayList day item: ', item, (item['Note'] ? item['Note'].includes(' #[') : ''));
       if (item['Note'] && !item['Note'].includes(' #[')) {
         winston.debug('normalizeUP -> Item not matching " #[" found! - booking in projectile only: ,  ', item['Note']);
@@ -781,13 +783,18 @@ async function deleteProjectileEmptySlots(cleanProjectileList) {
   for (let i = 0; i < cleanProjectileList.length; i++) {
     // get indexes of not null
     for (let j = 0; j < cleanProjectileList[i].length; j++) {
+      /*   if(cleanProjectileList[i][j]['Note'] && !cleanProjectileList[i][j]['Note'].includes('#[')){
+          cleanProjectileList[i][j].Duration = null;
+        } */
       if (cleanProjectileList[i][j].Duration !== null) {
-        // DEBUG
-        winston.debug('Delete ' + cleanProjectileList[i][j].Note);
-        await projectile.delete(cleanProjectileList[i][j].StartDate, j);
-        cleanProjectileList[i].splice(j, 1);
-        // isn't it enough to just run through the list and deleting the entries without splice?
-        j = j - 1;
+        if (cleanProjectileList[i][j]['Note'].includes('#[')) {
+          // DEBUG
+          winston.debug('Delete ' + cleanProjectileList[i][j].Note);
+          await projectile.delete(cleanProjectileList[i][j].StartDate, j);
+          cleanProjectileList[i].splice(j, 1);
+          // isn't it enough to just run through the list and deleting the entries without splice?
+          j = j - 1;
+        }
       }
     }
   }

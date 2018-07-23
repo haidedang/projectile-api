@@ -527,9 +527,10 @@ exports.save = async(date, time, project, note) => {
     }
     return saveEntryResult;
   }
-  return {
+  /* return {
     returnValue: false
-  };
+  }; */
+  return saveEntryResult;
   // return false;
 };
 /*

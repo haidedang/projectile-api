@@ -723,7 +723,6 @@ app.get(basePath + '/booking', (req, res) => {
 app.get(basePath + '/book/:date?/:duration/:activity/:note', async(req, res) => {
   // whats the spec duration format - 1,75? 1:45?
   try {
-
     /*   e.g.
          http://localhost:3000/book/1/2788-3/testing
          http://localhost:3000/book/2018-05-23/1.5/2788-3/testing
@@ -773,7 +772,20 @@ app.get(basePath + '/book/:date?/:duration/:activity/:note', async(req, res) => 
       winston.debug('save for projectile successfull');
       // handle result of save request!! TODO
       // res.status(200).send(date + ' ' + req.params.duration + ' ' + req.params.activity + ' ' + req.params.note);
-      res.status(200).send(result);
+      if (result.resultValue == false) {
+        res.status(200).send(result);
+      } else {
+        res.status(200).send(
+          {
+            bookedEntry: {
+              date: date,
+              duration:req.params.duration,
+              activity: req.params.activity,
+              note: req.params.note
+            }
+          }
+        );
+      }
     });
 
   } catch (e) {

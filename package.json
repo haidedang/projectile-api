@@ -28,6 +28,7 @@
     "request": "^2.83.0",
     "request-promise": "^4.2.2",
     "request-promise-native": "^1.0.5",
+    "sinon": "^6.1.0",
     "winston": "^2.4.1"
   },
   "pkg": {

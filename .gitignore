@@ -53,6 +53,7 @@ package-lock.json
 #####################
 user.txt
 timeularToken.txt
+config/test.json
 
 # temp working files #
 ######################

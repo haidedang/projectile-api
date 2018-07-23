@@ -10,53 +10,53 @@ const chaiHttp = require('chai-http');
 
 chai.use(chaiHttp);
 
-before(function () {
-    config = JSON.parse(fs.readFileSync('./config/test.json'));
-    activity = config.test.projectile.activity;
-    date = config.test.projectile.date;
-    duration = config.test.projectile.duration;
-    note = config.test.projectile.note;
-    let user = JSON.parse(fs.readFileSync('user.txt'));
-    projectileAPI.initializeUser(user);
+before(function() {
+  config = JSON.parse(fs.readFileSync('./config/test.json'));
+  activity = config.test.projectile.activity;
+  date = config.test.projectile.date;
+  duration = config.test.projectile.duration;
+  note = config.test.projectile.note;
+  let user = JSON.parse(fs.readFileSync('user.txt'));
+  projectileAPI.initializeUser(user);
 })
 
 
-describe('UNIT TESTS Projectile API', function () {
-    this.startDate = '2018-06-18'
-    this.endDate = '2018-06-24'
+describe('UNIT TESTS Projectile API', function() {
+  this.startDate = '2018-06-18'
+  this.endDate = '2018-06-24'
 
-    this.timeout(7000);
+  this.timeout(7000);
 
-    /*  it('it should save successfully', async () => { 
-       let response = await projectileAPI.save(date,duration,activity,note);
-       expect(response.returnValue, 'returnValue of Save fn should be true').to.be.true;
-     })
-  */
-    it('should get all Projectile Entries in a Time Frame and bring it to the right format', async () => {
+  /*  it('it should save successfully', async () => { 
+     let response = await projectileAPI.save(date,duration,activity,note);
+     expect(response.returnValue, 'returnValue of Save fn should be true').to.be.true;
+   })
+*/
+  it('should get all Projectile Entries in a Time Frame and bring it to the right format', async () => {
 
-        let TimeRangeArray = [];
-        let temp = [];
+    let TimeRangeArray = [];
+    let temp = [];
 
-        let List = await projectileAPI.getallEntriesInTimeFrame(this.startDate, this.endDate);
-        let obj = List["values"];
-        for (key in obj) {
-            if (key.match('DayList')) {
-                TimeRangeArray.push(obj[key]);
-            }
-        }
-        TimeRangeArray.forEach((item) => {
-            let entryObj = {};
-            entryObj["StartDate"] = item[item.map((item) => item.n).indexOf("Day")]["v"];
-            entryObj["Duration"] = item[item.map((item) => item.n).indexOf("Time")]["v"];
-            entryObj["Activity"] = item[item.map((item) => item.n).indexOf("What")]["v"];
-            entryObj["Note"] = item[item.map((item) => item.n).indexOf("Note")]["v"];
-            temp.push(entryObj);
-        })
-
-        assert.notEqual(temp.length, 0, "array should contain Daylist objects")
-        //fs.writeFileSync('./test/mocks/projectileList', JSON.stringify(temp, null, 2))
-        //console.log(temp)
+    let List = await projectileAPI.getallEntriesInTimeFrame(this.startDate, this.endDate);
+    let obj = List["values"];
+    for (key in obj) {
+      if (key.match('DayList')) {
+        TimeRangeArray.push(obj[key]);
+      }
+    }
+    TimeRangeArray.forEach((item) => {
+      let entryObj = {};
+      entryObj["StartDate"] = item[item.map((item) => item.n).indexOf("Day")]["v"];
+      entryObj["Duration"] = item[item.map((item) => item.n).indexOf("Time")]["v"];
+      entryObj["Activity"] = item[item.map((item) => item.n).indexOf("What")]["v"];
+      entryObj["Note"] = item[item.map((item) => item.n).indexOf("Note")]["v"];
+      temp.push(entryObj);
     })
+
+    assert.notEqual(temp.length, 0, "array should contain Daylist objects")
+    //fs.writeFileSync('./test/mocks/projectileList', JSON.stringify(temp, null, 2))
+    //console.log(temp)
+  })
 
 
 })
