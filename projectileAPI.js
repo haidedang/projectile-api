@@ -1,7 +1,7 @@
 // const fs = require('fs'); never used here
 const request = require('request');
 const rp = require('request-promise');
-const encoding = require("encoding");
+const encoding = require('encoding');
 
 // const util = require('util'); // for Debug only --> util.inspect() - never used here
 
@@ -284,7 +284,8 @@ const saveEntry = async(cookie, employee, time, project, note) => {
   // "normalize" note - Q'n'D fix, until final solution found - UMLAUTE
   // !!! TODO CHECK - final clean Solution necessary: Q'n'D fix in TimeularAPI -> merge
   // set time, select Project, write note -> all in one request now.
-  await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit', // 'https://postman-echo.com/post',
+  await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit',
+  // 'https://postman-echo.com/post',
     cookie, {
       'values': {
         [listEntry]: [{
@@ -311,7 +312,7 @@ const saveEntry = async(cookie, employee, time, project, note) => {
   let bodyString = JSON.stringify(body);
   const entries = [];
 
-// FIXME - external function
+  // FIXME - external function
   // check for successfull saving
   // pattern to matches within a note! e.g.: 2 tesing vs. testing vs. testing 2
   // " gets stored as \" in projectile json
