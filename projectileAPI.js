@@ -1,7 +1,7 @@
 // const fs = require('fs'); never used here
 const request = require('request');
 const rp = require('request-promise');
-const encoding = require('encoding');
+
 
 // const util = require('util'); // for Debug only --> util.inspect() - never used here
 
