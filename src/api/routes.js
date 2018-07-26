@@ -1,4 +1,5 @@
-const router = require('express-router');
+const express = require('express');
+const router = new express.Router();
 const BookingController = require('./controllers/BookingController');
 
 /**
@@ -36,7 +37,7 @@ const BookingController = require('./controllers/BookingController');
  *     }
  *
  */
-router.get('/book/:date?/:duration/:activity/:note', BookingController.bookEntry);
+router.post('/book', BookingController.bookEntry);
 
 /**
  * @api {get} /api/v1/showListProjectile/:pretty? Returns a list of activities.

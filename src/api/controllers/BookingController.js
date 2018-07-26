@@ -1,7 +1,16 @@
 class BookingController {
-  static async bookEntry(req, res, next) {
-    next();
-    return 'foo';
+  static async bookEntry(req, res) {
+    console.log(req.body);
+
+    res.json({
+      status: 'ok'
+    });
+  }
+
+  static async showList(req, res) {
+    res.json({
+      status: 'ok'
+    });
   }
 }
 
