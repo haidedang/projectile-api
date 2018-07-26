@@ -4,6 +4,7 @@
   "description": "booking hours for projectile",
   "main": "projectileCli.js",
   "scripts": {
+    "build": "rm -rf src/api/public/api/doc && apidoc -v -p true -i src/api/ -o src/api/public/api/doc/",
     "start": "node api.js",
     "start+debug": "node api.js debug",
     "lint": "./node_modules/.bin/eslint *.js",
@@ -35,6 +36,7 @@
     "assets": "src/**/*"
   },
   "devDependencies": {
+    "apidoc": "^0.17.6",
     "chai": "^4.1.2",
     "chai-http": "^4.0.0",
     "eslint": "^4.19.1",
