@@ -5,7 +5,7 @@
   "main": "projectileCli.js",
   "scripts": {
     "build": "rm -rf src/api/public/api/doc && apidoc -v -p true -i src/api/ -o src/api/public/api/doc/",
-    "api": "node src/api/app.js",
+    "api": "rm -f logs/* && node src/api/app.js",
     "start": "node api.js",
     "start+debug": "node api.js debug",
     "lint": "./node_modules/.bin/eslint *.js",
@@ -34,7 +34,7 @@
     "request-promise": "^4.2.2",
     "request-promise-native": "^1.0.5",
     "sinon": "^6.1.0",
-    "winston": "^2.4.1"
+    "winston": "^3.0.0"
   },
   "pkg": {
     "assets": "src/**/*"

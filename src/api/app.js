@@ -15,16 +15,17 @@ const path = require('path');
 /**
  * App related imports
  */
+const logger = require('../lib/logger');
 const router = require('./routes');
+
+// set root path and environment
+const rootPath = process.env.NODE_PATH || process.cwd();
 
 /**
  * Initialize express app
  */
 
 const app = express();
-// set root path and environment
-const rootPath = process.env.NODE_PATH || process.cwd();
-global.environment = process.env.NODE_ENV || 'development';
 
 /**
  * Middlewares
@@ -44,7 +45,7 @@ app.use('/api/v1', router);
 
 // error handler middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  logger.error(err.stack);
   res.status(500).send('Something broke!');
 });
 
@@ -53,7 +54,7 @@ app.use((err, req, res, next) => {
  */
 
 /* check if we want to use ssl and create a server with ssl */
-if (config.api.server.https) {
+if (config.api.server.https === true) {
   const options = {
     key: fs.readFileSync(path.join(rootPath, '/', config.api.server.key)),
     cert: fs.readFileSync(path.join(rootPath, '/', config.api.server.cert))
@@ -63,13 +64,13 @@ if (config.api.server.https) {
     .listen(
       config.api.server.port,
       config.api.server.host,
-      () => console.log(`Server started on https://${config.api.server.host}:${config.api.server.port}`)
+      () => logger.info(`Server started on https://${config.api.server.host}:${config.api.server.port}`)
     );
 } else {
   http.createServer(app)
     .listen(
       config.api.server.port,
       config.api.server.host,
-      () => console.log(`Server started on https://${config.api.server.host}:${config.api.server.port}`)
+      () => logger.info(`Server started on http://${config.api.server.host}:${config.api.server.port}`)
     );
 }

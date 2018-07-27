@@ -3,12 +3,14 @@
     "server": {
       "host": "localhost",
       "port": "3000",
-      "https": "true",
+      "https": false,
       "cert": "config/cert.pem",
       "key": "config/key.pem"
     },
     "logger": {
-      "level": "warn"
+      "level": "info",
+      "errorLog": "logs/error.log",
+      "combinedLog": "logs/combined.log"
     }
   },
   "client": {
