@@ -453,7 +453,7 @@ const updateEntry = async(cookie, employee, obj, line) => {
   if (bodyStringMatch) {
     count = bodyStringMatch.length; // "api * ! \" ' url1" zu matchen!
   }
-  winston.debug('saveEntry -> Occurence count of note text: ' + count);
+  winston.debug('updateEntry -> Occurence count of note text: ' + count);
   for (let i = 0; i < count; i++) {
     // find the note
     const indexOfNote = bodyString.search(re);
@@ -487,14 +487,14 @@ const updateEntry = async(cookie, employee, obj, line) => {
       returnValue = {
         returnValue: true
       };
-      winston.debug('saveEntry -> While recognizing save status: created a new entry, return value: true');
+      winston.debug('updateEntry -> While recognizing save status: created a new entry, return value: true');
     } else if (item.includes('"What","v":"' + obj.packageNo + '","d"') && item.includes('"Note","v":"' +
             obj.comment.replace(/[\"]/g, '\\\$&') + '","d"')) {
       // added to an existing entry
       returnValue = {
         returnValue: true
       };
-      winston.debug('saveEntry -> While recognizing save status: added to an existing entry, return value: true');
+      winston.debug('updateEntry -> While recognizing save status: added to an existing entry, return value: true');
     }
   });
 

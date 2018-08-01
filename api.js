@@ -730,6 +730,7 @@ app.post(basePath + '/editing', async(req, res) => {
       winston.debug('/editing -> Changes is true!');
       json.valuesAfterChange.forEach(async(item, index) => {
         if (JSON.stringify(json.valuesBeforeChange[index]) !== JSON.stringify(item)) {
+          console.log('####');
           winston.debug('/editing -> Difference detected. Update triggered.');
           // exports.delete for delete route
           // exports.deleteEntry
@@ -740,7 +741,6 @@ app.post(basePath + '/editing', async(req, res) => {
           let result = await projectile.update(item, item.line);
           winston.debug('/editing -> Result from update:', result);
         }
-
       });
     }
     res.status(200).send('All fine - post /booking');
