@@ -728,20 +728,23 @@ app.post(basePath + '/editing', async(req, res) => {
     // iterate through list of changes... IFF .changes = true
     if (json.changes){
       winston.debug('/editing -> Changes is true!');
-      json.valuesAfterChange.forEach(async(item, index) => {
+
+      for (const index in json.valuesAfterChange) { // for...in => index no
+        const item = json.valuesAfterChange[index];
         if (JSON.stringify(json.valuesBeforeChange[index]) !== JSON.stringify(item)) {
           console.log('####');
-          winston.debug('/editing -> Difference detected. Update triggered.');
+          winston.debug('/editing -> Difference detected. Update triggered.', item.line);
           // exports.delete for delete route
           // exports.deleteEntry
 
           // TODO - seems to run in concurrency!!! if more than 2 entries are updated at once, the durations can
           // get damaged, entries have dupletes,...
-
+          // TODO - to consider. Mark what has to be done per date!... then handle ALL in once. Deleting and Editing!
+          // one Save operation ONLY!
           let result = await projectile.update(item, item.line);
           winston.debug('/editing -> Result from update:', result);
         }
-      });
+      }
     }
     res.status(200).send('All fine - post /booking');
     winston.debug('/editing results done');
