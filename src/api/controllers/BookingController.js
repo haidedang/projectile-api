@@ -1,6 +1,6 @@
 const logger = require('../../lib/logger');
 
-const projectile = require('../../../projectileAPI.js');
+const ProjectileService = require('../../api/services/ProjectileService');
 const authenticationMiddleware = require('../../lib/AuthenticationMiddleware');
 
 class BookingController {
@@ -21,10 +21,10 @@ class BookingController {
        status: 'ok'
      });
   */
-
-
     console.log('reached Controller');
     try {
+
+      const projectile = new ProjectileService();
       /*   e.g.
            http://localhost:3000/book/1/2788-3/testing
            http://localhost:3000/book/2018-05-23/1.5/2788-3/testing
@@ -41,7 +41,7 @@ class BookingController {
       }
 
       // normalizing duration time if necessary (to x.xx and parse as float to avoid weird duration lengths)
-      let time = await projectile.normalizetime(req.body.duration);
+      let time = await projectile.normalizeTime(req.body.duration);
       time = parseFloat(time);
       // book in projectile
       /*
@@ -49,7 +49,6 @@ class BookingController {
            it allows to use activityId or packageId to be provided in url
            */
       const payload = await authenticationMiddleware.getPayload(req.token);
-      console.log(payload);
       const cookie = payload.cookie;
 
       projectile
