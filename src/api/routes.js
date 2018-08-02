@@ -17,7 +17,7 @@ const authenticationMiddleware = require('../lib/AuthenticationMiddleware');
  * @apiParamExample {json} Request example:
  *
  *     {
- *         "user": "max.mustermann",
+ *         "username": "max.mustermann",
  *         "password": "Test123!"
  *     }
  *
