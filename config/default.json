@@ -11,6 +11,12 @@
       "level": "info",
       "errorLog": "logs/error.log",
       "combinedLog": "logs/combined.log"
+    },
+    "sqlite": {
+      "db": "data/token.db"
+    },
+    "jwt": {
+      "secret": "the_awesome_insurmountable_secret"
     }
   },
   "client": {

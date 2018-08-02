@@ -32,9 +32,12 @@ class BookingController {
     // 2. initialize projectile service
     // 3. get a list of activities via projectile service
     // 4. create a response with activities
+    // const projectileUser = req.body.projectileUser;
+    // const projectilePassword = req.body.projectilePassword;
 
     res.json({
-      status: 'ok'
+      status: 'ok',
+      token: req.token
     });
   }
 }

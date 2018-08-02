@@ -5,7 +5,8 @@
   "main": "projectileCli.js",
   "scripts": {
     "build": "rm -rf src/api/public/api/doc && apidoc -v -p true -i src/api/ -o src/api/public/api/doc/",
-    "api": "rm -f logs/* && node src/api/app.js",
+    "api": "node src/api/app.js",
+    "cleanup": "rm -f logs/*",
     "start": "node api.js",
     "start+debug": "node api.js debug",
     "lint": "./node_modules/.bin/eslint *.js",
@@ -21,6 +22,7 @@
     "api": "./api.js"
   },
   "dependencies": {
+    "atob": "^2.1.1",
     "body-parser": "^1.18.2",
     "co": "^4.6.0",
     "co-prompt": "^1.0.0",
@@ -29,11 +31,15 @@
     "encoding": "^0.1.12",
     "express": "^4.16.2",
     "express-router": "^0.0.1",
+    "jsonwebtoken": "^8.3.0",
     "morgan": "^1.9.0",
+    "passport": "^0.4.0",
+    "passport-http-bearer": "^1.0.1",
     "request": "^2.83.0",
     "request-promise": "^4.2.2",
     "request-promise-native": "^1.0.5",
     "sinon": "^6.1.0",
+    "sqlite": "^2.9.2",
     "winston": "^3.0.0"
   },
   "pkg": {

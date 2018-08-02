@@ -19,7 +19,7 @@ const logger = require('../lib/logger');
 const router = require('./routes');
 
 // set root path and environment
-const rootPath = process.env.NODE_PATH || process.cwd();
+const rootPath = process.cwd();
 
 /**
  * Initialize express app
@@ -40,13 +40,26 @@ app.use(bodyParser.json());
 // add the documentation route, this is static and has to be build before
 app.use('/api/doc', express.static(path.join(__dirname, 'public/api/doc')));
 
-// add the router middleware
+// add the authentication and router middlewares; the authentication is required to format the return value to json
 app.use('/api/v1', router);
 
+// add a default error for everything that goes here /
+app.use('/', (req, res) => {
+  res.status(404)
+    .json({
+      status: 404,
+      message: 'Resource not found.'
+    });
+});
+
 // error handler middleware
-app.use((err, req, res, next) => {
+app.use((err, res) => {
   logger.error(err.stack);
-  res.status(500).send('Something broke!');
+  res.status(500)
+    .json({
+      status: 500,
+      message: err.stack
+    });
 });
 
 /**
