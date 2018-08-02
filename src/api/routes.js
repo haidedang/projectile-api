@@ -5,7 +5,7 @@ const AuthController = require('./controllers/AuthController');
 const authenticationMiddleware = require('../lib/AuthenticationMiddleware');
 
 /**
- * @api {get} /api/v1/login Authenticates a user to Projectile.
+ * @api {POST} /api/v1/login Authenticates a user to Projectile.
  * @apiVersion 1.0.0
  * @apiName Auth
  * @apiGroup Login
@@ -42,7 +42,7 @@ const authenticationMiddleware = require('../lib/AuthenticationMiddleware');
 router.post('/login', AuthController.login);
 
 /**
- * @api {get} /api/v1/book/:date?/:duration/:activity/:note Books an activity.
+ * @api {POST} /api/v1/book Books an activity.
  * @apiVersion 1.0.0
  * @apiName Book
  * @apiGroup Booking
