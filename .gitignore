@@ -71,4 +71,5 @@ test.js
 /pkg/
 /pkg/*
 
+src/api/public/
 

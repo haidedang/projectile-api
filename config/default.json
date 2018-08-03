@@ -1,5 +1,27 @@
 {
-  "appPort": "3000",
-  "winstonLevel": "warn",
+  "api": {
+    "server": {
+      "host": "localhost",
+      "port": "3000",
+      "https": false,
+      "cert": "config/cert.pem",
+      "key": "config/key.pem"
+    },
+    "logger": {
+      "level": "info",
+      "errorLog": "logs/error.log",
+      "combinedLog": "logs/combined.log"
+    },
+    "jwt": {
+      "secret": "the_awesome_insurmountable_secret"
+    }
+  },
+  "client": {
+    "host": "localhost",
+    "appPort": "3000",
+    "logger": {
+      "level": "warn"
+    }
+  },
   "projectileOnly": false
 }
