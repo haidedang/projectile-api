@@ -117,6 +117,12 @@ class AuthenticationMiddleware {
     }
   }
 
+  /**
+   * Parses the cookie for the expiration time Projectile has given within its JSON Web Token.
+   *
+   * @param {object} cookie The cookie object coming from Projectile.
+   * @returns {string} The expiration time.
+   */
   getExpFromCookie(cookie) {
     if (!Array.isArray(cookie)) {
       return;
