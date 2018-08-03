@@ -7,8 +7,8 @@ const authenticationMiddleware = require('../lib/AuthenticationMiddleware');
 /**
  * @api {POST} /api/v1/login Authenticates a user to Projectile.
  * @apiVersion 1.0.0
- * @apiName Auth
- * @apiGroup Login
+ * @apiName Login
+ * @apiGroup Authentication
  * @apiDescription This route takes the user credentials, logs the user in and returns a JSON Web Token.
  *
  * @apiParam {string} username The username of the users Projectile Account.
