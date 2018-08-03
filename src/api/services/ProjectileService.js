@@ -75,6 +75,13 @@ class ProjectileService {
     }
   }
 
+  /**
+   *
+   * @param {*} method  HTTP method
+   * @param {*} url     Server URL
+   * @param {*} cookie  cookie response
+   * @param {*} body    HTTP body if post request
+   */
    option(method, url, cookie, body) {
     const options = {
       method,
@@ -91,6 +98,11 @@ class ProjectileService {
     return options;
   }
 
+  /**
+   *
+   * @param {*} cookie  projectile cookie
+   * @param {*} employee projectile Employee ID
+   */
   async showJobList(cookie, employee)  {
     const body = await this.normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get',
       cookie, {
@@ -262,6 +274,14 @@ class ProjectileService {
   }
 
   // FIXME too many statements
+  /**
+   *
+   * @param {*} cookie projectile cookie
+   * @param {*} employee projectile employee ID
+   * @param {*} time task duration
+   * @param {*} project project ID
+   * @param {*} note task description
+   */
    async saveEntry(cookie, employee, time, project, note) {
     const dayList = await this.getDayListToday(cookie, employee);
     logger.debug('saveEntry -> dayList: ' + JSON.stringify(dayList, null, 2));
@@ -517,6 +537,12 @@ class ProjectileService {
     return returnValue;
   };
 
+  /**
+   *
+   * @param {*} cookie
+   * @param {*} employee
+   * @param {*} number
+   */
   async deleteEntry(cookie, employee, number) {
     // mark entry for deletion, get popup response, extract ref and execute action to delete
     const dayList = await getDayListToday(cookie, employee);
@@ -559,6 +585,11 @@ class ProjectileService {
     }
   }
 
+  /**
+   *
+   * @param {*} cookie
+   * @param {*} employee
+   */
   async getDayListToday(cookie, employee) {
     const temp = await this.normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get',
       cookie, {
@@ -570,7 +601,12 @@ class ProjectileService {
     return dayList;
   }
 
-
+  /**
+   *
+   * @param {*} date
+   * @param {*} cookie
+   * @param {*} employee
+   */
   async setCalendarDate(date, cookie, employee) {
     const dateComplete = date + 'T00:00:00';
     // Timetracker page
@@ -609,6 +645,11 @@ class ProjectileService {
 
 
   // e.g.: index.delete('2018-02-01', 0)
+  /**
+   *
+   * @param {*} date
+   * @param {*} listEntry
+   */
   async delete(date, listEntry)  {
     const cookie = await this.login();
     const employee = await this.getEmployee(cookie);
@@ -623,11 +664,21 @@ class ProjectileService {
   };
 
   // simplified for API use
+  /**
+   *
+   * @param {*} cookie
+   * @param {*} employee
+   */
   async jobList(cookie, employee)  {
     logger.debug('fetching data for jobList.');
     return this.showJobList(cookie, employee);
   };
 
+  /**
+   *
+   * @param {*} cookie
+   * @param {*} employee
+   */
   async fetchNewJobList(cookie, employee)  {
     logger.debug('fetching new data for jobList...');
     const data = await this.showJobList(cookie, employee);
@@ -635,6 +686,15 @@ class ProjectileService {
   };
 
   // simplified for API Use
+  /**
+   *
+   * @param {*} date
+   * @param {*} time
+   * @param {*} project
+   * @param {*} note
+   * @param {*} cookie
+   * @param {*} employee
+   */
  async save(date, time, project, note, cookie, employee)  {
     logger.debug('saving data...');
     console.log('WTF SAVING')
@@ -667,11 +727,12 @@ class ProjectileService {
   blubb();
   */
 
-  /*
-  *
-  * update entry in projectile on specific date!
-  *
-  */ // cookie, employee, obj, line)
+
+  /**
+   *  update entry in projectile on specific date!
+   * @param {*} obj
+   * @param {*} line
+   */
  async update(obj, line)  {
     logger.debug('updating data...');
     const cookie = await this.login();
@@ -741,6 +802,12 @@ class ProjectileService {
     return setCalendarDate(date, cookie, employee);
   };
  */
+
+ /**
+  *
+  * @param {*} startDate
+  * @param {*} endDate
+  */
 async getallEntriesInTimeFrame(startDate, endDate) {
     startDate = startDate + 'T00:00:00';
     endDate = endDate + 'T00:00:00';
