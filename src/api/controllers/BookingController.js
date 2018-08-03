@@ -86,22 +86,13 @@ class BookingController {
    *
    * @param {object} req ExpressJS request object.
    * @param {string} req.body.pretty Attribute to tell the return format.
+   * @param {object} req.cookie The projectile cookie that is read from the bearer token.
    * @param {object} res ExpressJS response object.
    * @returns {void}
    */
   static async showList(req, res) {
-
-    // TODO:
-    // 1. get projectiile user credentials
-    // 2. initialize projectile service
-    // 3. get a list of activities via projectile service
-    // 4. create a response with activities
-    // const projectileUser = req.body.projectileUser;
-    // const projectilePassword = req.body.projectilePassword;
-
     res.json({
-      status: 'ok',
-      token: req.token
+      status: 'ok'
     });
   }
 }

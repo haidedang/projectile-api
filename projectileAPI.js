@@ -390,6 +390,131 @@ const saveEntry = async(cookie, employee, time, project, note) => {
   return returnValue;
 };
 
+/*
+*
+* update an entry!
+*
+*/
+const updateEntry = async(cookie, employee, obj, line) => {
+  winston.debug('updateEntry -> provided object: ' + JSON.stringify(obj, null, 2));
+  lineSelector = line;
+  winston.debug('updateEntry -> lineSelector: ' + lineSelector);
+
+  // "+.|DayList|9|TimeTracker!^.|Default|Employee|1|357" so musses aussehen!
+  const listEntry = '+.|DayList|' + line + '|' + employee;
+
+  // FIXME -why is a ',' necessary suddenly????
+  obj.duration = obj.duration.replace('.', ',');
+
+  // "normalize" note - Q'n'D fix, until final solution found - UMLAUTE
+  // !!! TODO CHECK - final clean Solution necessary: Q'n'D fix in TimeularAPI -> merge
+  // set time, select Project, write note -> all in one request now.
+  await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit',
+  // 'https://postman-echo.com/post',
+    cookie, {
+      'values': {
+        [listEntry]: [{
+          'n': 'Time',
+          'v': obj.duration
+        }, {
+          'n': 'What',
+          'v': obj.packageNo
+        }, {
+          'n': 'Note',
+          'v': obj.comment
+        }]
+      }
+    });
+
+  // save entry
+  const body = await normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action',
+    cookie, {
+      'ref': employee,
+      'name': '*',
+      'action': 'Save',
+      'Params': {}
+    });
+  let bodyString = JSON.stringify(body);
+  const entries = [];
+
+  // FIXME - external function
+  // check for successfull update
+  // pattern to matches within a note! e.g.: 2 tesing vs. testing vs. testing 2
+  // " gets stored as \" in projectile json
+  const re = new RegExp('\"v\"\:\"' + escapeRegExp(obj.comment).replace(/[\"]/g, '\\\\$&') + '\"\,\"d\"', 'g');
+  // TODO enough to check for notes?! :( must be another way if there is note present!)
+
+  // winston.debug('RegEx Debug: ' + escapeRegExp(note).replace(/[\"]/g, "\\\\$&"));
+  // winston.debug(note.replace(/[\"]/g, "\\\$&"));
+
+  // from server reply create list of entries of "note" matches to check them further, ideally there is only one
+  let count = 0;
+  const bodyStringMatch = bodyString.match(re);
+  if (bodyStringMatch) {
+    count = bodyStringMatch.length; // "api * ! \" ' url1" zu matchen!
+  }
+  winston.debug('updateEntry -> Occurence count of note text: ' + count);
+  for (let i = 0; i < count; i++) {
+    // find the note
+    const indexOfNote = bodyString.search(re);
+    const bodyStringEntry = bodyString.slice(0, indexOfNote + 5); // 0 to note position, temp
+    // find the beginnig of that block
+    const indexOfDayList = bodyStringEntry.lastIndexOf('"+.|DayList|');
+    // position of DayList in that new shorter bodyStringEntry
+    let bodyStringEntryCut = bodyString.slice(indexOfDayList); // from DayList connected to note to end
+    // find the end of that block
+    const indexOfEnd = bodyStringEntryCut.indexOf('"options":"update"}],'); // find the end of that block
+    bodyStringEntryCut = bodyStringEntryCut.slice(0, indexOfEnd + 21);
+    // 21 = length of search pattern, extract only the block we are interested in
+
+    entries.push('{' + bodyStringEntryCut + '}'); // collect found block entry
+
+    bodyString = bodyString.slice(indexOfEnd + 21); // cut the processed block out of the bodyString and keep searching
+  }
+
+  // evaluate results for correct return value
+  let returnValue = {
+    returnValue: false
+  };
+
+  entries.forEach((item) => {
+    // time has to be noramlized. Projectile ALWAYS returns x.xx though x,xx or x:xx may have been sent before
+    // winston.debug('Länge Response TimeTracker: ' + body.values['TimeTracker!^.|Default|Employee|1|357'].length);
+    if (body.values[employee].length >= 5 && item.includes('"Time","v":' + obj.duration + ',"d"') &&
+      item.includes('"What","v":"' + obj.packageNo + '","d"') && item.includes('"Note","v":"' +
+      obj.comment.replace(/[\"]/g, '\\\$&') + '","d"')) {
+      // created a new entry
+      returnValue = {
+        returnValue: true
+      };
+      winston.debug('updateEntry -> While recognizing save status: created a new entry, return value: true');
+    } else if (item.includes('"What","v":"' + obj.packageNo + '","d"') && item.includes('"Note","v":"' +
+            obj.comment.replace(/[\"]/g, '\\\$&') + '","d"')) {
+      // added to an existing entry
+      returnValue = {
+        returnValue: true
+      };
+      winston.debug('updateEntry -> While recognizing save status: added to an existing entry, return value: true');
+    }
+  });
+
+  // check for problem messages in projectile response that indicate saving was NOT successfull
+  returnValue = await checkProblems(bodyString, returnValue);
+
+  // fs.writeFile('bodyString.json', JSON.stringify(bodyString, null, 2), (err)=>{});  // Debug
+  /* TODO was always causing errors! Check for good and bad case, find single binding condition
+    if (bodyString.includes('"clearProblems":["')){
+      winston.warn('saveEntry -> Recognizing problem status: problem message found! returnValue can\'t be true!');
+      winston.warn('saveEntry -> "clearProblems" error - can\'t write to projectile - booking locked for current ' +
+      'timeperiod.');
+      if (returnValue.returnValue) {
+        returnValue.returnValue = false;
+          returnValue["errors"].push("clearProblems error, booking locked for current timeperiod");
+      }
+    } */
+  return returnValue;
+};
+
 async function deleteEntry(cookie, employee, number) {
   // mark entry for deletion, get popup response, extract ref and execute action to delete
   const dayList = await getDayListToday(cookie, employee);
@@ -541,6 +666,34 @@ async function blubb () {
 blubb();
 */
 
+/*
+*
+* update entry in projectile on specific date!
+*
+*/ // cookie, employee, obj, line)
+exports.update = async(obj, line) => {
+  winston.debug('updating data...');
+  const cookie = await exports.login();
+  const employee = await exports.getEmployee(cookie);
+  // let jobList = await exports.jobList(cookie, employee); // fetch the actual joblist.
+  if (await setCalendarDate(obj.date, cookie, employee)) {
+    const updateEntryResult = await updateEntry(cookie, employee, obj, line);
+    // saveEntry returns true or false depending on save result
+    // returns { returnValue: false, errors: errorArray }
+    winston.debug('updateEntryResult --> ' + JSON.stringify(updateEntryResult, null, 2));
+    if (updateEntryResult.returnValue) {
+      winston.debug('Finished updating entry.');
+      // return true;
+      // return saveEntryResult;
+    }
+    return updateEntryResult;
+  }
+  /* return {
+    returnValue: false
+  }; */
+  return updateEntryResult;
+  // return false;
+};
 
 
 exports.getDate = async(date) => {

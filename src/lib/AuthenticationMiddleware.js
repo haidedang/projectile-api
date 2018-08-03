@@ -1,11 +1,10 @@
 const atob = require('atob');
 const config = require('config');
+const jwt = require('jsonwebtoken');
 const passport = require('passport');
 const Strategy = require('passport-http-bearer').Strategy;
-const jwt = require('jsonwebtoken');
 
 const logger = require('../lib/logger');
-const tokenStore = require('../lib/TokenStoreSqlite');
 
 /**
  * Middleware to take of authentication and token handling.
@@ -13,21 +12,29 @@ const tokenStore = require('../lib/TokenStoreSqlite');
 class AuthenticationMiddleware {
   constructor() {
     // authentication strategy
-    passport.use(new Strategy(
-      async function(token, cb) {
-        try {
-          const tokenResult = await tokenStore.getToken(token);
+    passport.use(new Strategy(this.cookieStrategy));
+  }
 
-          if (!tokenResult || !tokenResult.token) {
-            return cb(new Error('Unauthorized'));
-          }
+  /**
+   * Strategy to handle authentication requests with passport strategy.
+   *
+   * @param {string} token The token that is given by the Authorization: Bearer ... method.
+   * @param {function} cb The callback function that is called, when the token was verified.
+   * @returns {void}
+   */
+  async cookieStrategy(token, cb) {
+    try {
+      const secret = config.api.jwt.secret;
+      const tokenPayload = jwt.verify(token, secret);
 
-          return cb(null, tokenResult.token);
-        } catch(e) {
-          return cb(e);
-        }
+      if (!tokenPayload) {
+        return cb(new Error('Unauthorized'));
       }
-    ));
+
+      cb(null, tokenPayload.cookie);
+    } catch(e) {
+      cb(e);
+    }
   }
 
   /**
@@ -39,7 +46,7 @@ class AuthenticationMiddleware {
    * @returns {function} standard connect middleware
    */
   async authenticate(req, res, next) {
-    return passport.authenticate('bearer', { session: false }, (err, token) => {
+    return passport.authenticate('bearer', { session: false }, (err, cookie) => {
       if (err) {
         return res.json({
           status: 'error',
@@ -47,14 +54,14 @@ class AuthenticationMiddleware {
         });
       }
 
-      if (!token) {
+      if (!cookie) {
         return res.json({
           status: 'error',
           message: 'Unauthorized'
         });
       }
 
-      req.token = token;
+      req.cookie = cookie;
       return next();
     })(req, res, next);
   }
@@ -76,7 +83,6 @@ class AuthenticationMiddleware {
 
     try {
       token = jwt.sign(payload, secret);
-      tokenStore.addToken(token);
     } catch(e) {
       logger.error('An error occured while creating new JWT.', e.stack);
     }
@@ -89,6 +95,12 @@ class AuthenticationMiddleware {
    *
    * @param {string} token The Json Web Token.
    * @returns {object|void} The payload javascript object or void when something went wrong.
+   * @example
+   *
+   * {
+   *    exp: 123466,
+   *    cookie: ... (stringified with JSON.stringify)
+   * }
    */
   async getPayload(token) {
     const secret = config.api.jwt.secret;
@@ -105,6 +117,12 @@ class AuthenticationMiddleware {
     }
   }
 
+  /**
+   * Parses the cookie for the expiration time Projectile has given within its JSON Web Token.
+   *
+   * @param {object} cookie The cookie object coming from Projectile.
+   * @returns {string} The expiration time.
+   */
   getExpFromCookie(cookie) {
     if (!Array.isArray(cookie)) {
       return;

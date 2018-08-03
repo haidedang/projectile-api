@@ -5,25 +5,23 @@ const AuthController = require('./controllers/AuthController');
 const authenticationMiddleware = require('../lib/AuthenticationMiddleware');
 
 /**
- * @api {get} /api/v1/login Authenticates a user to Projectile.
+ * @api {POST} /api/v1/login Authenticates a user to Projectile.
  * @apiVersion 1.0.0
- * @apiName Auth
- * @apiGroup Login
+ * @apiName Login
+ * @apiGroup Authentication
  * @apiDescription This route takes the user credentials, logs the user in and returns a JSON Web Token.
  *
- * @apiParam {string} user The Projectile username.
- * @apiParam {string} password The Projectile password.
+ * @apiParam {string} username The username of the users Projectile Account.
+ * @apiParam {string} password The password of the users Projectile Account.
  *
  * @apiParamExample {json} Request example:
- *
  *     {
  *         "username": "max.mustermann",
  *         "password": "Test123!"
  *     }
  *
- * @apiSuccess {string} status The status of the call, 'ok' or 'error'.
+ * @apiSuccess {string} status The status of the call.
  * @apiSuccess {string} token The JSON Web Token that authenticates the user on further requests.
- * @apiSuccess {string} description In case of an error the description tells what has gone wrong.
  *
  * @apiSuccessExample Success response examples:
  *     HTTP/1.1 200 OK
@@ -32,17 +30,21 @@ const authenticationMiddleware = require('../lib/AuthenticationMiddleware');
  *         "token": "1F34A5C..."
  *     }
  *
+ * @apiSuccess {string} status The status of the call.
+ * @apiSuccess {string} message In case of an error the message tells what went wrong.
+ *
+ * @apiErrorExample Error response examples:
  *     HTTP/1.1 200 OK
  *     {
  *         "status": "error",
- *         "description": "Invalid credentials"
+ *         "message": "Login failed"
  *     }
  *
  */
 router.post('/login', AuthController.login);
 
 /**
- * @api {get} /api/v1/book/:date?/:duration/:activity/:note Books an activity.
+ * @api {POST} /api/v1/book Books an activity.
  * @apiVersion 1.0.0
  * @apiName Book
  * @apiGroup Booking
