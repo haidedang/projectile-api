@@ -20,13 +20,13 @@ class AuthController {
     const password = req.body.password;
     let token = '';
 
-    const proService = new ProjectileService();
+    const ptileService = new ProjectileService();
 
     try {
-      const cookie = await proService.login(username, password);
+      const cookie = await ptileService.login(username, password);
 
       if (!cookie) {
-        throw new Error('Login failed.');
+        throw new Error('Login failed');
       }
 
       const exp = authenticationMiddleware.getExpFromCookie(cookie);
@@ -37,18 +37,19 @@ class AuthController {
       });
     } catch(e) {
       logger.error(`An error occured while logging into projectile. ${e.stack}`);
+      // send an error response
       res.json({
         status: 'error',
-        message: 'Login on Projectile failed.'
+        message: 'Login failed'
       });
       return;
     }
 
-    res.header('Authorization', 'Bearer ' + token)
-      .json({
-        status: 'ok',
-        token
-      });
+    // send success response with token
+    res.json({
+      status: 'ok',
+      token
+    });
   }
 }
 
