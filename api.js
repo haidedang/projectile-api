@@ -684,11 +684,114 @@ app.get(basePath + '/booking', (req, res) => {
   winston.debug('/booking website done');
 });
 
+/*
+ *
+ *
+ *
+ */
+require('./Api/routes.booking')(app);
 
-require('./Api/routes.booking')(app)
 
+/**
+ *  route for editing website
+ */
+app.get(basePath + '/editing', (req, res) => {
+  winston.debug('editing website entered.');
+  let html = fs.readFileSync(__dirname + '/src/editing.html', { encoding: 'utf8' });
+  html = html.replace(/\{port\}/g, appPort);
+  // delivering website with options
+  res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+  res.end(html);
+  // delivering website with options
+  // res.sendFile(__dirname + '/src/start.html');
+  winston.debug('/editing website done');
+});
 
+/**
+ *  route for editing results
+ */
+app.post(basePath + '/editing', async(req, res) => {
+  winston.debug('editing results entered.');
+  try {
+    let json = req.body;
+    /*
+    currentJson.valuesAfterChange
+    currentJson.valuesBeforeChange
+    currentJson.changes
 
+    obj.date
+    obj.duration
+    obj.packageNo
+    obj.comment
+    obj.line
+    */
+    // iterate through list of changes... IFF .changes = true
+    if (json.changes){
+      winston.debug('/editing -> Changes is true!');
+
+      for (const index in json.valuesAfterChange) { // for...in => index no
+        const item = json.valuesAfterChange[index];
+        if (JSON.stringify(json.valuesBeforeChange[index]) !== JSON.stringify(item)) {
+          console.log('####');
+          winston.debug('/editing -> Difference detected. Update triggered.', item.line);
+          // exports.delete for delete route
+          // exports.deleteEntry
+
+          // TODO - seems to run in concurrency!!! if more than 2 entries are updated at once, the durations can
+          // get damaged, entries have dupletes,...
+          // TODO - to consider. Mark what has to be done per date!... then handle ALL in once. Deleting and Editing!
+          // one Save operation ONLY!
+          let result = await projectile.update(item, item.line);
+          winston.debug('/editing -> Result from update:', result);
+        }
+      }
+    }
+    res.status(200).send('All fine - post /booking');
+    winston.debug('/editing results done');
+  } catch(e) {
+    res.status(400).send('Something went wrong - post /booking');
+    winston.error('/editing results not successfull');
+  }
+});
+
+/**
+ *  route for list of bookings for a certain date
+ */
+app.get(basePath + '/bookingslist/:date/:date2?', async(req, res) => {
+  winston.debug('bookingslist website entered.');
+  // projectile.setCalendarDate(req.params.date);
+  // const dayList = await projectile.getDayListToday();
+  const dayList = await projectile.getallEntriesInTimeFrame(req.params.date, req.params.date2 ? req.params.date2 : req.params.date);
+
+  let dayListJSON = {};
+  dayListJSON['employee'] = employee;
+  // dayListJSON['values'] = dayList2.values;
+  dayListJSON['values'] = [];
+  // console.log(dayList2.values[employee][2].v.length);
+  for (let i = 0; i < dayList.values[employee][2].v.length; i++) {
+    let obj = {};
+    obj.date = dayList.values['+.|DayList|' + i + '|' + employee][32].v; // date
+    obj.duration = dayList.values['+.|DayList|' + i + '|' + employee][5].v; // duration
+    obj.packageNo = dayList.values['+.|DayList|' + i + '|' + employee][8].v; // packageNo
+    obj.comment = dayList.values['+.|DayList|' + i + '|' + employee][29].v; // comment
+    obj.line = i; // 7 pro Tag leer + Einträge! daraus lässt sich die Line zum löschen/updaten errechnen?!
+    // Anpassung in saveEntry, damit man die gleiche Zeile editieren kann?!
+    if (obj.duration !== null) {
+      dayListJSON.values.push(obj);
+    }
+  }
+  // dayListJSON.values.push({})
+
+  // iterate through json, find entries WITH time value !== null, add to array with 4 values object, provide employee string
+
+  res.status(200).send(dayListJSON);
+  // res.status(200).send(JSON.stringify(dayList2));
+  // res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+  // res.end(html);
+  // delivering website with options
+  // res.sendFile(__dirname + '/src/start.html');
+  winston.debug('/bookingslist website done');
+});
 
 
 

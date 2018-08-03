@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+  <!-- <link href="https://getbootstrap.com/docs/4.0/examples/cover/cover.css" rel="stylesheet"> -->
+  <link rel="shortcut icon" type="image/x-icon" href="/src/favicon.ico">
+  <title>Book 2 projectile</title>
+</head>
+<body class="p-3 mb-2 bg-dark text-white">
+  <div class="container">
+    <nav class="navbar navbar-dark bg-dark navbar-expand-lg">
+      <!-- <a class="navbar-brand" href="#">B</a> -->
+      <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+        <div class="navbar-nav">
+          <a class="nav-item nav-link" href="booking">Booking <span class="sr-only">(current)</span></a>
+          <a class="nav-item nav-link active" href="editing">Editing <span class="sr-only">(current)</span></a>
+          <a class="nav-item nav-link" href="deleting">Deleting</a>
+          <a class="nav-item nav-link disabled" href="#">Disabled</a>
+        </div>
+      </div>
+    </nav>
+    <hr>
+    <div class="row" id="header">
+      <div class="col" id="headerText">
+        <h3>projectile booking</h3>...
+      </div>
+    </div>
+
+    <hr>
+    Please select a date to get a list of available entries for that date<br>
+    Please select an entry from that list to edit its content.
+    <br><br>
+
+    <!-- sync range -->
+    <div class="row">
+      <div class="col-md-4">
+        <div class="input-group mb-3">
+          <div class="input-group-prepend">
+            <span class="input-group-text" id="basic-addon1">Date</span>
+          </div>
+          <input type="date" class="form-control" id="date" placeholder="if none provided today is assumed">
+        </div>
+      </div>
+      <!-- <div class="col">
+        <div class="input-group mb-3">
+          <div class="input-group-prepend">
+            <span class="input-group-text" id="basic-addon1">StartDate</span>
+          </div>
+          <input type="date" class="form-control" id="startDate" placeholder="if none provided today is assumed">
+        </div>
+      </div>
+      <div class="col">
+        <div class="input-group mb-3">
+          <div class="input-group-prepend">
+            <span class="input-group-text" id="basic-addon1">EndDate</span>
+          </div>
+          <input type="date" class="form-control" id="endDate" placeholder="if none provided today is assumed">
+        </div>
+      </div> -->
+    </div>
+    <div class="row">
+      <div class="col">
+        <button type="button" id="buttonGetList" class="btn btn-secondary">Show the list!</button>
+      </div>
+      <div class="col" id=Book>
+      </div>
+    </div>
+
+    <hr>
+    <!-- output results -->
+    <div>
+      <h4>Book list:</h4>
+      <ul class="list-group">
+        <div id="results"> <!-- insert results here at end -->
+          <li class="list-group-item list-group-item-dark">
+            <div class="row">
+              <div class="col-md-2">
+                <h5>Start date</h5>
+              </div>
+              <div class="col-md-2">
+                <h5>Duration</h5>
+              </div>
+              <div class="col-md-3">
+                <h5>Package</h5>
+              </div>
+              <div class="col-md">
+                <h5>Note</h5>
+              </div>
+            <!-- <textarea id="results" name="htmlContent" rows="5" cols="100">RESULTS</textarea> -->
+            </div>
+          </li>
+        </div>
+      </ul>
+      <div class="row">
+        <div class="col">
+          <button type="button" id="buttonUpdateList" class="btn btn-secondary">Update changes!</button>
+        </div>
+      </div>
+    </div>
+  </div>
+<!-- <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script> -->
+<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<script src="//localhost:{port}/src/editing.js"></script>
+</body>
+</html>
