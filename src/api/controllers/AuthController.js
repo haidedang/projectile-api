@@ -24,6 +24,9 @@ class AuthController {
 
     try {
       const cookie = await ptileService.login(username, password);
+      const employee = await ptileService.getEmployee(cookie);
+
+      console.log('EMPLN' , employee)
 
       if (!cookie) {
         throw new Error('Login failed');
@@ -33,7 +36,8 @@ class AuthController {
 
       token = await authenticationMiddleware.createToken({
         cookie,
-        exp
+        exp,
+        employee
       });
     } catch(e) {
       logger.error(`An error occured while logging into projectile. ${e.stack}`);
