@@ -635,9 +635,9 @@ exports.fetchNewJobList = async() => {
 };
 
 // simplified for API Use
-exports.save = async(date, time, project, note) => {
+exports.save = async(date, time, project, note, cookie) => {
   winston.debug('saving data...');
-  const cookie = await exports.login();
+  /* const cookie = await exports.login(); */
   const employee = await exports.getEmployee(cookie);
   // let jobList = await exports.jobList(cookie, employee); // fetch the actual joblist.
   if (await setCalendarDate(date, cookie, employee)) {

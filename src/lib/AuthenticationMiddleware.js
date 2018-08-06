@@ -31,7 +31,7 @@ class AuthenticationMiddleware {
         return cb(new Error('Unauthorized'));
       }
 
-      cb(null, tokenPayload.cookie);
+      cb(null, tokenPayload.cookie, tokenPayload.employee);
     } catch(e) {
       cb(e);
     }
@@ -46,7 +46,7 @@ class AuthenticationMiddleware {
    * @returns {function} standard connect middleware
    */
   async authenticate(req, res, next) {
-    return passport.authenticate('bearer', { session: false }, (err, cookie) => {
+    return passport.authenticate('bearer', { session: false }, (err, cookie, employee) => {
       if (err) {
         return res.json({
           status: 'error',
@@ -62,6 +62,7 @@ class AuthenticationMiddleware {
       }
 
       req.cookie = cookie;
+      req.employee = employee;
       return next();
     })(req, res, next);
   }
