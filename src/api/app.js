@@ -36,7 +36,7 @@ app.use(morgan('dev'));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-
+app.use(express.static('dist'));
 // add the documentation route, this is static and has to be build before
 app.use('/api/doc', express.static(path.join(__dirname, 'public/api/doc')));
 
