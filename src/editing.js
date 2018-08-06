@@ -158,11 +158,23 @@ packageSelectTmp +
         obj.packageNo = $('#packageNo' + i).val();
         obj.comment = $('#comment' + i).val();
         obj.line = valuesBeforeChange[i].line;
+        obj.status = '';
         bookingArray.push(obj);
         console.log(obj);
       }
       currentJson.valuesAfterChange = bookingArray;
       currentJson.valuesBeforeChange = valuesBeforeChange;
+
+      for (let i = 0; i < currentJson.valuesAfterChange; i++) {
+        // check for changes or deletion
+        if (JSON.stringify(currentJson.valuesAfterChange[i]) !== JSON.stringify(currentJson.valuesBeforeChange[i])) {
+          currentJson.valuesAfterChange[i].status = 'changed'; // changed / deleted
+        }
+        /*
+        if (deletion flag is set) {
+
+        } */
+      }
 
       // mark changed values?!
       if (JSON.stringify(currentJson.valuesAfterChange) === JSON.stringify(currentJson.valuesBeforeChange)) {
@@ -181,6 +193,27 @@ packageSelectTmp +
       $.post('//localhost:{port}/editing/', currentJson, function(data) {
         console.log('Posted to /editing - Server replied:');
         console.log(data);
+        if (data.returnValue) {
+          if (!document.getElementById('updateInfo')) {
+            $('<div class="col" id="updateInfo">' +
+            '<span class=\"badge badge-success\">Successfully updated booking entries</span>' +
+            '</div>').insertBefore('#bookingslist').delay(5000).fadeOut(function() {
+              // $(this).html('');
+              $(this).remove();
+              // $(this).show();
+            });
+          }
+        } else {
+          if (!document.getElementById('updateInfo')) {
+            $('<div class="col" id="updateInfo">' +
+            '<span class=\"badge badge-warning\">Unsuccessfully in updating booking entries - one or more entries ' +
+            'failed</span>' +
+            '</div>').insertBefore('#bookingslist').delay(5000).fadeOut(function() {
+              $(this).html('');
+              $(this).show();
+            });
+          }
+        }
       });
 
 

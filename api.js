@@ -741,15 +741,21 @@ app.post(basePath + '/editing', async(req, res) => {
           // get damaged, entries have dupletes,...
           // TODO - to consider. Mark what has to be done per date!... then handle ALL in once. Deleting and Editing!
           // one Save operation ONLY!
-          let result = await projectile.update(item, item.line);
+          const result = await projectile.update(item, item.line);
           winston.debug('/editing -> Result from update:', result);
         }
       }
     }
-    res.status(200).send('All fine - post /booking');
+    // simple general reply for now
+    // TODO submit status for each booking line to allow highlighting of results per line in frontend
+    res.status(200).send({
+      'returnValue': true
+    });
     winston.debug('/editing results done');
   } catch(e) {
-    res.status(400).send('Something went wrong - post /booking');
+    res.status(400).send({
+      'returnValue': false
+    });
     winston.error('/editing results not successfull');
   }
 });
