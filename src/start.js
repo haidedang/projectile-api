@@ -15,7 +15,7 @@ $(document).ready(function() {
       projectilePassword: $('#projectilePassword').val(),
       timeularApiKey: $('#timeularApiKey').val(),
       timeularApiSecret: $('#timeularApiSecret').val(),
-      projectileOnly: ($('#projectileOnly').attr('aria-pressed') === 'true')? true : false
+      projectileOnly: ($('#projectileOnly').attr('aria-pressed') === 'true') ? true : false
     };
 
     $.post("//localhost:{port}/start/", $currentJson, function(data) {
@@ -61,6 +61,7 @@ $(document).ready(function() {
       $('#apiSecret').hide();
     } else  if (event.target.getAttribute('aria-pressed') === 'true'){ 
       event.target.style.backgroundColor = 'grey'
+      event.target.setAttribute('aria-pressed', 'false')
       $('#apiKey').show();
       $('#apiSecret').show();
     }

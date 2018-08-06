@@ -388,7 +388,7 @@ const apiConfig = {
     return user;
   },
   checkUserInput({ projectileOnly, projectileUser, projectilePassword, timeularApiKey, timeularApiSecret }) {
-    if (!projectileOnly && projectileUser && projectilePassword || projectileOnly && projectileUser &&
+    if (projectileOnly && projectileUser && projectilePassword || !projectileOnly && projectileUser &&
       projectilePassword && timeularApiKey && timeularApiSecret) {
       return true;
     }
