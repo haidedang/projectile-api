@@ -74,7 +74,7 @@
     "no-useless-call": "error",
     "no-useless-concat": "error",
     "no-useless-constructor": "error",
-    "no-warning-comments": 1,
+    "no-warning-comments": 0,
     "no-whitespace-before-property": "error",
     "no-var": 1,
     "no-void": "error",
