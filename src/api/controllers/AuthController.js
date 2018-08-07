@@ -26,8 +26,6 @@ class AuthController {
       const cookie = await ptileService.login(username, password);
       const employee = await ptileService.getEmployee(cookie);
 
-      console.log('EMPLN' , employee)
-
       if (!cookie) {
         throw new Error('Login failed');
       }

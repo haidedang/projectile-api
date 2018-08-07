@@ -29,7 +29,7 @@ class ProjectileService {
         isAjax: '0',
         develop: '0',
         login: username,
-        password: password,
+        password,
         dologin: true
       },
       strictSSL: false, // TODO: SSL Zertifizierung mit node.js
@@ -68,8 +68,7 @@ class ProjectileService {
 
       // return the whole cookie
       return cookie;
-
-    } catch(e) {
+    } catch (e) {
       // Zeitüberschreitung beim Verbinden zum projectile Server... Bitte überprüfe deine Netzwerkverbindung." + error
       logger.error(`projectile login error. ${e.stack}`);
     }
@@ -82,15 +81,14 @@ class ProjectileService {
    * @param {*} cookie  cookie response
    * @param {*} body    HTTP body if post request
    */
-   option(method, url, cookie, body) {
+  option(method, url, cookie, body) {
     const options = {
       method,
       url,
-      headers:
-              {
-                cookie,
-                'content-type': 'application/json'
-              },
+      headers: {
+        cookie,
+        'content-type': 'application/json'
+      },
       body,
       json: true,
       strictSSL: false
@@ -103,28 +101,54 @@ class ProjectileService {
    * @param {*} cookie  projectile cookie
    * @param {*} employee projectile Employee ID
    */
-  async showJobList(cookie, employee)  {
-    const body = await this.normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get',
-      cookie, {
-        [employee]:
-                  [
-                    'DayList',
-                    'JobList',
-                    'Begin',
-                    'Favorites',
-                    'TrackingRestriction',
-                    'FilterCustomer',
-                    'FilterProject'
-                  ],
+  async showJobList(cookie, employee) {
+    console.log(employee);
+
+    logger.debug('parameters:');
+    logger.debug(
+      'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get',
+      cookie,
+      {
+        [employee]: [
+          'DayList',
+          'JobList',
+          'Begin',
+          'Favorites',
+          'TrackingRestriction',
+          'FilterCustomer',
+          'FilterProject'
+        ],
         Dock: ['Area.TrackingArea', 'Area.ProjectManagementArea']
-      });
+      }
+    );
 
-      // fs.writeFile("answer.json", JSON.stringify(body), (err)=>{.debug()});
-      // TODO TO CHECK necessary?
+    const body = await this.normalPostURL(
+      'POST',
+      'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get',
+      cookie,
+      {
+        [employee]: [
+          'DayList',
+          'JobList',
+          'Begin',
+          'Favorites',
+          'TrackingRestriction',
+          'FilterCustomer',
+          'FilterProject'
+        ],
+        Dock: ['Area.TrackingArea', 'Area.ProjectManagementArea']
+      }
+    );
 
-      /**
-      * get name and NO. of Employee Job
-      */
+    logger.debug(JSON.stringify(body));
+
+
+    // fs.writeFile("answer.json", JSON.stringify(body), (err)=>{.debug()});
+    // TODO TO CHECK necessary?
+
+    /**
+     * get name and NO. of Employee Job
+     */
     const temp = body['values'][employee][11]['v'];
     const joblist = []; // const because NO reassignment happens, just adding to it -> valid
 
@@ -147,7 +171,7 @@ class ProjectileService {
     // get an actual copy of the joblist fetched from server
     this.joblist = advJoblist; // TODO why a copy?
     return advJoblist;
-  };
+  }
 
   /**
    *
@@ -157,7 +181,7 @@ class ProjectileService {
    * @param body
    * @returns {Promise.<T>}
    */
-   normalPostURL(method, url, cookie, body) {
+  normalPostURL(method, url, cookie, body) {
     return new Promise((resolve, reject) => {
       const options = this.option(method, url, cookie, body);
       request(options, function(error, response, body) {
@@ -174,7 +198,7 @@ class ProjectileService {
    *  function to test if projectile webserver is alive/reachable
    *  @returns {boolean} status
    */
-  async projectileAlive()  {
+  async projectileAlive() {
     const status = await rp({ uri: 'https://projectile.office.sevenval.de/projectile/start', strictSSL: false })
       .then(function() {
         logger.silly('projectileAlive -> projectile is alive.');
@@ -186,7 +210,7 @@ class ProjectileService {
         return false;
       });
     return status;
-  };
+  }
 
   /**
    *
@@ -194,17 +218,20 @@ class ProjectileService {
    * @returns {Promise} Employee
    * # possible Error Case: wrong login data.
    */
- async getEmployee(cookie)  {
-
-   console.log('fuck')
+  async getEmployee(cookie) {
+    console.log('fuck');
     // Überprüfe ob Request in Ordnung ging
-    const body = await this.normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action',
-      cookie, {
-        'ref': 'Start',
-        'name': '*',
-        'action': 'TimeTracker1',
-        'Params': {}
-      });
+    const body = await this.normalPostURL(
+      'POST',
+      'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action',
+      cookie,
+      {
+        ref: 'Start',
+        name: '*',
+        action: 'TimeTracker1',
+        Params: {}
+      }
+    );
 
     try {
       const EmplN = JSON.parse(body['values']['Dock'][0]['v'][0])['a'];
@@ -213,7 +240,7 @@ class ProjectileService {
     } catch (error) {
       throw new Error('Ungültige Login Daten. Bitte überprüfen.');
     }
-  };
+  }
 
   /**
    * normalize the duration value
@@ -221,7 +248,7 @@ class ProjectileService {
    * @returns {duration} duration value that is cleaned to x.xx
    *
    */
-  async normalizetime(time)  {
+  async normalizetime(time) {
     if (time.includes(':')) {
       const tmp = time.split(':');
       const tmp2 = (parseInt(tmp[1]) / 60) * 100;
@@ -230,20 +257,19 @@ class ProjectileService {
       time = time.replace(',', '.');
     }
     return time;
-  };
+  }
 
   // helper
   /**
    *
    * @param {*} str
    */
-   escapeRegExp(str) {
+  escapeRegExp(str) {
     return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
   }
 
   // TODO: Refactoring Neccessary
   // Save entry to projectile
-
 
   /**
    *
@@ -252,15 +278,22 @@ class ProjectileService {
    */
   async checkProblems(bodyString, returnValue) {
     if (bodyString.includes('"problems":[{"ref"')) {
-      logger.warn('saveEntry -> Recognizing problem status: problem message found! returnValue can\'t be true!');
+      logger.warn("saveEntry -> Recognizing problem status: problem message found! returnValue can't be true!");
       const indexOfErrorArrayStart = bodyString.lastIndexOf('problems":[');
       const indexOfErrorArrayEnd = bodyString.slice(indexOfErrorArrayStart).indexOf('"}],');
-      logger.warn('saveEntry -> Error array: ', 'Start: ', indexOfErrorArrayStart, 'length:', indexOfErrorArrayEnd,
-        bodyString.slice(indexOfErrorArrayStart + 10, indexOfErrorArrayStart + indexOfErrorArrayEnd + 3));
-      const errorArray = JSON.parse(bodyString.slice(indexOfErrorArrayStart + 10, indexOfErrorArrayStart +
-             indexOfErrorArrayEnd + 3));
+      logger.warn(
+        'saveEntry -> Error array: ',
+        'Start: ',
+        indexOfErrorArrayStart,
+        'length:',
+        indexOfErrorArrayEnd,
+        bodyString.slice(indexOfErrorArrayStart + 10, indexOfErrorArrayStart + indexOfErrorArrayEnd + 3)
+      );
+      const errorArray = JSON.parse(
+        bodyString.slice(indexOfErrorArrayStart + 10, indexOfErrorArrayStart + indexOfErrorArrayEnd + 3)
+      );
       logger.warn('saveEntry -> Error array itms: ', errorArray.length);
-      errorArray.forEach((item) => {
+      errorArray.forEach(item => {
         logger.warn(item.message, item.severity);
       });
       // array contains: ref, message, severity
@@ -282,7 +315,7 @@ class ProjectileService {
    * @param {*} project project ID
    * @param {*} note task description
    */
-   async saveEntry(cookie, employee, time, project, note) {
+  async saveEntry(cookie, employee, time, project, note) {
     const dayList = await this.getDayListToday(cookie, employee);
     logger.debug('saveEntry -> dayList: ' + JSON.stringify(dayList, null, 2));
     /*
@@ -306,31 +339,43 @@ class ProjectileService {
     // "normalize" note - Q'n'D fix, until final solution found - UMLAUTE
     // !!! TODO CHECK - final clean Solution necessary: Q'n'D fix in TimeularAPI -> merge
     // set time, select Project, write note -> all in one request now.
-    await this.normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit',
-    // 'https://postman-echo.com/post',
-      cookie, {
-        'values': {
-          [listEntry]: [{
-            'n': 'Time',
-            'v': time
-          }, {
-            'n': 'What',
-            'v': project
-          }, {
-            'n': 'Note',
-            'v': note
-          }]
+    await this.normalPostURL(
+      'POST',
+      'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit',
+      // 'https://postman-echo.com/post',
+      cookie,
+      {
+        values: {
+          [listEntry]: [
+            {
+              n: 'Time',
+              v: time
+            },
+            {
+              n: 'What',
+              v: project
+            },
+            {
+              n: 'Note',
+              v: note
+            }
+          ]
         }
-      });
+      }
+    );
 
     // save entry
-    const body = await this.normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action',
-      cookie, {
-        'ref': employee,
-        'name': '*',
-        'action': 'Save',
-        'Params': {}
-      });
+    const body = await this.normalPostURL(
+      'POST',
+      'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action',
+      cookie,
+      {
+        ref: employee,
+        name: '*',
+        action: 'Save',
+        Params: {}
+      }
+    );
     let bodyString = JSON.stringify(body);
     const entries = [];
 
@@ -338,7 +383,7 @@ class ProjectileService {
     // check for successfull saving
     // pattern to matches within a note! e.g.: 2 tesing vs. testing vs. testing 2
     // " gets stored as \" in projectile json
-    const re = new RegExp('\"v\"\:\"' + this.escapeRegExp(note).replace(/[\"]/g, '\\\\$&') + '\"\,\"d\"', 'g');
+    const re = new RegExp('"v":"' + this.escapeRegExp(note).replace(/[\"]/g, '\\\\$&') + '","d"', 'g');
     // TODO enough to check for notes?! :( must be another way if there is note present!)
 
     // logger.debug('RegEx Debug: ' + escapeRegExp(note).replace(/[\"]/g, "\\\\$&"));
@@ -366,7 +411,8 @@ class ProjectileService {
 
       entries.push('{' + bodyStringEntryCut + '}'); // collect found block entry
 
-      bodyString = bodyString.slice(indexOfEnd + 21); // cut the processed block out of the bodyString and keep searching
+      // cut the processed block out of the bodyString and keep searching
+      bodyString = bodyString.slice(indexOfEnd + 21);
     }
 
     // evaluate results for correct return value
@@ -374,19 +420,24 @@ class ProjectileService {
       returnValue: false
     };
 
-    entries.forEach((item) => {
+    entries.forEach(item => {
       // time has to be noramlized. Projectile ALWAYS returns x.xx though x,xx or x:xx may have been sent before
       // logger.debug('Länge Response TimeTracker: ' + body.values['TimeTracker!^.|Default|Employee|1|357'].length);
-      if (body.values[employee].length >= 5 && item.includes('"Time","v":' + time + ',"d"') &&
-        item.includes('"What","v":"' + project + '","d"') && item.includes('"Note","v":"' +
-        note.replace(/[\"]/g, '\\\$&') + '","d"')) {
+      if (
+        body.values[employee].length >= 5 &&
+        item.includes('"Time","v":' + time + ',"d"') &&
+        item.includes('"What","v":"' + project + '","d"') &&
+        item.includes('"Note","v":"' + note.replace(/[\"]/g, '\\$&') + '","d"')
+      ) {
         // created a new entry
         returnValue = {
           returnValue: true
         };
         logger.debug('saveEntry -> While recognizing save status: created a new entry, return value: true');
-      } else if (item.includes('"What","v":"' + project + '","d"') && item.includes('"Note","v":"' +
-              note.replace(/[\"]/g, '\\\$&') + '","d"')) {
+      } else if (
+        item.includes('"What","v":"' + project + '","d"') &&
+        item.includes('"Note","v":"' + note.replace(/[\"]/g, '\\$&') + '","d"')
+      ) {
         // added to an existing entry
         returnValue = {
           returnValue: true
@@ -410,14 +461,14 @@ class ProjectileService {
         }
       } */
     return returnValue;
-  };
+  }
 
   /*
   *
   * update an entry!
   *
   */
-   async updateEntry(cookie, employee, obj, line)  {
+  async updateEntry(cookie, employee, obj, line) {
     logger.debug('updateEntry -> provided object: ' + JSON.stringify(obj, null, 2));
     lineSelector = line;
     logger.debug('updateEntry -> lineSelector: ' + lineSelector);
@@ -431,31 +482,43 @@ class ProjectileService {
     // "normalize" note - Q'n'D fix, until final solution found - UMLAUTE
     // !!! TODO CHECK - final clean Solution necessary: Q'n'D fix in TimeularAPI -> merge
     // set time, select Project, write note -> all in one request now.
-    await this.normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit',
-    // 'https://postman-echo.com/post',
-      cookie, {
-        'values': {
-          [listEntry]: [{
-            'n': 'Time',
-            'v': obj.duration
-          }, {
-            'n': 'What',
-            'v': obj.packageNo
-          }, {
-            'n': 'Note',
-            'v': obj.comment
-          }]
+    await this.normalPostURL(
+      'POST',
+      'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit',
+      // 'https://postman-echo.com/post',
+      cookie,
+      {
+        values: {
+          [listEntry]: [
+            {
+              n: 'Time',
+              v: obj.duration
+            },
+            {
+              n: 'What',
+              v: obj.packageNo
+            },
+            {
+              n: 'Note',
+              v: obj.comment
+            }
+          ]
         }
-      });
+      }
+    );
 
     // save entry
-    const body = await this.normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action',
-      cookie, {
-        'ref': employee,
-        'name': '*',
-        'action': 'Save',
-        'Params': {}
-      });
+    const body = await this.normalPostURL(
+      'POST',
+      'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action',
+      cookie,
+      {
+        ref: employee,
+        name: '*',
+        action: 'Save',
+        Params: {}
+      }
+    );
     let bodyString = JSON.stringify(body);
     const entries = [];
 
@@ -463,7 +526,7 @@ class ProjectileService {
     // check for successfull update
     // pattern to matches within a note! e.g.: 2 tesing vs. testing vs. testing 2
     // " gets stored as \" in projectile json
-    const re = new RegExp('\"v\"\:\"' + this.escapeRegExp(obj.comment).replace(/[\"]/g, '\\\\$&') + '\"\,\"d\"', 'g');
+    const re = new RegExp('"v":"' + this.escapeRegExp(obj.comment).replace(/[\"]/g, '\\\\$&') + '","d"', 'g');
     // TODO enough to check for notes?! :( must be another way if there is note present!)
 
     // logger.debug('RegEx Debug: ' + escapeRegExp(note).replace(/[\"]/g, "\\\\$&"));
@@ -491,7 +554,8 @@ class ProjectileService {
 
       entries.push('{' + bodyStringEntryCut + '}'); // collect found block entry
 
-      bodyString = bodyString.slice(indexOfEnd + 21); // cut the processed block out of the bodyString and keep searching
+      // cut the processed block out of the bodyString and keep searching
+      bodyString = bodyString.slice(indexOfEnd + 21);
     }
 
     // evaluate results for correct return value
@@ -499,19 +563,24 @@ class ProjectileService {
       returnValue: false
     };
 
-    entries.forEach((item) => {
+    entries.forEach(item => {
       // time has to be noramlized. Projectile ALWAYS returns x.xx though x,xx or x:xx may have been sent before
       // logger.debug('Länge Response TimeTracker: ' + body.values['TimeTracker!^.|Default|Employee|1|357'].length);
-      if (body.values[employee].length >= 5 && item.includes('"Time","v":' + obj.duration + ',"d"') &&
-        item.includes('"What","v":"' + obj.packageNo + '","d"') && item.includes('"Note","v":"' +
-        obj.comment.replace(/[\"]/g, '\\\$&') + '","d"')) {
+      if (
+        body.values[employee].length >= 5 &&
+        item.includes('"Time","v":' + obj.duration + ',"d"') &&
+        item.includes('"What","v":"' + obj.packageNo + '","d"') &&
+        item.includes('"Note","v":"' + obj.comment.replace(/[\"]/g, '\\$&') + '","d"')
+      ) {
         // created a new entry
         returnValue = {
           returnValue: true
         };
         logger.debug('updateEntry -> While recognizing save status: created a new entry, return value: true');
-      } else if (item.includes('"What","v":"' + obj.packageNo + '","d"') && item.includes('"Note","v":"' +
-              obj.comment.replace(/[\"]/g, '\\\$&') + '","d"')) {
+      } else if (
+        item.includes('"What","v":"' + obj.packageNo + '","d"') &&
+        item.includes('"Note","v":"' + obj.comment.replace(/[\"]/g, '\\$&') + '","d"')
+      ) {
         // added to an existing entry
         returnValue = {
           returnValue: true
@@ -535,7 +604,7 @@ class ProjectileService {
         }
       } */
     return returnValue;
-  };
+  }
 
   /**
    *
@@ -547,23 +616,31 @@ class ProjectileService {
     // mark entry for deletion, get popup response, extract ref and execute action to delete
     const dayList = await getDayListToday(cookie, employee);
     const listEntry = dayList[number];
-    const body = await this.normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action',
-      cookie, {
-        'ref': employee,
-        'name': 'DayList',
-        'action': 'RowAction_Delete',
-        'Params': { 'ref': listEntry }
-      });
-      // logger.debug(body.dialog.structure[""][""]["0"][1].v); --> contains "Nicht erlaubt: Krank löschen" in spec case
-    const secondBody = await this.normalPostURL('POST',
-      'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action', cookie, {
-        'ref': body.dialog.ref,
-        'name': '*',
-        'action': '+0+1__null_',
-        'Params': { 'isDialog': true }
-      });
+    const body = await this.normalPostURL(
+      'POST',
+      'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action',
+      cookie,
+      {
+        ref: employee,
+        name: 'DayList',
+        action: 'RowAction_Delete',
+        Params: { ref: listEntry }
+      }
+    );
+    // logger.debug(body.dialog.structure[""][""]["0"][1].v); --> contains "Nicht erlaubt: Krank löschen" in spec case
+    const secondBody = await this.normalPostURL(
+      'POST',
+      'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action',
+      cookie,
+      {
+        ref: body.dialog.ref,
+        name: '*',
+        action: '+0+1__null_',
+        Params: { isDialog: true }
+      }
+    );
 
-      /*
+    /*
       expected behaviour: after successfull deletion of a listEntry, the secondBody contains the line:
       "close":["1519808571525-0"],"clearProblems":["1519808571525-0"]} containing the ref value from first request twice
       */
@@ -591,11 +668,23 @@ class ProjectileService {
    * @param {*} employee
    */
   async getDayListToday(cookie, employee) {
-    const temp = await this.normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get',
-      cookie, {
-        'Dock': ['Area.TrackingArea'],
-        [employee]: ['DayList', 'JobList', 'Begin', 'Favorites', 'TrackingRestriction', 'FilterCustomer', 'FilterProject']
-      });
+    const temp = await this.normalPostURL(
+      'POST',
+      'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get',
+      cookie,
+      {
+        Dock: ['Area.TrackingArea'],
+        [employee]: [
+          'DayList',
+          'JobList',
+          'Begin',
+          'Favorites',
+          'TrackingRestriction',
+          'FilterCustomer',
+          'FilterProject'
+        ]
+      }
+    );
     const dayList = await temp['values'][employee][2]['v'];
 
     return dayList;
@@ -612,22 +701,36 @@ class ProjectileService {
     // Timetracker page
     // OBSOLETE??
     await this.normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get', cookie, {
-      [employee]: ['DayList', 'JobList', 'Begin', 'Favorites', 'TrackingRestriction', 'FilterCustomer', 'FilterProject'],
-      'Dock': ['Area.TrackingArea', 'Area.ProjectManagementArea']
+      [employee]: [
+        'DayList',
+        'JobList',
+        'Begin',
+        'Favorites',
+        'TrackingRestriction',
+        'FilterCustomer',
+        'FilterProject'
+      ],
+      Dock: ['Area.TrackingArea', 'Area.ProjectManagementArea']
     });
     // setToday
-    const answer = await this.normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit',
-      cookie, {
-        'values': {
-          [employee]: [{
-            'n': 'Begin',
-            'v': dateComplete
-          }]
+    const answer = await this.normalPostURL(
+      'POST',
+      'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit',
+      cookie,
+      {
+        values: {
+          [employee]: [
+            {
+              n: 'Begin',
+              v: dateComplete
+            }
+          ]
         }
-      });
-      // reduce bodyString to contain only the first listEntry
-      // BE AWARE returned value depends on currently set date, ONLY if a date change happens the expected returned body
-      // is received, else its just a "true" value within a smaller json
+      }
+    );
+    // reduce bodyString to contain only the first listEntry
+    // BE AWARE returned value depends on currently set date, ONLY if a date change happens the expected returned body
+    // is received, else its just a "true" value within a smaller json
     let bodyString = JSON.stringify(answer);
 
     if (bodyString.includes('update"}]')) {
@@ -637,12 +740,12 @@ class ProjectileService {
       if (!bodyString.includes('[{"n":"Begin","d":true}]}')) {
         logger.warn('Function setCalenderDate returns false, something may be wrong.');
       }
-      return bodyString.includes('[{"n":"Begin","d":true}]}'); // behaviour/returned json if date doesn't had 2 be changed
+      // behaviour/returned json if date doesn't had 1 be changed
+      return bodyString.includes('[{"n":"Begin","d":true}]}');
     }
     // return bodyString.includes(date);
     // fs.writeFile('calendar.json', JSON.stringify(answer), (err)=>{});  // obsolete?
   }
-
 
   // e.g.: index.delete('2018-02-01', 0)
   /**
@@ -650,7 +753,7 @@ class ProjectileService {
    * @param {*} date
    * @param {*} listEntry
    */
-  async delete(date, listEntry)  {
+  async delete(date, listEntry) {
     const cookie = await this.login();
     const employee = await this.getEmployee(cookie);
     if (await setCalendarDate(date, cookie, employee)) {
@@ -661,7 +764,7 @@ class ProjectileService {
         logger.error('Error while deleting entry ' + listEntry + ' for date ' + date);
       }
     }
-  };
+  }
 
   // simplified for API use
   /**
@@ -669,21 +772,21 @@ class ProjectileService {
    * @param {*} cookie
    * @param {*} employee
    */
-  async jobList(cookie, employee)  {
+  async jobList(cookie, employee) {
     logger.debug('fetching data for jobList.');
     return this.showJobList(cookie, employee);
-  };
+  }
 
   /**
    *
    * @param {*} cookie
    * @param {*} employee
    */
-  async fetchNewJobList(cookie, employee)  {
+  async fetchNewJobList(cookie, employee) {
     logger.debug('fetching new data for jobList...');
     const data = await this.showJobList(cookie, employee);
     return data;
-  };
+  }
 
   // simplified for API Use
   /**
@@ -695,9 +798,9 @@ class ProjectileService {
    * @param {*} cookie
    * @param {*} employee
    */
- async save(date, time, project, note, cookie, employee)  {
+  async save(date, time, project, note, cookie, employee) {
     logger.debug('saving data...');
-    console.log('WTF SAVING')
+    console.log('WTF SAVING');
     /* const cookie = await exports.login(); */
     /* const employee = await this.getEmployee(cookie); */
     // let jobList = await exports.jobList(cookie, employee); // fetch the actual joblist.
@@ -718,7 +821,7 @@ class ProjectileService {
     }; */
     return saveEntryResult;
     // return false;
-  };
+  }
   /*
   async function blubb () {
     await exports.save('2018-03-05', '2', '2759-62', 'note');
@@ -727,13 +830,12 @@ class ProjectileService {
   blubb();
   */
 
-
   /**
    *  update entry in projectile on specific date!
    * @param {*} obj
    * @param {*} line
    */
- async update(obj, line)  {
+  async update(obj, line) {
     logger.debug('updating data...');
     const cookie = await this.login();
     const employee = await this.getEmployee(cookie);
@@ -755,28 +857,28 @@ class ProjectileService {
     }; */
     return updateEntryResult;
     // return false;
-  };
+  }
 
-
-/*  async getDate(date)  {
+  /*  async getDate(date)  {
     const cookie2 = await this.login();
     const employee2 = await this.getEmployee(cookie2);
     await setCalendarDate(date, cookie2, employee2);
   };
  */
   // Split Joblist into one without limit and one array with packages with limit
-  async joblistLimited(list, limitTime, callback)  { // "limitTime" is a fieldname
+  async joblistLimited(list, limitTime, callback) {
+    // "limitTime" is a fieldname
     const limitedJobList = [];
 
     // transform array to a bundle of property values
-    const temp = list.map((item) => {
+    const temp = list.map(item => {
       return item[limitTime];
     });
 
-      // create copy
+    // create copy
     const iterationArr = temp.slice(0);
 
-    iterationArr.forEach((item) => {
+    iterationArr.forEach(item => {
       if (callback(item)) {
         const a = list.splice(temp.indexOf(item), 1)[0];
         limitedJobList.push(a);
@@ -788,9 +890,9 @@ class ProjectileService {
     return limitedJobList;
     /* logger.debug(list);
       logger.debug(limitedJobList); */
-  };
+  }
 
-/*  async getDayListToday() {
+  /*  async getDayListToday() {
     const cookie = await this.login();
     const employee = await this.getEmployee(cookie);
     return getDayListToday(cookie, employee);
@@ -803,34 +905,39 @@ class ProjectileService {
   };
  */
 
- /**
-  *
-  * @param {*} startDate
-  * @param {*} endDate
-  */
-async getallEntriesInTimeFrame(startDate, endDate) {
+  /**
+   *
+   * @param {*} startDate
+   * @param {*} endDate
+   */
+  async getallEntriesInTimeFrame(startDate, endDate) {
     startDate = startDate + 'T00:00:00';
     endDate = endDate + 'T00:00:00';
     const cookie = await this.login();
     // const employee = await exports.getEmployee(cookie); // FIXME necessary?!
-    await this.normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit',
-      cookie, {
-        'values': {
-          'Start': [{ 'n': 'Field_TimeTrackerDate', 'v': startDate },
-            { 'n': 'Field_TimeTrackerDate2', 'v': endDate }]
+    await this.normalPostURL(
+      'POST',
+      'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit',
+      cookie,
+      {
+        values: {
+          Start: [{ n: 'Field_TimeTrackerDate', v: startDate }, { n: 'Field_TimeTrackerDate2', v: endDate }]
         }
-      });
+      }
+    );
     // handled with above normalPostURL request --> await normalPostURL('POST',
     // "https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit", cookie ,
     // {"values":{"Start":[{"n":"Field_TimeTrackerDate2","v":endDate}]}} );
-    const response = await this.normalPostURL('POST',
-      'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action', cookie,
-      { 'ref': 'Start', 'name': '*', 'action': 'TimeTracker1', 'Params': {} });
-      // OBOSLETE? fs.writeFile('daylist.json', JSON.stringify(response,null,2), (err)  logger.error(err));
-      // TODO necessary? obsolete? // error got triggered, whats wrong there?!
+    const response = await this.normalPostURL(
+      'POST',
+      'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action',
+      cookie,
+      { ref: 'Start', name: '*', action: 'TimeTracker1', Params: {} }
+    );
+    // OBOSLETE? fs.writeFile('daylist.json', JSON.stringify(response,null,2), (err)  logger.error(err));
+    // TODO necessary? obsolete? // error got triggered, whats wrong there?!
     return response;
-  };
-
+  }
 }
 
 module.exports = ProjectileService;
