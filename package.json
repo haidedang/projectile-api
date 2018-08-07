@@ -9,7 +9,7 @@
     "cleanup": "rm -f logs/*",
     "start": "node api.js",
     "start+debug": "node api.js debug",
-    "lint": "./node_modules/.bin/eslint *.js",
+    "lint": "./node_modules/.bin/eslint **/*.js",
     "prepush": "yarn lint",
     "test": "mocha --exit ./test"
   },

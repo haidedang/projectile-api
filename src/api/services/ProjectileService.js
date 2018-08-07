@@ -411,7 +411,8 @@ class ProjectileService {
 
       entries.push('{' + bodyStringEntryCut + '}'); // collect found block entry
 
-      bodyString = bodyString.slice(indexOfEnd + 21); // cut the processed block out of the bodyString and keep searching
+      // cut the processed block out of the bodyString and keep searching
+      bodyString = bodyString.slice(indexOfEnd + 21);
     }
 
     // evaluate results for correct return value
@@ -553,7 +554,8 @@ class ProjectileService {
 
       entries.push('{' + bodyStringEntryCut + '}'); // collect found block entry
 
-      bodyString = bodyString.slice(indexOfEnd + 21); // cut the processed block out of the bodyString and keep searching
+      // cut the processed block out of the bodyString and keep searching
+      bodyString = bodyString.slice(indexOfEnd + 21);
     }
 
     // evaluate results for correct return value
@@ -738,7 +740,8 @@ class ProjectileService {
       if (!bodyString.includes('[{"n":"Begin","d":true}]}')) {
         logger.warn('Function setCalenderDate returns false, something may be wrong.');
       }
-      return bodyString.includes('[{"n":"Begin","d":true}]}'); // behaviour/returned json if date doesn't had 2 be changed
+      // behaviour/returned json if date doesn't had 1 be changed
+      return bodyString.includes('[{"n":"Begin","d":true}]}');
     }
     // return bodyString.includes(date);
     // fs.writeFile('calendar.json', JSON.stringify(answer), (err)=>{});  // obsolete?

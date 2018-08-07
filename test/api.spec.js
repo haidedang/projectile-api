@@ -26,25 +26,26 @@ before(function() {
   projectileAPI.initializeUser(user);
 });
 
-
-
-before(function () {
-    config = JSON.parse(fs.readFileSync('./config/test.json'));
-    timeularActivityID = config.test.timeular.TimularActivityID;
-    activity = config.test.projectile.activity;
-    date = config.test.projectile.date;
-    duration = config.test.projectile.duration;
-    note = config.test.projectile.note;
-    let user = JSON.parse(fs.readFileSync('user.txt'));
-    projectileAPI.initializeUser(user);
-})
+before(function() {
+  config = JSON.parse(fs.readFileSync('./config/test.json'));
+  timeularActivityID = config.test.timeular.TimularActivityID;
+  activity = config.test.projectile.activity;
+  date = config.test.projectile.date;
+  duration = config.test.projectile.duration;
+  note = config.test.projectile.note;
+  const user = JSON.parse(fs.readFileSync('user.txt'));
+  projectileAPI.initializeUser(user);
+});
 
 // ------------ SERVER API TESTS
 describe('ProjectileAPI', function() {
   this.timeout(7000);
-  describe('GET ProjectileList', () => { // done
-    it('it should GET all the tasks', (done) => { // done
-      chai.request(server)
+  describe('GET ProjectileList', () => {
+    // done
+    it('it should GET all the tasks', done => {
+      // done
+      chai
+        .request(server)
         .get('/showListProjectile')
         .end((err, res) => {
           res.should.have.status(200);
@@ -57,26 +58,31 @@ describe('ProjectileAPI', function() {
         });
     });
   });
-})
+});
 
-//------------ SERVER API TESTS 
-describe('ProjectileAPI', function () {
-    this.timeout(7000);
+// ------------ SERVER API TESTS
+describe('ProjectileAPI', function() {
+  this.timeout(7000);
 
-    describe('GET ProjectileList', () => {
-        it('it should GET all the tasks', (done) => {
-            chai.request(server)
-                .get('/showListProjectile')
-                .end((err, res) => {
-                    res.should.have.status(200);
-                    // res.body.should.be.a('string'); 
-                    // expect(res.body.length).to.not.equal(0);
-                    done()
-                })
-        })
-    })
+  describe('GET ProjectileList', () => {
+    it('it should GET all the tasks', done => {
+      chai
+        .request(server)
+        .get('/showListProjectile')
+        .end((err, res) => {
+          if (err) {
+            return;
+          }
 
-   /*  describe('book an Entry in Projectile API', function () {
+          res.should.have.status(200);
+          // res.body.should.be.a('string');
+          // expect(res.body.length).to.not.equal(0);
+          done();
+        });
+    });
+  });
+
+  /*  describe('book an Entry in Projectile API', function () {
 
         it('it should save successfully', (done) => {
             chai.request(server)
@@ -87,46 +93,59 @@ describe('ProjectileAPI', function () {
                 })
         })
     }) */
-    describe('user setup', () => {
-        it('should return a User', () => {
-            let result = server.apiConfig.retrieveUserData({
-                projectileUser: config.test.projectile.projectileUser,
-                projectilePassword: config.test.projectile.projectilePassword,
-                timeularApiKey: config.test.projectile.timeularApiKey,
-                timeularApiSecret: config.test.projectile.timeularApiSecret
-            })
-            expect(result).to.deep.equal({ login: config.test.projectile.projectileUser, password: config.test.projectile.projectilePassword })
+  describe('user setup', () => {
+    it('should return a User', () => {
+      const result = server.apiConfig.retrieveUserData({
+        projectileUser: config.test.projectile.projectileUser,
+        projectilePassword: config.test.projectile.projectilePassword,
+        timeularApiKey: config.test.projectile.timeularApiKey,
+        timeularApiSecret: config.test.projectile.timeularApiSecret
+      });
+      expect(result).to.deep.equal({
+        login: config.test.projectile.projectileUser,
+        password: config.test.projectile.projectilePassword
+      });
+    });
+  });
+
+  describe('it should successfully set Up UserCredentials for API Usage', function() {
+    it('if no usercredential data is passed, it should return false', done => {
+      chai
+        .request(server)
+        .post('/start')
+        .send({})
+        .end(function(err, res) {
+          if (err) {
+            return;
+          }
+
+          res.should.have.status(200);
+          // eslint-disable-next-line
+          res.body.credsPresent.should.be.false;
+          done();
+        });
+    });
+
+    it('it should write UserFile and TimularFile successfully', done => {
+      chai
+        .request(server)
+        .post('/start')
+        .send({
+          projectileUser: config.test.projectile.projectileUser,
+          projectilePassword: config.test.projectile.projectilePassword,
+          timeularApiKey: config.test.projectile.timeularApiKey,
+          timeularApiSecret: config.test.projectile.timeularApiSecret
         })
-    })
+        .end(function(err, res) {
+          if (err) {
+            return;
+          }
 
-    describe('it should successfully set Up UserCredentials for API Usage', function () {
-
-        it('if no usercredential data is passed, it should return false', (done) => {
-            chai.request(server)
-                .post('/start')
-                .send({})
-                .end(function (err, res, body) {
-                    res.should.have.status(200);
-                    res.body.credsPresent.should.be.false
-                    done();
-                })
-        })
-
-        it('it should write UserFile and TimularFile successfully', (done) => {
-            chai.request(server)
-                .post('/start')
-                .send({
-                    projectileUser: config.test.projectile.projectileUser,
-                    projectilePassword: config.test.projectile.projectilePassword,
-                    timeularApiKey: config.test.projectile.timeularApiKey,
-                    timeularApiSecret: config.test.projectile.timeularApiSecret
-                })
-                .end(function (err, res, body) {
-                    res.should.have.status(200);
-                    res.body.credsPresent.should.be.true
-                    done();
-                })
-        })
-
-    })
-})
+          res.should.have.status(200);
+          // eslint-disable-next-line
+          res.body.credsPresent.should.be.true;
+          done();
+        });
+    });
+  });
+});
