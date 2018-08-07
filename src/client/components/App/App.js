@@ -18,11 +18,11 @@ class App extends Component {
     fetch('/api/v1/test')
       .then(res => res.json())
       .then(user => this.setState({ username: user.username }));
-    console.log(this.props.token);
+    console.log(sessionStorage.token);
   }
 
   render() {
-    if (this.props.token == false) {
+    if (sessionStorage.token == undefined) {
       return (
         <div className="jumbotron">
           <div id="root" className="container">
@@ -40,10 +40,10 @@ class App extends Component {
   }
 }
 
-function mapStateToProps(state) {
+/* function mapStateToProps(state) {
   return {
     token: getToken(state)
   };
-}
+} */
 
-export default connect(mapStateToProps)(App);
+export default App;

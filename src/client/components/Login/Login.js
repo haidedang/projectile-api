@@ -1,6 +1,10 @@
 import React from 'react';
 import styles from './Login.css';
 import AuthentificationService from '../../services/AuthentificationService';
+import {connect} from 'react-redux'
+import {login} from "../../actions";
+import {getToken} from "../../reducers";
+import { withRouter } from "react-router-dom";
 
 class Login extends React.Component { 
   constructor(props) { 
@@ -20,11 +24,11 @@ class Login extends React.Component { 
     }
   }
 
-  handleSubmit(event) { 
-    console.log('clicked')
-    console.log(this.state.username)
-    console.log(this.state.password)
-    AuthentificationService.login(this.state.username, this.state.password);
+   handleSubmit(event) { 
+    AuthentificationService.login(this.state.username, this.state.password).then((res) => {
+      this.props.dispatch(login(res.token));
+      this.props.history.push({pathname: "/dashboard"});
+      })
   }
 
   render(){
@@ -53,4 +57,10 @@ class Login extends React.Component { 
   }
 }
 
-export default Login;
+function mapStateToProps(state) {
+  return {
+    token: getToken(state)
+  };
+}
+
+export default withRouter(connect(mapStateToProps)(Login));
