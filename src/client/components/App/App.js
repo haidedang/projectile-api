@@ -8,19 +8,6 @@ import { connect } from 'react-redux';
 import { getToken } from '../../reducers';
 
 class App extends Component {
-  constructor(props) {
-    super(props);
-    this.state = { username: null };
-  }
-
-  // API TEST
-  componentDidMount() {
-    fetch('/api/v1/test')
-      .then(res => res.json())
-      .then(user => this.setState({ username: user.username }));
-    console.log(sessionStorage.token);
-  }
-
   render() {
     if (sessionStorage.token == undefined) {
       return (

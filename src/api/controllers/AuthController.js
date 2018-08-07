@@ -40,11 +40,10 @@ class AuthController {
     } catch(e) {
       logger.error(`An error occured while logging into projectile. ${e.stack}`);
       // send an error response
-      res.json({
+      return res.json({
         status: 'error',
         message: 'Login failed'
       });
-      return;
     }
 
     // send success response with token

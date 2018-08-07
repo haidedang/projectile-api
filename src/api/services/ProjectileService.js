@@ -219,7 +219,6 @@ class ProjectileService {
    * # possible Error Case: wrong login data.
    */
   async getEmployee(cookie) {
-    console.log('fuck');
     // Überprüfe ob Request in Ordnung ging
     const body = await this.normalPostURL(
       'POST',
