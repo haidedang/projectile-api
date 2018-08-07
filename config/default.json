@@ -8,7 +8,7 @@
       "key": "config/key.pem"
     },
     "logger": {
-      "level": "info",
+      "level": "debug",
       "errorLog": "logs/error.log",
       "combinedLog": "logs/combined.log"
     },

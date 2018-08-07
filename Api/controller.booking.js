@@ -1,5 +1,3 @@
-const api = require('../api');
-const timeularapi = require('../timeularAPI');
 const winston = require('winston');
 
 const projectile = require('../projectileAPI.js');
@@ -37,12 +35,12 @@ module.exports = {
           winston.debug('save for projectile successfull');
           // handle result of save request!! TODO
           // res.status(200).send(date + ' ' + req.params.duration + ' ' + req.params.activity + ' ' + req.params.note);
-          if (result.resultValue == false) {
+          if (result.resultValue === false) {
             res.status(200).send(result);
           } else {
             res.status(200).send({
               bookedEntry: {
-                date: date,
+                date,
                 duration: req.params.duration,
                 activity: req.params.activity,
                 note: req.params.note
