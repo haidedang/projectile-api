@@ -22,6 +22,8 @@ class Login extends React.Component { 
 
   handleSubmit(event) { 
     console.log('clicked')
+    console.log(this.state.username)
+    console.log(this.state.password)
     AuthentificationService.login(this.state.username, this.state.password);
   }
 
@@ -34,7 +36,7 @@ class Login extends React.Component { 
             <form className="form-signin">
                 <span id="reauth-email" className="reauth-email"></span>
                 <input value={this.state.username} onChange={this.handleChange} type="text" id="inputEmail" className="form-control" placeholder="Email address" required autofocus/>
-                <input type="password" id="inputPassword" className="form-control" placeholder="Password" required/>
+                <input type="password" id="inputPassword" value={this.state.handleChange} onChange={this.handleChange} className="form-control" placeholder="Password" required/>
                 <div id="remember" className="checkbox">
                     <label>
                         <input type="checkbox" value="remember-me"/> Remember me
