@@ -126,6 +126,5 @@ router.post('/book', authenticationMiddleware.authenticate, BookingController.bo
  */
 router.get('/showListProjectile/:pretty?', authenticationMiddleware.authenticate, BookingController.showList);
 
-
 module.exports = router;
 

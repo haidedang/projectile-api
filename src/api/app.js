@@ -33,10 +33,15 @@ const app = express();
 
 // initialize morgan logger
 app.use(morgan('dev'));
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-
+app.use(express.static('dist'));
 // add the documentation route, this is static and has to be build before
 app.use('/api/doc', express.static(path.join(__dirname, 'public/api/doc')));
 
