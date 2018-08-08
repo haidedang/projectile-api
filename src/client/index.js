@@ -6,6 +6,7 @@ import App from './components/App/App';
 import Login from './components/Login/Login';
 import DashBoard from './components/DashBoard/DashBoard'
 import store from './store'
+import { Switch } from 'react-router-dom/Switch';
 
 function checkAuth (nextState, cb){ 
   const {loggedIn} = store.getState();
@@ -16,10 +17,13 @@ ReactDOM.render(
   <Provider store={store}>
     <HashRouter>
       <div>
-        <Route exact path="/" component={App} />
-        <Route exact path="/login" component={Login} />
-        <Route path="/dashBoard" component={DashBoard} />
+        {/* not working as expected  */}
+       {/*  <Route exact path="/" component={App} />
+        <Route  path="/login" component={Login} />
+        <Route exact path="/dashBoard" component={DashBoard} /> */}
+        <App />
       </div>
+
     </HashRouter>
   </Provider>,
   document.getElementById('root'));

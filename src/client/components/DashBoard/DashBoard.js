@@ -1,11 +1,16 @@
 import React from 'react';
+import Nav from './Header/Nav'
+import Main from './Main/Main'
 
-class DashBoard extends React.Component{
-  render(){
+class DashBoard extends React.Component {
+  render() {
     return (
-      <div>DashBoard</div>
-    )
+      <div>
+        <Nav />
+        <Main />
+      </div>
+    );
   }
 }
 
-export default DashBoard
+export default DashBoard;

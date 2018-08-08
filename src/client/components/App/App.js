@@ -6,6 +6,7 @@ import Login from '../Login/Login';
 import { Link } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { getToken } from '../../reducers';
+import DashBoard from '../DashBoard/DashBoard';
 
 class App extends Component {
   render() {
@@ -18,11 +19,7 @@ class App extends Component {
         </div>
       );
     } else {
-      return (
-        <div>
-          <h1>You are logged In.</h1>
-        </div>
-      );
+      return <DashBoard />;
     }
   }
 }
