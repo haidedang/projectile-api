@@ -74,6 +74,37 @@ class BookingController {
     logger.debug('/book/:date?/:duration/:activity/:note done');
   }
 
+  /**
+   * Static middleware to update an activity.
+   *
+   * @param {object} req ExpressJS request object.
+   * @param {string} req.body.date Optional date value.
+   * @param {string} req.body.duration The duration time of the work on that activity.
+   * @param {string} req.body.activity An ID or the name of the activity, that was retrieved by the showList method.
+   * @param {string} req.body.note A description what has been done on that activity.
+   * @param {string} req.body.line The line represents the entrys position in the entry list retrieved for a specific day.
+   * @param {string} req.cookie Cookie from Projectile
+   * @param {string} req.employee  Projectile Employee ID
+   * @param {object} res ExpressJS response object.
+   * @param {string} res.status String with 'ok' or 'error'.
+   * @returns {void}
+   */
+  static async editEntry(req, res) {
+    try {
+      logger.debug('/edit --> editEntry() --> starting updating of entry/entries...');
+      const projectile = new ProjectileService();
+      const json = req.body; // array of entry objects
+
+      const result = await projectile.updateEntry(req.cookie, req.employee, json);
+
+      res.status(200).send('All fine - post /booking');
+      logger.debug('/editing results done');
+    } catch(e) {
+      res.status(400).send('Something went wrong - post /booking');
+      logger.error('/editing results not successfull');
+    }
+  }
+
   static async showDayList (req, res) { 
 
   }

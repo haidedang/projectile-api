@@ -728,7 +728,7 @@ app.post(basePath + '/editing', async(req, res) => {
     if (json.changes){
       winston.debug('/editing -> Changes is true!');
 
-      for (const index in json.valuesAfterChange) { // for...in => index no
+      for (const index in json.valuesAfterChange) { // for...in => index no; for..of => content
         const item = json.valuesAfterChange[index];
         if (JSON.stringify(json.valuesBeforeChange[index]) !== JSON.stringify(item)) {
           console.log('####');
