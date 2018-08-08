@@ -126,10 +126,5 @@ router.post('/book', authenticationMiddleware.authenticate, BookingController.bo
  */
 router.get('/showListProjectile/:pretty?', authenticationMiddleware.authenticate, BookingController.showList);
 
-router.get('/test', function (req, res) { 
-  res.json({success: 'fail'});
-})
-
-
 module.exports = router;
 
