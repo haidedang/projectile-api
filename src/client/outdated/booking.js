@@ -2,8 +2,6 @@
 
 $(document).ready(function() {
 
-  let packageList = '';
-
   /**
    *  load package list into custom-select
    */
@@ -13,8 +11,7 @@ $(document).ready(function() {
       contentType: false,
       processData: false,
       type: 'get',
-      success: function(response, status){ // eslint-disable-line
-        packageList = response;
+      success: function(response) {
         // adde options!
         const options = $('#inputGroupSelect01').prop('options');
         // $('option', '#inputGroupSelect01').remove();
@@ -43,7 +40,7 @@ $(document).ready(function() {
   /**
    *  Book
    */
-  $('#buttonBook').click(function(e) {
+  $('#buttonBook').click(function() {
     $('.syncOutput').remove();
     const date = $('#Date').val() ? $('#Date').val() : new Date().toISOString().substr(0, 10);
     let duration = $('#Duration').val();

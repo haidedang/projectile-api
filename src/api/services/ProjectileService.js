@@ -264,6 +264,7 @@ class ProjectileService {
    * @param {*} str
    */
   escapeRegExp(str) {
+    // eslint-disable-next-line
     return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
   }
 
@@ -382,7 +383,7 @@ class ProjectileService {
     // check for successfull saving
     // pattern to matches within a note! e.g.: 2 tesing vs. testing vs. testing 2
     // " gets stored as \" in projectile json
-    const re = new RegExp('"v":"' + this.escapeRegExp(note).replace(/[\"]/g, '\\\\$&') + '","d"', 'g');
+    const re = new RegExp('"v":"' + this.escapeRegExp(note).replace(/["]/g, '\\\\$&') + '","d"', 'g');
     // TODO enough to check for notes?! :( must be another way if there is note present!)
 
     // logger.debug('RegEx Debug: ' + escapeRegExp(note).replace(/[\"]/g, "\\\\$&"));
@@ -426,7 +427,7 @@ class ProjectileService {
         body.values[employee].length >= 5 &&
         item.includes('"Time","v":' + time + ',"d"') &&
         item.includes('"What","v":"' + project + '","d"') &&
-        item.includes('"Note","v":"' + note.replace(/[\"]/g, '\\$&') + '","d"')
+        item.includes('"Note","v":"' + note.replace(/["]/g, '\\$&') + '","d"')
       ) {
         // created a new entry
         returnValue = {
@@ -435,7 +436,7 @@ class ProjectileService {
         logger.debug('saveEntry -> While recognizing save status: created a new entry, return value: true');
       } else if (
         item.includes('"What","v":"' + project + '","d"') &&
-        item.includes('"Note","v":"' + note.replace(/[\"]/g, '\\$&') + '","d"')
+        item.includes('"Note","v":"' + note.replace(/["]/g, '\\$&') + '","d"')
       ) {
         // added to an existing entry
         returnValue = {
@@ -469,8 +470,7 @@ class ProjectileService {
   */
   async updateEntry(cookie, employee, obj, line) {
     logger.debug('updateEntry -> provided object: ' + JSON.stringify(obj, null, 2));
-    lineSelector = line;
-    logger.debug('updateEntry -> lineSelector: ' + lineSelector);
+    logger.debug('updateEntry -> lineSelector: ' + line);
 
     // "+.|DayList|9|TimeTracker!^.|Default|Employee|1|357" so musses aussehen!
     const listEntry = '+.|DayList|' + line + '|' + employee;
@@ -525,7 +525,7 @@ class ProjectileService {
     // check for successfull update
     // pattern to matches within a note! e.g.: 2 tesing vs. testing vs. testing 2
     // " gets stored as \" in projectile json
-    const re = new RegExp('"v":"' + this.escapeRegExp(obj.comment).replace(/[\"]/g, '\\\\$&') + '","d"', 'g');
+    const re = new RegExp('"v":"' + this.escapeRegExp(obj.comment).replace(/["]/g, '\\\\$&') + '","d"', 'g');
     // TODO enough to check for notes?! :( must be another way if there is note present!)
 
     // logger.debug('RegEx Debug: ' + escapeRegExp(note).replace(/[\"]/g, "\\\\$&"));
@@ -569,7 +569,7 @@ class ProjectileService {
         body.values[employee].length >= 5 &&
         item.includes('"Time","v":' + obj.duration + ',"d"') &&
         item.includes('"What","v":"' + obj.packageNo + '","d"') &&
-        item.includes('"Note","v":"' + obj.comment.replace(/[\"]/g, '\\$&') + '","d"')
+        item.includes('"Note","v":"' + obj.comment.replace(/["]/g, '\\$&') + '","d"')
       ) {
         // created a new entry
         returnValue = {
@@ -578,7 +578,7 @@ class ProjectileService {
         logger.debug('updateEntry -> While recognizing save status: created a new entry, return value: true');
       } else if (
         item.includes('"What","v":"' + obj.packageNo + '","d"') &&
-        item.includes('"Note","v":"' + obj.comment.replace(/[\"]/g, '\\$&') + '","d"')
+        item.includes('"Note","v":"' + obj.comment.replace(/["]/g, '\\$&') + '","d"')
       ) {
         // added to an existing entry
         returnValue = {
@@ -613,7 +613,7 @@ class ProjectileService {
    */
   async deleteEntry(cookie, employee, number) {
     // mark entry for deletion, get popup response, extract ref and execute action to delete
-    const dayList = await getDayListToday(cookie, employee);
+    const dayList = await this.getDayListToday(cookie, employee);
     const listEntry = dayList[number];
     const body = await this.normalPostURL(
       'POST',
@@ -755,9 +755,9 @@ class ProjectileService {
   async delete(date, listEntry) {
     const cookie = await this.login();
     const employee = await this.getEmployee(cookie);
-    if (await setCalendarDate(date, cookie, employee)) {
+    if (await this.setCalendarDate(date, cookie, employee)) {
       logger.debug('setCalenderDate was successful in delete function.');
-      if (await deleteEntry(cookie, employee, listEntry)) {
+      if (await this.deleteEntry(cookie, employee, listEntry)) {
         logger.debug('Finished deleting entry ' + listEntry + ' for date ' + date);
       } else {
         logger.error('Error while deleting entry ' + listEntry + ' for date ' + date);
@@ -800,11 +800,12 @@ class ProjectileService {
   async save(date, time, project, note, cookie, employee) {
     logger.debug('saving data...');
     console.log('WTF SAVING');
+    let saveEntryResult;
     /* const cookie = await exports.login(); */
     /* const employee = await this.getEmployee(cookie); */
     // let jobList = await exports.jobList(cookie, employee); // fetch the actual joblist.
     if (await this.setCalendarDate(date, cookie, employee)) {
-      const saveEntryResult = await this.saveEntry(cookie, employee, time, project, note);
+      saveEntryResult = await this.saveEntry(cookie, employee, time, project, note);
       // saveEntry returns true or false depending on save result
       // returns { returnValue: false, errors: errorArray }
       logger.debug('saveEntryResult --> ' + JSON.stringify(saveEntryResult, null, 2));
@@ -838,24 +839,19 @@ class ProjectileService {
     logger.debug('updating data...');
     const cookie = await this.login();
     const employee = await this.getEmployee(cookie);
+    let updateEntryResult;
     // let jobList = await exports.jobList(cookie, employee); // fetch the actual joblist.
-    if (await setCalendarDate(obj.date, cookie, employee)) {
-      const updateEntryResult = await updateEntry(cookie, employee, obj, line);
+    if (await this.setCalendarDate(obj.date, cookie, employee)) {
+      updateEntryResult = await this.updateEntry(cookie, employee, obj, line);
       // saveEntry returns true or false depending on save result
       // returns { returnValue: false, errors: errorArray }
       logger.debug('updateEntryResult --> ' + JSON.stringify(updateEntryResult, null, 2));
       if (updateEntryResult.returnValue) {
         logger.debug('Finished updating entry.');
-        // return true;
-        // return saveEntryResult;
       }
       return updateEntryResult;
     }
-    /* return {
-      returnValue: false
-    }; */
     return updateEntryResult;
-    // return false;
   }
 
   /*  async getDate(date)  {

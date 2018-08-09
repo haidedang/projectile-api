@@ -1,5 +1,5 @@
-import { LOGIN } from './actions';
-import { LOGOUT } from './actions';
+import { LOGIN } from "./actions";
+import { LOGOUT } from "./actions";
 
 const initialState = {
   token: false

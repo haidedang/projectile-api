@@ -1,29 +1,27 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import { HashRouter, Route } from 'react-router-dom';
-import {Provider} from 'react-redux'
-import App from './components/App/App';
-import Login from './components/Login/Login';
-import DashBoard from './components/DashBoard/DashBoard'
-import store from './store'
-import { Switch } from 'react-router-dom/Switch';
+import React from "react";
+import ReactDOM from "react-dom";
+import { BrowserRouter as Router } from "react-router-dom";
+import { Provider } from "react-redux";
+import App from "./components/App/App";
+import store from "./store";
 
-function checkAuth (nextState, cb){ 
-  const {loggedIn} = store.getState();
-  console.log(loggedIn);
-}
+// function checkAuth(nextState, cb) {
+// const { loggedIn } = store.getState();
+// console.log(loggedIn);
+// }
 
+// global document
 ReactDOM.render(
   <Provider store={store}>
-    <HashRouter>
+    <Router>
       <div>
         {/* not working as expected  */}
-       {/*  <Route exact path="/" component={App} />
+        {/*  <Route exact path="/" component={App} />
         <Route  path="/login" component={Login} />
         <Route exact path="/dashBoard" component={DashBoard} /> */}
-        <App />
+        <App foo="bar" />
       </div>
-
-    </HashRouter>
+    </Router>
   </Provider>,
-  document.getElementById('root'));
+  document.getElementById("root")
+);

@@ -87,7 +87,7 @@ $(document).ready(function() {
   /**
    *  getList
    */
-  $('#buttonGetList').click(function(e) {
+  $('#buttonGetList').click(function() {
     $('.syncOutput').remove();
     /* vorerst nur einen Tag abrufen! einfachere Logik
     const startDate = $('#startDate').val() ? $('#startDate').val() : new Date().toISOString().substr(0, 10);
@@ -139,7 +139,7 @@ packageSelectTmp +
     /**
      *  updateList
      */
-    $('#buttonUpdateList').click(function(e) {
+    $('#buttonUpdateList').click(function() {
       // collect data
       // iterate through table!
       // TODO nur wenn noOfBookingEntries > 0! -> bei leerer Übersicht nichts tun!
