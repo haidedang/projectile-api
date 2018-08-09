@@ -1,11 +1,13 @@
 import React from 'react';
-// eslint-disable-next-line
-import styles from './Login.css';
-import AuthentificationService from '../../services/AuthentificationService';
 import { connect } from 'react-redux';
+import { withRouter, Redirect } from 'react-router-dom';
+
+import AuthentificationService from '../../services/AuthentificationService';
 import { login } from '../../actions';
 import { getToken } from '../../reducers';
-import { withRouter } from 'react-router-dom';
+
+// eslint-disable-next-line
+import styles from './Login.css';
 
 class Login extends React.Component {
   constructor(props) {
@@ -13,6 +15,12 @@ class Login extends React.Component {
     this.state = { username: '', password: '' };
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+  }
+
+  renderRedirect () {
+    if (this.props.token) {
+      return <Redirect to='/dashboard' />
+    }
   }
 
   handleChange(event) {
@@ -50,6 +58,7 @@ class Login extends React.Component {
   render() {
     return (
       <div className="card card-container">
+        {this.renderRedirect()}
         <img
           id="profile-img"
           className="profile-img-card"
@@ -105,3 +114,4 @@ function mapStateToProps(state) {
 }
 
 export default withRouter(connect(mapStateToProps)(Login));
+

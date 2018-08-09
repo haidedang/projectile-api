@@ -1,16 +1,34 @@
 import React from 'react';
-import Nav from './Header/Nav'
-import Main from './Main/Main'
+import { connect } from 'react-redux';
+import { withRouter, Redirect } from 'react-router-dom';
+
+import { getToken } from '../../reducers';
 
 class DashBoard extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
+  renderRedirect () {
+    if (!this.props.token) {
+      return <Redirect to='/login' />
+    }
+  }
+
   render() {
     return (
       <div>
-        <Nav />
-        <Main />
+        {this.renderRedirect()}
+        <h1>Hello DashBoard</h1>
       </div>
     );
   }
 }
 
-export default DashBoard;
+function mapStateToProps(state) {
+  return {
+    token: getToken(state)
+  };
+}
+
+export default withRouter(connect(mapStateToProps)(DashBoard));
