@@ -1,4 +1,5 @@
 import React from 'react';
+// eslint-disable-next-line
 import styles from './Login.css';
 import AuthentificationService from '../../services/AuthentificationService';
 import { connect } from 'react-redux';

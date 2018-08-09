@@ -79,7 +79,9 @@ class BookingController {
     logger.debug('/book/:date?/:duration/:activity/:note done');
   }
 
-  static async showDayList(req, res) {}
+  // static async showDayList (req, res) {
+
+  // }
 
   /**
    * Static middleware to handle showList route.
@@ -92,9 +94,6 @@ class BookingController {
    */
   static async showList(req, res) {
     const projectile = new ProjectileService();
-    /*   res.json({
-      status: 'ok'
-    }); */
     try {
       let jobList = await projectile.fetchNewJobList(req.cookie, req.employee);
       if (req.params.pretty) {
@@ -141,3 +140,4 @@ class BookingController {
 }
 
 module.exports = BookingController;
+
