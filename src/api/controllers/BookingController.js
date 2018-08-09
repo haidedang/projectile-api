@@ -1,9 +1,8 @@
-const logger = require('../../lib/logger');
+const logger = require("../../lib/logger");
 
-const ProjectileService = require('../../api/services/ProjectileService');
+const ProjectileService = require("../../api/services/ProjectileService");
 /* const projectile = require('../../../projectileAPI') */
 // const authenticationMiddleware = require('../../lib/AuthenticationMiddleware');
-
 
 class BookingController {
   /**
@@ -21,7 +20,6 @@ class BookingController {
    * @returns {void}
    */
   static async bookEntry(req, res) {
-
     try {
       const projectile = new ProjectileService();
 
@@ -33,7 +31,7 @@ class BookingController {
       // TODO: check validity of date, duration, activitiy and note?
 
       // check if date parameter is present or use current date
-      let date = '';
+      let date = "";
       if (!req.body.date) {
         date = new Date().toISOString().substr(0, 10); // YYYY/MM/DD
       } else {
@@ -46,12 +44,19 @@ class BookingController {
       // book in projectile
 
       projectile
-        .save(date, time, req.body.activity, req.body.note, req.cookie, req.employee)
+        .save(
+          date,
+          time,
+          req.body.activity,
+          req.body.note,
+          req.cookie,
+          req.employee
+        )
         .then(result => {
-          logger.debug('save for projectile successfull');
+          logger.debug("save for projectile successfull");
           // handle result of save request!! TODO
           // res.status(200).send(date + ' ' + req.body.duration + ' ' + req.body.activity + ' ' + req.body.note);
-          if (result.resultValue == false) {
+          if (result.resultValue === false) {
             res.status(200).json(result);
           } else {
             res.status(200).json({
@@ -67,11 +72,11 @@ class BookingController {
     } catch (e) {
       res
         .status(400)
-        .send('Something went wrong - /book/:date/:duration/:activity/:note');
-      logger.error('/book/:date?/:duration/:activity/:note');
+        .send("Something went wrong - /book/:date/:duration/:activity/:note");
+      logger.error("/book/:date?/:duration/:activity/:note");
       logger.info(e.stack);
     }
-    logger.debug('/book/:date?/:duration/:activity/:note done');
+    logger.debug("/book/:date?/:duration/:activity/:note done");
   }
 
   // static async showDayList (req, res) {
@@ -92,7 +97,8 @@ class BookingController {
 
     try {
       let jobList = await projectile.fetchNewJobList(req.cookie, req.employee);
-      if (req.params.pretty) { // any value for pretty should be ok
+      if (req.params.pretty) {
+        // any value for pretty should be ok
         let result = `<table border="1">
           <tbody>
             <tr>
@@ -102,24 +108,36 @@ class BookingController {
               <th>Zeit Limit</td>
               <th>gebuchte Zeit</td>
             </tr>`;
-        jobList.forEach((item) => {
-          result = result + '<tr><td>' + item.name + '</td><td>' + item.no + '</td><td>' + item.remainingTime +
-            '</td><td>' + item.limitTime + '</td><td>' + item.Totaltime + '</td></tr>';
+        jobList.forEach(item => {
+          result =
+            result +
+            "<tr><td>" +
+            item.name +
+            "</td><td>" +
+            item.no +
+            "</td><td>" +
+            item.remainingTime +
+            "</td><td>" +
+            item.limitTime +
+            "</td><td>" +
+            item.Totaltime +
+            "</td></tr>";
         });
-        result = result + `</table>
+        result =
+          result +
+          `</table>
           </tbody>`;
         res.status(200).send(result);
       } else {
         res.status(200).send(JSON.stringify(jobList));
       }
-      logger.debug('/showListProjectile done');
-    }catch(err){
-      console.log(err)
-      res.status(400).send('Something went wrong - /showListProjectile');
+      logger.debug("/showListProjectile done");
+    } catch (err) {
+      console.log(err);
+      res.status(400).send("Something went wrong - /showListProjectile");
     }
-    logger.debug('/showListProjectile done');
+    logger.debug("/showListProjectile done");
   }
 }
 
 module.exports = BookingController;
-
