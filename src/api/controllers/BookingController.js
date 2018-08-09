@@ -1,9 +1,8 @@
 const logger = require('../../lib/logger');
 
 const ProjectileService = require('../../api/services/ProjectileService');
- /* const projectile = require('../../../projectileAPI') */
- const authenticationMiddleware = require('../../lib/AuthenticationMiddleware');
-
+/* const projectile = require('../../../projectileAPI') */
+const authenticationMiddleware = require('../../lib/AuthenticationMiddleware');
 
 class BookingController {
   /**
@@ -21,7 +20,6 @@ class BookingController {
    * @returns {void}
    */
   static async bookEntry(req, res) {
-
     try {
       const projectile = new ProjectileService();
 
@@ -46,7 +44,14 @@ class BookingController {
       // book in projectile
 
       projectile
-        .save(date, time, req.body.activity, req.body.note, req.cookie, req.employee)
+        .save(
+          date,
+          time,
+          req.body.activity,
+          req.body.note,
+          req.cookie,
+          req.employee
+        )
         .then(result => {
           logger.debug('save for projectile successfull');
           // handle result of save request!! TODO
@@ -74,9 +79,7 @@ class BookingController {
     logger.debug('/book/:date?/:duration/:activity/:note done');
   }
 
-  static async showDayList (req, res) { 
-
-  }
+  static async showDayList(req, res) {}
 
   /**
    * Static middleware to handle showList route.
@@ -89,12 +92,13 @@ class BookingController {
    */
   static async showList(req, res) {
     const projectile = new ProjectileService();
-  /*   res.json({
+    /*   res.json({
       status: 'ok'
     }); */
     try {
       let jobList = await projectile.fetchNewJobList(req.cookie, req.employee);
-      if (req.params.pretty) { // any value for pretty should be ok
+      if (req.params.pretty) {
+        // any value for pretty should be ok
         let result = `<table border="1">
           <tbody>
             <tr>
@@ -104,19 +108,32 @@ class BookingController {
               <th>Zeit Limit</td>
               <th>gebuchte Zeit</td>
             </tr>`;
-        jobList.forEach((item) => {
-          result = result + '<tr><td>' + item.name + '</td><td>' + item.no + '</td><td>' + item.remainingTime +
-            '</td><td>' + item.limitTime + '</td><td>' + item.Totaltime + '</td></tr>';
+        jobList.forEach(item => {
+          result =
+            result +
+            '<tr><td>' +
+            item.name +
+            '</td><td>' +
+            item.no +
+            '</td><td>' +
+            item.remainingTime +
+            '</td><td>' +
+            item.limitTime +
+            '</td><td>' +
+            item.Totaltime +
+            '</td></tr>';
         });
-        result = result + `</table>
+        result =
+          result +
+          `</table>
           </tbody>`;
         res.status(200).send(result);
       } else {
         res.status(200).send(JSON.stringify(jobList));
       }
       logger.debug('/showListProjectile done');
-    }catch(err){
-      console.log(err)
+    } catch (err) {
+      console.log(err);
       res.status(400).send('Something went wrong - /showListProjectile');
     }
     logger.debug('/showListProjectile done');
