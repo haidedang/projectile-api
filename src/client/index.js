@@ -14,13 +14,7 @@ import store from "./store";
 ReactDOM.render(
   <Provider store={store}>
     <Router>
-      <div>
-        {/* not working as expected  */}
-        {/*  <Route exact path="/" component={App} />
-        <Route  path="/login" component={Login} />
-        <Route exact path="/dashBoard" component={DashBoard} /> */}
-        <App foo="bar" />
-      </div>
+      <App foo="bar" />
     </Router>
   </Provider>,
   document.getElementById("root")
