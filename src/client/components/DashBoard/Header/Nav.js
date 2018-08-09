@@ -1,5 +1,5 @@
 import React from 'react';
-import {logout} from '../../../actions';
+import { logout } from '../../../actions';
 import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 
@@ -37,12 +37,7 @@ class Nav extends React.Component {
 }
 
 function mapStateToProps(state) {
-  return {
-  };
+  return {};
 }
 
-export default withRouter(
-  connect(
-    mapStateToProps
-  )(Nav)
-);
+export default withRouter(connect(mapStateToProps)(Nav));
