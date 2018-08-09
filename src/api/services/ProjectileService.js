@@ -311,8 +311,9 @@ class ProjectileService {
    * @param {*} project project ID
    * @param {*} note task description
    */
-  async saveEntry(cookie, employee, time, project, note) {
+  async saveEntry(cookie, employee, date, time, project, note) {
     const dayList = await this.getDayListToday(cookie, employee);
+    // const dayList = await this.getDayListNG(cookie, employee, date);
     logger.debug('saveEntry -> dayList: ' + JSON.stringify(dayList, null, 2));
     /*
       extend the "lines" range of originally 6 depending on amount of existing entries in dayList! else insertion of
@@ -338,11 +339,16 @@ class ProjectileService {
       'duration': time,
       'activity': project,
       'note': note
-    }
-    await this.setEntry(cookie, item, listEntry);
+    };
+    const debug = await this.setEntry(cookie, item, listEntry);
+
+    console.log('#####' + JSON.stringify(debug, null, 2));
+    // SET ENTRY DEFEKT?
 
     // save entry
-    const body = this.saveEntries(cookie, employee);
+    // const body = this.saveEntries(cookie, employee);
+    // DEBUG
+    const body = '';
 
     let bodyString = JSON.stringify(body);
     const entries = [];
@@ -433,12 +439,12 @@ class ProjectileService {
 
   /*
   *
-  * normalize a comment (replacing umlauts)
+  * normalize a note (replacing umlauts)
   *
   * FIXME fix encoding issue that makes this hack necessary!
   */
-  async normalizeComment(comment) {
-    const result = comment.replace(/ä/g, 'ae')
+  async normalizeComment(note) {
+    const result = note.replace(/ä/g, 'ae')
       .replace(/Ä/g, 'Ae')
       .replace(/ü/g, 'ue')
       .replace(/Ü/g, 'Ue')
@@ -457,10 +463,10 @@ class ProjectileService {
   async setEntry(cookie, item, listEntry) {
     // FIXME - why is ',' necessary for duration suddenly???? if other than ',' durations in projectile get's messed up
     const duration = item.duration.replace('.', ',');
-    const packageNo = item.activity;
-    const comment = await this.normalizeComment(item.note);
+    const activity = item.activity;
+    const note = await this.normalizeComment(item.note);
 
-    await this.normalPostURL(
+    const result = await this.normalPostURL(
       'POST',
       'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit',
       cookie,
@@ -473,17 +479,18 @@ class ProjectileService {
             },
             {
               n: 'What',
-              v: packageNo
+              v: activity
             },
             {
               n: 'Note',
-              v: comment
+              v: note
             }
           ]
         }
       }
     );
     // TODO return true/false success/failed?!
+    return result;
   }
 
   /*
@@ -508,18 +515,19 @@ class ProjectileService {
 
   /*
   *
-  * compare the result of an update/change/book event
+  * compare the result of an update/change event
+  * NOT suitable for book events, as the line of entry is unknown there!
   *
   */
   async compareChanges(body, json, employee) {
     for (const item of json.entries) {
       const duration = item.duration.replace(',', '.');
       const packageNo = item.activity;
-      const comment = await this.normalizeComment(item.note);
+      const note = await this.normalizeComment(item.note);
       const listEntry = '+.|DayList|' + item.line + '|' + employee;
       // compare
       if ((!body.values[listEntry][5].v === duration) || (!body.values[listEntry][8].v === packageNo) ||
-        (!body.values[listEntry][28].v === comment)) {
+        (!body.values[listEntry][28].v === note)) {
         return false;
       }
     }
@@ -540,6 +548,7 @@ class ProjectileService {
     };
     if (await this.setCalendarDate(json.date, cookie, employee)) {
       // set entry/entries
+      // json = {date, entries:[{ date, duration, activtiy, note}]}
       for (const item of json.entries) { // for...in => index no; for..of => content
         logger.debug('updateEntry -> provided object: ' + JSON.stringify(item, null, 2));
         logger.debug('updateEntry -> line selector: ' + item.line);
@@ -629,6 +638,33 @@ class ProjectileService {
     }
   }
 
+
+  /**
+   *
+   * @param {*} cookie
+   * @param {*} employee
+   */
+  async getDayListNG(cookie, employee, date) {
+    const temp = await this.normalPostURL(
+      'POST',
+      'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit',
+      cookie,
+      {'values':{[employee]:[{'n':'Begin', 'v': date + 'T00:00:00'}]}}
+    );
+    // const dayList = await temp['values'][employee][2]['v'];
+    // Length of daylist can be retrieved from: temp['values'][employee][1].v.length
+    console.log(JSON.stringify(temp, null, 2));
+    let dayList = [];
+    for (const item of temp['values'][employee]) {
+      if (item.n === 'DayList') {
+        dayList = item.v;
+      }
+    }
+    // const dayList = await temp['values'][employee][2].v;
+
+    return dayList;
+  }
+
   /**
    *
    * @param {*} cookie
@@ -703,7 +739,7 @@ class ProjectileService {
         return false;
       }
     } else {
-      logger.info('setCalenderDate --> date is already set to desired date. No further action necessary.');
+      logger.info('setCalenderDate --> date is already set to desired date ' + date + '. No further action necessary.');
       return true;
     }
   }
@@ -764,8 +800,9 @@ class ProjectileService {
     /* const cookie = await exports.login(); */
     /* const employee = await this.getEmployee(cookie); */
     // let jobList = await exports.jobList(cookie, employee); // fetch the actual joblist.
+//     const saveEntryResult = await this.saveEntry(cookie, employee, time, project, note, date);
     if (await this.setCalendarDate(date, cookie, employee)) {
-      const saveEntryResult = await this.saveEntry(cookie, employee, time, project, note);
+      const saveEntryResult = await this.saveEntry(cookie, employee, date, time, project, note);
       // saveEntry returns true or false depending on save result
       // returns { returnValue: false, errors: errorArray }
       logger.debug('saveEntryResult --> ' + JSON.stringify(saveEntryResult, null, 2));

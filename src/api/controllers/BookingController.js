@@ -42,7 +42,8 @@ class BookingController {
 
       // normalizing duration time if necessary (to x.xx and parse as float to avoid weird duration lengths)
       let time = await projectile.normalizetime(req.body.duration);
-      time = parseFloat(time);
+      // TODO why does this happen here!? --> parseFloat
+      // time = parseFloat(time);
       // book in projectile
 
       projectile
