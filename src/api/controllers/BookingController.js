@@ -24,14 +24,6 @@ class BookingController {
 
     try {
       const projectile = new ProjectileService();
-
-      /*   e.g.
-           http://localhost:3000/book/1/2788-3/testing
-           http://localhost:3000/book/2018-05-23/1.5/2788-3/testing
-          */
-      // books in timeular and projectile!
-      // TODO: check validity of date, duration, activitiy and note?
-
       // check if date parameter is present or use current date
       let date = '';
       if (!req.body.date) {
@@ -44,9 +36,13 @@ class BookingController {
       let time = await projectile.normalizetime(req.body.duration);
       // TODO why does this happen here!? --> parseFloat
       // time = parseFloat(time);
-      // book in projectile
 
-      projectile
+      // Currently necessary to ensure that updates of a hypothetical second session of projectile (e.g. via browser) are recognized!
+      // Without that updates might be invisible between those sessions, e.g. ignoring deletion of entries.
+      await projectile.refreshProjectile(cookie, employee);
+
+      // book in projectile
+      await projectile
         .save(date, time, req.body.activity, req.body.note, req.cookie, req.employee)
         .then(result => {
           logger.debug('save for projectile successfull');
@@ -78,16 +74,8 @@ class BookingController {
   static async bookEntry(req, res) {
     try {
       const projectile = new ProjectileService();
-
-      /*   e.g.
-           http://localhost:3000/book/1/2788-3/testing
-           http://localhost:3000/book/2018-05-23/1.5/2788-3/testing
-          */
-      // books in timeular and projectile!
-      // TODO: check validity of date, duration, activitiy and note?
-
       // check if date parameter is present or use current date
-      let date = "";
+      let date = '';
       if (!req.body.date) {
         date = new Date().toISOString().substr(0, 10); // YYYY/MM/DD
       } else {
@@ -96,10 +84,16 @@ class BookingController {
 
       // normalizing duration time if necessary (to x.xx and parse as float to avoid weird duration lengths)
       let time = await projectile.normalizetime(req.body.duration);
+      console.log('time: ' + time);
       time = parseFloat(time);
-      // book in projectile
+      console.log('time2: ' + time);
 
-      projectile
+      // Currently necessary to ensure that updates of a hypothetical second session of projectile (e.g. via browser) are recognized!
+      // Without that updates might be invisible between those sessions, e.g. ignoring deletion of entries.
+      await projectile.refreshProjectile(req.cookie, req.employee);
+
+      // book in projectile
+      await projectile
         .save(
           date,
           time,
@@ -109,7 +103,7 @@ class BookingController {
           req.employee
         )
         .then(result => {
-          logger.debug("save for projectile successfull");
+          logger.debug('Saving in projectile successfull.');
           // handle result of save request!! TODO
           // res.status(200).send(date + ' ' + req.body.duration + ' ' + req.body.activity + ' ' + req.body.note);
           if (result.resultValue === false) {
@@ -128,11 +122,11 @@ class BookingController {
     } catch (e) {
       res
         .status(400)
-        .send("Something went wrong - /book/:date/:duration/:activity/:note");
-      logger.error("/book/:date?/:duration/:activity/:note");
+        .send('Something went wrong - /book');
+      logger.error('Something went wrong - /book', e.stack);
       logger.info(e.stack);
     }
-    logger.debug("/book/:date?/:duration/:activity/:note done");
+    logger.debug('/book done');
   }
 
 
@@ -157,6 +151,8 @@ class BookingController {
       const projectile = new ProjectileService();
       const json = req.body; // array of entry objects
 
+      /* no refresh prior to running the update routine necessary. The daylist was read, altered and now gets
+      rewritten, no matter what happend in the meantime, to ensure consistency for this session */
       const result = await projectile.updateEntry(req.cookie, req.employee, json);
 
       res.status(200).send('All fine - post /booking');
@@ -167,7 +163,7 @@ class BookingController {
     }
   }
 
-  static async showDayList (req, res) { 
+  static async showDayList(req, res) { 
 
   }
 
