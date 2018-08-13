@@ -30,7 +30,7 @@ class DashBoard extends React.Component {
   }
 
   renderRedirect () {
-    if (!this.props.token) {
+    if (!sessionStorage.token) {
       return <Redirect to='/login' />
     }
   }
