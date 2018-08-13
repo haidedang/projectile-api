@@ -1,15 +1,14 @@
 import React from 'react';
-import Nav from './Header/Nav';
-import Main from './Main/Main';
 import { connect } from 'react-redux';
+import {withRouter, Redirect} from 'react-router-dom';
+import Booking from './Main/Booking'
 
-import { fetchSelectOptions } from '../../Actions/PackageActions';
 import ApiCaller from '../../services/ApiCaller';
 import { getToken, getSelectOptions } from '../../reducers';
 import { addSelectOptions } from '../../Actions/PackageActions';
 
 class DashBoard extends React.Component {
-  async componentWillMount() {
+  async UNSAFE_componentWillMount() {
     console.log(sessionStorage.token);
     console.log(sessionStorage);
     //Actions required to provide package data for Select Options
@@ -18,7 +17,7 @@ class DashBoard extends React.Component {
     try {
       let res = await api.callApi('showListProjectile', 'GET');
 
-      if (res.status == 'error') {
+      if (res.status === 'error') {
         console.error(res);
         return;
       } else {
@@ -41,7 +40,6 @@ class DashBoard extends React.Component {
     return (
       <div>
         {this.renderRedirect()}
-        <h1>Hello DashBoard</h1>
         <Booking options = {this.props.options} />
       </div>
     );

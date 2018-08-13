@@ -1,6 +1,4 @@
 import React from 'react';
-import { FaPlayCircle, FaStopCircle } from 'react-icons/fa';
-import { IconContext } from 'react-icons';
 import Timer from './Timer';
 import Controls from './Controls';
 

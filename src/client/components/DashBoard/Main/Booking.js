@@ -1,14 +1,12 @@
 import React from 'react';
 import Select from 'react-select';
 import './Booking.css';
-import { FaPlayCircle, FaStopCircle } from 'react-icons/fa';
-import { IconContext } from 'react-icons';
-import getSelectOptions from '../../../reducers';
 import StopWatch from './StopWatch';
 import ApiCaller from '../../../services/ApiCaller';
 import { normalizeDuration } from '../../../utils/timeFormat';
 
 function getDefaultState() {
+  console.log('called')
   return {
     selectedOption: null,
     clicked: false,
@@ -21,10 +19,11 @@ function getDefaultState() {
 }
 
 class Booking extends React.Component {
-  state = getDefaultState();
+
 
   constructor(props) {
     super(props);
+    this.state = getDefaultState();
     this.handlePackageChange = this.handlePackageChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleNote = this.handleNote.bind(this);
@@ -62,7 +61,7 @@ class Booking extends React.Component {
     });
 
     console.log(res);
-    getDefaultState();
+    this.setState(getDefaultState());
   }
 
   handleClick(time) {
@@ -76,7 +75,7 @@ class Booking extends React.Component {
 
     //TODO: There must be another way to update the freaking state
     if (sessionStorage.options) {
-      const { duration } = this.state;
+
       return (
         <div className="container">
           <div className="card card-container">
