@@ -311,7 +311,7 @@ class ProjectileService {
    * @param {*} project project ID
    * @param {*} note task description
    */
-  async saveEntry(cookie, employee, date, time, project, note) {
+  async saveEntryNG(cookie, employee, date, time, project, note) {
     const dayList = await this.getDayListToday(cookie, employee);
     // const dayList = await this.getDayListNG(cookie, employee, date);
     logger.debug('saveEntry -> dayList: ' + JSON.stringify(dayList, null, 2));
@@ -436,6 +436,155 @@ class ProjectileService {
       } */
     return returnValue;
   }
+
+  async saveEntry(cookie, employee, time, project, note) {
+      const dayList = await this.getDayListToday(cookie, employee);
+      logger.debug('saveEntry -> dayList: ' + JSON.stringify(dayList, null, 2));
+      /*
+        extend the "lines" range of originally 6 depending on amount of existing entries in dayList! else insertion of
+        larger lists
+        than 7 entries per day fail to save successfully.
+        */
+      let lineSelector = dayList.length - 1;
+      if (dayList.length >= 49) {
+        // depends if one day or whole weeks is returned from projectile - when what gets returned is still weird
+        lineSelector = dayList.length - 43;
+      }
+
+      logger.debug('saveEntry -> lineSelector: ' + lineSelector);
+      // let lineSelector = dayList.length - 43; // case that 7 days are in dayList
+      /* if (dayList && dayList.length < 49) { // case that 1 day is in dayList
+          lineSelector = dayList.length -1;
+        } */
+      const listEntry = dayList[lineSelector];
+
+      // "normalize" note - Q'n'D fix, until final solution found - UMLAUTE
+      // !!! TODO CHECK - final clean Solution necessary: Q'n'D fix in TimeularAPI -> merge
+      // set time, select Project, write note -> all in one request now.
+      await this.normalPostURL(
+        'POST',
+        'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit',
+        // 'https://postman-echo.com/post',
+        cookie,
+        {
+          values: {
+            [listEntry]: [
+              {
+                n: 'Time',
+                v: time
+              },
+              {
+                n: 'What',
+                v: project
+              },
+              {
+                n: 'Note',
+                v: note
+              }
+            ]
+          }
+        }
+      );
+
+      // save entry
+      const body = await this.normalPostURL(
+        'POST',
+        'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action',
+        cookie,
+        {
+          ref: employee,
+          name: '*',
+          action: 'Save',
+          Params: {}
+        }
+      );
+      let bodyString = JSON.stringify(body);
+      const entries = [];
+
+      // FIXME - external function
+      // check for successfull saving
+      // pattern to matches within a note! e.g.: 2 tesing vs. testing vs. testing 2
+      // " gets stored as \" in projectile json
+      const re = new RegExp('"v":"' + this.escapeRegExp(note).replace(/["]/g, '\\\\$&') + '","d"', 'g');
+      // TODO enough to check for notes?! :( must be another way if there is note present!)
+
+      // logger.debug('RegEx Debug: ' + escapeRegExp(note).replace(/[\"]/g, "\\\\$&"));
+      // logger.debug(note.replace(/[\"]/g, "\\\$&"));
+
+      // from server reply create list of entries of "note" matches to check them further, ideally there is only one
+      let count = 0;
+      const bodyStringMatch = bodyString.match(re);
+      if (bodyStringMatch) {
+        count = bodyStringMatch.length; // "api * ! \" ' url1" zu matchen!
+      }
+      logger.debug('saveEntry -> Occurence count of note text: ' + count);
+      for (let i = 0; i < count; i++) {
+        // find the note
+        const indexOfNote = bodyString.search(re);
+        const bodyStringEntry = bodyString.slice(0, indexOfNote + 5); // 0 to note position, temp
+        // find the beginnig of that block
+        const indexOfDayList = bodyStringEntry.lastIndexOf('"+.|DayList|');
+        // position of DayList in that new shorter bodyStringEntry
+        let bodyStringEntryCut = bodyString.slice(indexOfDayList); // from DayList connected to note to end
+        // find the end of that block
+        const indexOfEnd = bodyStringEntryCut.indexOf('"options":"update"}],'); // find the end of that block
+        bodyStringEntryCut = bodyStringEntryCut.slice(0, indexOfEnd + 21);
+        // 21 = length of search pattern, extract only the block we are interested in
+
+        entries.push('{' + bodyStringEntryCut + '}'); // collect found block entry
+
+        // cut the processed block out of the bodyString and keep searching
+        bodyString = bodyString.slice(indexOfEnd + 21);
+      }
+
+      // evaluate results for correct return value
+      let returnValue = {
+        returnValue: false
+      };
+
+      entries.forEach(item => {
+        // time has to be noramlized. Projectile ALWAYS returns x.xx though x,xx or x:xx may have been sent before
+        // logger.debug('Länge Response TimeTracker: ' + body.values['TimeTracker!^.|Default|Employee|1|357'].length);
+        if (
+          body.values[employee].length >= 5 &&
+          item.includes('"Time","v":' + time + ',"d"') &&
+          item.includes('"What","v":"' + project + '","d"') &&
+          item.includes('"Note","v":"' + note.replace(/["]/g, '\\$&') + '","d"')
+        ) {
+          // created a new entry
+          returnValue = {
+            returnValue: true
+          };
+          logger.debug('saveEntry -> While recognizing save status: created a new entry, return value: true');
+        } else if (
+          item.includes('"What","v":"' + project + '","d"') &&
+          item.includes('"Note","v":"' + note.replace(/["]/g, '\\$&') + '","d"')
+        ) {
+          // added to an existing entry
+          returnValue = {
+            returnValue: true
+          };
+          logger.debug('saveEntry -> While recognizing save status: added to an existing entry, return value: true');
+        }
+      });
+
+      // check for problem messages in projectile response that indicate saving was NOT successfull
+      returnValue = await this.checkProblems(bodyString, returnValue);
+
+      // fs.writeFile('bodyString.json', JSON.stringify(bodyString, null, 2), (err)=>{});  // Debug
+      /* TODO was always causing errors! Check for good and bad case, find single binding condition
+        if (bodyString.includes('"clearProblems":["')){
+          logger.warn('saveEntry -> Recognizing problem status: problem message found! returnValue can\'t be true!');
+          logger.warn('saveEntry -> "clearProblems" error - can\'t write to projectile - booking locked for current ' +
+          'timeperiod.');
+          if (returnValue.returnValue) {
+            returnValue.returnValue = false;
+              returnValue["errors"].push("clearProblems error, booking locked for current timeperiod");
+          }
+        } */
+      return returnValue;
+    }
+
 
   /*
   *
@@ -662,6 +811,8 @@ class ProjectileService {
     }
     // const dayList = await temp['values'][employee][2].v;
 
+    // WENN LEER, RUFE REFRESH AUF? :)
+
     return dayList;
   }
 
@@ -795,7 +946,7 @@ class ProjectileService {
    * @param {*} cookie
    * @param {*} employee
    */
-  async save(date, time, project, note, cookie, employee) {
+  async saveNG(date, time, project, note, cookie, employee) {
     logger.debug('saving data...');
     /* const cookie = await exports.login(); */
     /* const employee = await this.getEmployee(cookie); */
@@ -869,6 +1020,50 @@ class ProjectileService {
     return setCalendarDate(date, cookie, employee);
   };
  */
+
+ // simplified for API Use
+  /**
+   *
+   * @param {*} date
+   * @param {*} time
+   * @param {*} project
+   * @param {*} note
+   * @param {*} cookie
+   * @param {*} employee
+   */
+  async save(date, time, project, note, cookie, employee) {
+    logger.debug('saving data...');
+    console.log('WTF SAVING');
+    let saveEntryResult;
+    /* const cookie = await exports.login(); */
+    /* const employee = await this.getEmployee(cookie); */
+    // let jobList = await exports.jobList(cookie, employee); // fetch the actual joblist.
+    if (await this.setCalendarDate(date, cookie, employee)) {
+      saveEntryResult = await this.saveEntry(cookie, employee, time, project, note);
+      // saveEntry returns true or false depending on save result
+      // returns { returnValue: false, errors: errorArray }
+      logger.debug('saveEntryResult --> ' + JSON.stringify(saveEntryResult, null, 2));
+      if (saveEntryResult.returnValue) {
+        logger.debug('Finished saving entry.');
+        // return true;
+        // return saveEntryResult;
+      }
+      return saveEntryResult;
+    }
+    /* return {
+      returnValue: false
+    }; */
+    return saveEntryResult;
+    // return false;
+  }
+  /*
+  async function blubb () {
+    await exports.save('2018-03-05', '2', '2759-62', 'note');
+    await exports.delete('2018-03-05', '0');
+  }
+  blubb();
+  */
+
 
   /**
    *
