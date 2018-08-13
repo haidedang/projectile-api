@@ -7,15 +7,26 @@ import timeFormat from '../../../utils/timeFormat';
 function getDefaultState() {
   return {
     isRunning: false,
-    time: 0
+    time: 0,
+    startTime: Date.now(),
+    currentTime: null
   };
 }
+
 
 class StopWatch extends React.Component {
   constructor(props) {
     super(props);
     this.state = getDefaultState();
     this.timerRef = null;
+  }
+
+  componentDidMount(){
+    const that = this;
+    window.addEventListener('focus', function(){
+      const now = Date.now() - that.state.startTime;
+      that.setState({time: now})
+    })
   }
 
   updateTimer(extraTime) {
