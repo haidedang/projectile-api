@@ -30,11 +30,19 @@ class DashBoard extends React.Component {
     }
   }
 
+  renderRedirect () {
+    if (!this.props.token) {
+      return <Redirect to='/login' />
+    }
+  }
+
+
   render() {
     return (
       <div>
-        <Nav />
-        <Main options={this.props.options} />
+        {this.renderRedirect()}
+        <h1>Hello DashBoard</h1>
+        <Booking options = {this.props.options} />
       </div>
     );
   }
@@ -47,4 +55,4 @@ function mapStateToProps(state) {
   };
 }
 
-export default connect(mapStateToProps)(DashBoard);
+export default withRouter(connect(mapStateToProps)(DashBoard));
