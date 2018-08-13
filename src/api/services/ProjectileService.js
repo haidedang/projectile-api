@@ -267,9 +267,6 @@ class ProjectileService {
     return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
   }
 
-  // TODO: Refactoring Neccessary
-  // Save entry to projectile
-
   /**
    *
    * helper function for saveEntry - check for problems that indicate saving was NOT successfull
@@ -303,6 +300,8 @@ class ProjectileService {
   }
 
   /**
+   * Helper function to ensure the retrieved daylist is up to date even if a second projectile session is active and
+   * alters content
    *
    * @param {*} cookie
    * @param {*} employee
@@ -480,6 +479,16 @@ class ProjectileService {
     // "normalize" note - Q'n'D fix, until final solution found - UMLAUTE
     // !!! TODO CHECK - final clean Solution necessary: Q'n'D fix in TimeularAPI -> merge
     // set time, select Project, write note -> all in one request now.
+
+    // normalizing takes place in setEntry()
+    const item = {
+      'duration': time,
+      'activity': project,
+      'note': note
+    };
+    const debug = await this.setEntry(cookie, item, listEntry);
+
+    /* DEBUG
     await this.normalPostURL(
       'POST',
       'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit',
@@ -503,7 +512,7 @@ class ProjectileService {
           ]
         }
       }
-    );
+    ); */
 
     // save entry
     const body = await this.normalPostURL(
@@ -629,8 +638,9 @@ class ProjectileService {
   *
   */
   async setEntry(cookie, item, listEntry) {
-    // FIXME - why is ',' necessary for duration suddenly???? if other than ',' durations in projectile get's messed up
-    const duration = item.duration.replace('.', ',');
+    // FIXME CLEANUP - why is ',' necessary for duration suddenly???? if other than ',' durations in projectile get's messed up
+    // const duration = item.duration.replace('.', ','); - possibly no longer necessary
+    const duration = (item.duration ? parseFloat(item.duration) : '0'); // catch empty duration
     const activity = item.activity;
     const note = await this.normalizeComment(item.note);
 
@@ -681,26 +691,29 @@ class ProjectileService {
     return body;
   }
 
-  /*
-  *
-  * compare the result of an update/change event
-  * NOT suitable for book events, as the line of entry is unknown there!
-  *
-  */
-  async compareChanges(body, json, employee) {
-    for (const item of json.entries) {
-      const duration = item.duration.replace(',', '.');
-      const packageNo = item.activity;
-      const note = await this.normalizeComment(item.note);
-      const listEntry = '+.|DayList|' + item.line + '|' + employee;
-      // compare
-      if ((!body.values[listEntry][5].v === duration) || (!body.values[listEntry][8].v === packageNo) ||
-        (!body.values[listEntry][28].v === note)) {
-        return false;
+  /**
+   * Check for error messages in result. If none present asume operation was successfull (false)
+   * @param {*} json
+   * @return {*} int - whether problems were found or not
+   */
+  async problemsFound(body) {
+    if (body.problems) {
+      if (body.problems.length > 0) {
+        return true;
       }
     }
-    // return matches true / false
-    return true;
+    return false;
+  }
+
+  /**
+   * Print error messages. Assume that input is an array of problems (body.problems)
+   * @param {*} json
+   */
+  async printProblems(problems) {
+    logger.warn('checkProblems -> Found warnings and/or error messages.');
+    problems.foreach(item => {
+      logger.warn(item.message, item.severity);
+    });
   }
 
   /**
@@ -722,32 +735,26 @@ class ProjectileService {
         logger.debug('updateEntry -> line selector: ' + item.line);
         logger.debug('updateEntry -> preparing entry in projectile');
         const listEntry = '+.|DayList|' + item.line + '|' + employee;
+        // set entries
         await this.setEntry(cookie, item, listEntry);
         logger.debug('updateEntry -> Entry for line ' + item.line + ' update prepared in projectile.');
       }
+
       // save changes
       const body = await this.saveEntries(cookie, employee);
 
-      // compare changes
-      returnValue.returnValue = await this.compareChanges(body, json, employee);
-      logger.debug('updateEntry --> compareChanges() result is: ' + successfulUpdate);
-
-      // in case of errors, check for problem messages and return/log them
-      if (!returnValue.returnValue) {
-        logger.debug('updateEntry --> compareChanges() notices problems. Am checking for details.');
-        const bodyString = JSON.stringify(body);
-        // check for problem messages in projectile response
-        const errors = await this.checkProblems(bodyString);
-        logger.warn('updateEntry --> checkProblems() found ' + errors.length + ' problems.');
-        logger.errors(JSON.stringify(errors, null, 2));
-        returnValue[errors] = errors;
+      // check for problems in results
+      const problemsFoundResult = await this.problemsFound(body);
+      if (problemsFoundResult) {
+        logger.warn('updateEntry() -> ' + body.problems.length + ' problems found. ' + problemsFoundResult);
+        await this.printProblems(body.problems);
+        returnValue[errors] = body.problems;
         returnValue.returnValue = false;
-        return returnValue;
+      } else {
+        returnValue.returnValue = true;
       }
-      return returnValue;
-    } else {
-      return returnValue;
     }
+    return returnValue;
   }
 
   /**
