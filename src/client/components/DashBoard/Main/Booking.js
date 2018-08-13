@@ -6,7 +6,6 @@ import ApiCaller from '../../../services/ApiCaller';
 import { normalizeDuration } from '../../../utils/timeFormat';
 
 function getDefaultState() {
-  console.log('called')
   return {
     selectedOption: null,
     clicked: false,
@@ -19,8 +18,6 @@ function getDefaultState() {
 }
 
 class Booking extends React.Component {
-
-
   constructor(props) {
     super(props);
     this.state = getDefaultState();
@@ -47,32 +44,19 @@ class Booking extends React.Component {
     let formattedDate = today.toISOString().substr(0, 10);
     let duration = normalizeDuration(this.state.duration);
 
-    console.log(
-      formattedDate,
-      this.state.selectedOption.value,
-      this.state.note,
-      this.state.duration
-    );
-
-    let res = await api.callApi('book', 'POST', {
+    await api.callApi('book', 'POST', {
       date: formattedDate,
       duration: duration.toString(),
       activity: this.state.selectedOption.value,
       note: this.state.note
     });
 
-    console.log(res);
-    this.setState(getDefaultState(), () => {
-      console.log(this.state);
-    });
-
+    this.setState(getDefaultState());
     this.StopWatch.current.reset();
   }
 
   handleClick(time) {
-    this.setState({ duration: time }, () => {
-      console.log(this.state);
-    });
+    this.setState({ duration: time });
   }
 
   render() {
@@ -80,7 +64,6 @@ class Booking extends React.Component {
 
     //TODO: There must be another way to update the freaking state
     if (sessionStorage.options) {
-
       return (
         <div className="container">
           <div className="card card-container">
@@ -106,7 +89,10 @@ class Booking extends React.Component {
               required
             />
             <br />
-            <StopWatch ref={this.StopWatch} handleClick={this.handleClick.bind(this)} />
+            <StopWatch
+              ref={this.StopWatch}
+              handleClick={this.handleClick.bind(this)}
+            />
             <button
               className="btn btn-outline-success my-2 my-sm-0"
               onClick={this.handleSubmit}
