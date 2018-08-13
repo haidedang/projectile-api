@@ -14,7 +14,7 @@ function getDefaultState() {
     StartDisplay: 'block',
     StopDisplay: 'none',
     note: '',
-    duration: ''
+    duration: 0
   };
 }
 
@@ -28,6 +28,7 @@ class Booking extends React.Component {
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleNote = this.handleNote.bind(this);
     this.handleClick = this.handleClick.bind(this);
+    this.StopWatch = React.createRef();
   }
 
   handlePackageChange(selectedOption) {
@@ -45,7 +46,6 @@ class Booking extends React.Component {
     const today = new Date();
     let formattedDate = today.toISOString().substr(0, 10);
     let duration = normalizeDuration(this.state.duration);
-    console.log(duration);
 
     console.log(
       formattedDate,
@@ -62,7 +62,11 @@ class Booking extends React.Component {
     });
 
     console.log(res);
-    this.setState(getDefaultState());
+    this.setState(getDefaultState(), () => {
+      console.log(this.state);
+    });
+
+    this.StopWatch.current.reset();
   }
 
   handleClick(time) {
@@ -102,7 +106,7 @@ class Booking extends React.Component {
               required
             />
             <br />
-            <StopWatch handleClick={this.handleClick.bind(this)} />
+            <StopWatch ref={this.StopWatch} handleClick={this.handleClick.bind(this)} />
             <button
               className="btn btn-outline-success my-2 my-sm-0"
               onClick={this.handleSubmit}

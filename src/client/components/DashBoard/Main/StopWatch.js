@@ -13,7 +13,6 @@ function getDefaultState() {
   };
 }
 
-
 class StopWatch extends React.Component {
   constructor(props) {
     super(props);
@@ -21,12 +20,12 @@ class StopWatch extends React.Component {
     this.timerRef = null;
   }
 
-  componentDidMount(){
+  componentDidMount() {
     const that = this;
-    window.addEventListener('focus', function(){
+    window.addEventListener('focus', function() {
       const now = Date.now() - that.state.startTime;
-      that.setState({time: now})
-    })
+      that.setState({ time: now });
+    });
   }
 
   updateTimer(extraTime) {
@@ -63,6 +62,10 @@ class StopWatch extends React.Component {
     );
 
     this.props.handleClick(newTime.join(':'));
+  }
+
+  reset(){
+    this.setState(getDefaultState());
   }
 
   render() {
