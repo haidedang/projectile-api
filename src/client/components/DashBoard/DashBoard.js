@@ -1,7 +1,7 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import {withRouter, Redirect} from 'react-router-dom';
-import Booking from './Main/Booking'
+import { withRouter, Redirect } from 'react-router-dom';
+import Booking from './Main/Booking';
 
 import ApiCaller from '../../services/ApiCaller';
 import { getToken, getSelectOptions } from '../../reducers';
@@ -29,18 +29,17 @@ class DashBoard extends React.Component {
     }
   }
 
-  renderRedirect () {
+  renderRedirect() {
     if (!sessionStorage.token) {
-      return <Redirect to='/login' />
+      return <Redirect to="/login" />;
     }
   }
-
 
   render() {
     return (
       <div>
         {this.renderRedirect()}
-        <Booking options = {this.props.options} />
+        <Booking options={this.props.options} />
       </div>
     );
   }
