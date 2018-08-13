@@ -20,6 +20,11 @@ const authenticationMiddleware = require('../lib/AuthenticationMiddleware');
  *         "password": "Test123!"
  *     }
  *
+ * @apiExample {bash} Usage example:
+ *
+ * curl -H 'Content-Type: application/json' -d '{"username":"max.mustermann","password":"Test123!"}'
+ * http://localhost:3000/api/v1/login
+ *
  * @apiSuccess {string} status The status of the call.
  * @apiSuccess {string} token The JSON Web Token that authenticates the user on further requests.
  *
@@ -49,6 +54,12 @@ router.post('/login', AuthController.login);
  * @apiName Book
  * @apiGroup Booking
  * @apiDescription This route is used to book an activity within the projectile system.
+ *
+ * @apiHeader {string} Authorization Pass the JW Token by the bearer method. The token comes as a result of
+ * the login call.
+ * @apiHeaderExample {string} Header example:
+ *
+ * Authorization: Bearer 1F34A5C...
  *
  * @apiParam {string} date? The date when the activity has done.
  * @apiParam {string} duration How long did this took.
@@ -86,19 +97,17 @@ router.post('/login', AuthController.login);
 router.post('/book', authenticationMiddleware.authenticate, BookingController.bookEntry);
 
 /**
- * @api {get} /api/v1/showListProjectile/:pretty? Returns a list of activities.
+ * @api {get} /api/v1/showListProjectile Returns a list of activities.
  * @apiVersion 1.0.0
  * @apiName ShowListProjectile
  * @apiGroup Booking
- * @apiDescription This route is to give a list of activities where it is possible to book for.
+ * @apiDescription Returns a list of bookable activities.
  *
- * @apiParam {string} pretty Pretty list.
+ * @apiHeader {string} Authorization Pass the JW Token by the bearer method. The token comes as a result of
+ * the login call.
+ * @apiHeaderExample {string} Header example:
  *
- * @apiParamExample {json} Request example:
- *
- *     {
- *         "pretty": "true"
- *     }
+ * Authorization: Bearer 1F34A5C...
  *
  * @apiSuccess {string} status "ok" or "error"
  * @apiSuccess {Object} response The response
@@ -124,7 +133,7 @@ router.post('/book', authenticationMiddleware.authenticate, BookingController.bo
  *     }
  *
  */
-router.get('/showListProjectile/:pretty?', authenticationMiddleware.authenticate, BookingController.showList);
+router.get('/showListProjectile/', authenticationMiddleware.authenticate, BookingController.showList);
 
 module.exports = router;
 
