@@ -22,12 +22,15 @@ export default function timeFormat(miliseconds) {
 }
 
 export function normalizeDuration(time) {
+  time = time.toString();
   if (time.includes(':')) {
     const tmp = time.split(':');
-    const tmp2 = (parseInt(tmp[1]) / 60) * 100;
-    time = tmp[0] + '.' + tmp2;
+    let tmp2 = parseFloat('0.' + tmp[1]) * (100 / 60);
+    tmp2 = tmp2.toString();
+    const tmp3 = tmp2.split('.')[1];
+    time = tmp[0] + (tmp3 ? '.' + tmp3 : '');
   } else if (time.includes(',')) {
     time = time.replace(',', '.');
   }
-  return time;
+  return parseFloat(time); // FIXME same for booking.js?
 }

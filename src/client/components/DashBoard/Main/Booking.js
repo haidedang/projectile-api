@@ -45,6 +45,7 @@ class Booking extends React.Component {
     const today = new Date();
     let formattedDate = today.toISOString().substr(0, 10);
     let duration = normalizeDuration(this.state.duration);
+    console.log(duration);
 
     console.log(
       formattedDate,
@@ -55,7 +56,7 @@ class Booking extends React.Component {
 
     let res = await api.callApi('book', 'POST', {
       date: formattedDate,
-      duration: duration,
+      duration: duration.toString(),
       activity: this.state.selectedOption.value,
       note: this.state.note
     });
