@@ -30,7 +30,6 @@ class Booking extends React.Component {
 
   handlePackageChange(selectedOption) {
     this.setState({ selectedOption });
-    console.log(`Option selected:`, selectedOption);
   }
 
   handleNote(event) {
