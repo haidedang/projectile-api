@@ -52,8 +52,6 @@ class StopWatch extends React.Component {
     let newTime = timeFormat(this.state.time).split(':');
     newTime.pop();
 
-    console.log(newTime.join(':'));
-
     this.setState(
       {
         isRunning: false
