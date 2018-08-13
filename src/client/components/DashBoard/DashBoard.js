@@ -8,7 +8,7 @@ import { getToken, getSelectOptions } from '../../reducers';
 import { addSelectOptions } from '../../Actions/PackageActions';
 
 class DashBoard extends React.Component {
-  async UNSAFE_componentWillMount() {
+  async componentDidMount() {
     console.log(sessionStorage.token);
     console.log(sessionStorage);
     //Actions required to provide package data for Select Options
