@@ -8,7 +8,7 @@ class Controls extends React.Component {
   }
 
   render() {
-    const { isRunning, start, stop } = this.props;
+    const { isRunning } = this.props;
     return (
       <div>
         {!isRunning ? (

@@ -1,11 +1,11 @@
-import React, { PropTypes, Component } from 'react';
+import React from 'react';
 
 import timeFormat from '../../../utils/timeFormat';
 
-class Timer extends Component {
-  static defaultProps = {
+class Timer extends React.Component {
+  /* static defaultProps = {
     time: 0
-  };
+  }; */
 
   render() {
     const { time } = this.props;

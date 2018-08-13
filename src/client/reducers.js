@@ -19,7 +19,7 @@ const rootReducer = (state = initialState, action) => {
         token: false
       };
     case ADD_SELECT_OPTIONS:
-      return { 
+      return {
         ...state,
         options: action.options
       }

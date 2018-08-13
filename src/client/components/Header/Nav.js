@@ -36,7 +36,7 @@ class Nav extends React.Component {
   }
 
   renderButtons() {
-    if (this.props.token) {
+    if (sessionStorage.token) {
       return this.renderLogoutButton();
     }
 
