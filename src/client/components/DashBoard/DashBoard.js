@@ -14,14 +14,15 @@ class DashBoard extends React.Component {
     console.log(sessionStorage);
     //Actions required to provide package data for Select Options
     const api = new ApiCaller(sessionStorage.token);
+
     try {
-      let res = await api.callApi('showListProjectile');
+      let res = await api.callApi('showListProjectile', 'GET');
 
       if (res.status == 'error') {
         console.error(res);
         return;
       } else {
-        console.log(res)
+        console.log(res);
         this.props.dispatch(addSelectOptions(res));
       }
     } catch (e) {

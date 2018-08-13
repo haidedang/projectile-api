@@ -1,16 +1,16 @@
 class ApiCaller {
-
-  constructor(token) { 
+  constructor(token) {
     this.token = token;
   }
 
-  async callApi(endpoint) {
+  async callApi(endpoint, method, body) {
     try {
-      const result = await fetch(`http://localhost:3000/api/v1/${endpoint}`,{
-        method:'GET',
-        headers:{
-          'content-type':'application/json',
-          authorization : 'Bearer ' + this.token
+      const result = await fetch(`http://localhost:3000/api/v1/${endpoint}`, {
+        method: method,
+        body: JSON.stringify(body),
+        headers: {
+          'content-type': 'application/json',
+          authorization: 'Bearer ' + this.token
         }
       });
       return result.json();

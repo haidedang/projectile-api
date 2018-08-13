@@ -1,24 +1,34 @@
 import React from 'react';
 import Select from 'react-select';
 import './Booking.css';
-import { FaPlayCircle } from 'react-icons/fa';
+import { FaPlayCircle, FaStopCircle } from 'react-icons/fa';
 import { IconContext } from 'react-icons';
 import getSelectOptions from '../../../reducers';
+import StopWatch from './StopWatch';
+import ApiCaller from '../../../services/ApiCaller';
+import { normalizeDuration } from '../../../utils/timeFormat';
 
-const options = [
-  { value: 'chocolate', label: 'Chocolate' },
-  { value: 'strawberry', label: 'Strawberry' },
-  { value: 'vanilla', label: 'Vanilla' }
-];
+function getDefaultState() {
+  return {
+    selectedOption: null,
+    clicked: false,
+    display: 'none',
+    StartDisplay: 'block',
+    StopDisplay: 'none',
+    note: '',
+    duration: ''
+  };
+}
 
 class Booking extends React.Component {
-  state = {
-    selectedOption: null
-  };
+  state = getDefaultState();
 
   constructor(props) {
     super(props);
     this.handlePackageChange = this.handlePackageChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleNote = this.handleNote.bind(this);
+    this.handleClick = this.handleClick.bind(this);
   }
 
   handlePackageChange(selectedOption) {
@@ -26,11 +36,47 @@ class Booking extends React.Component {
     console.log(`Option selected:`, selectedOption);
   }
 
+  handleNote(event) {
+    this.setState({ note: event.target.value });
+  }
+
+  async handleSubmit() {
+    const api = new ApiCaller(sessionStorage.token);
+
+    const today = new Date();
+    let formattedDate = today.toISOString().substr(0, 10);
+    let duration = normalizeDuration(this.state.duration);
+
+    console.log(
+      formattedDate,
+      this.state.selectedOption.value,
+      this.state.note,
+      this.state.duration
+    );
+
+    let res = await api.callApi('book', 'POST', {
+      date: formattedDate,
+      duration: duration,
+      activity: this.state.selectedOption.value,
+      note: this.state.note
+    });
+
+    console.log(res);
+    getDefaultState();
+  }
+
+  handleClick(time) {
+    this.setState({ duration: time }, () => {
+      console.log(this.state);
+    });
+  }
+
   render() {
     const { selectedOption } = this.state;
 
     //TODO: There must be another way to update the freaking state
     if (sessionStorage.options) {
+      const { duration } = this.state;
       return (
         <div className="container">
           <div className="card card-container">
@@ -49,24 +95,20 @@ class Booking extends React.Component {
             <input
               type="text"
               id="inputPassword"
-              value={this.state.package}
-              onChange={this.handleChange}
+              value={this.state.note}
+              onChange={this.handleNote}
               className="form-control"
               placeholder="description"
               required
             />
             <br />
-            <IconContext.Provider
-              value={{ color: 'green', className: 'global-class-name' }}
+            <StopWatch handleClick={this.handleClick.bind(this)} />
+            <button
+              className="btn btn-outline-success my-2 my-sm-0"
+              onClick={this.handleSubmit}
             >
-              <span>
-                <FaPlayCircle
-                  onClick={this.handlePackageChange}
-                  id="start"
-                  size={50}
-                />
-              </span>
-            </IconContext.Provider>
+              Book Entry
+            </button>
           </div>
         </div>
       );
