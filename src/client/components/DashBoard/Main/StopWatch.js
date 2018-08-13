@@ -23,11 +23,10 @@ class StopWatch extends React.Component {
   componentDidMount() {
     const that = this;
     window.addEventListener('focus', function() {
-      if(that.state.isRunning){
+      if (that.state.isRunning) {
         const now = Date.now() - that.state.startTime;
         that.setState({ time: now });
       }
-
     });
   }
 
@@ -67,7 +66,7 @@ class StopWatch extends React.Component {
     this.props.handleClick(newTime.join(':'));
   }
 
-  reset(){
+  reset() {
     this.setState(getDefaultState());
   }
 
