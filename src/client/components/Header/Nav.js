@@ -1,8 +1,8 @@
-import React from "react";
-import { Link, withRouter } from "react-router-dom";
-import { connect } from "react-redux";
+import React from 'react';
+import { Link, withRouter } from 'react-router-dom';
+import { connect } from 'react-redux';
 
-import { logout } from "../../actions";
+import { logout } from '../../actions';
 import { getToken } from '../../reducers';
 
 class Nav extends React.Component {
@@ -15,7 +15,7 @@ class Nav extends React.Component {
     event.preventDefault();
     this.props.dispatch(logout());
     this.props.history.replace({
-      pathName: "/"
+      pathName: '/'
     });
   }
 
@@ -29,7 +29,10 @@ class Nav extends React.Component {
 
   renderLogoutButton() {
     return (
-      <button className="btn btn-outline-danger my-2 my-sm-0" onClick={this.handleSubmit}>
+      <button
+        className="btn btn-outline-danger my-2 my-sm-0"
+        onClick={this.handleSubmit}
+      >
         Logout
       </button>
     );
@@ -46,7 +49,9 @@ class Nav extends React.Component {
   render() {
     return (
       <nav className="navbar navbar-light bg-light justify-content-between">
-        <Link to="/dashboard" className="navbar-brand">Projectile API</Link>
+        <Link to="/dashboard" className="navbar-brand">
+          Projectile API
+        </Link>
         {this.renderButtons()}
       </nav>
     );

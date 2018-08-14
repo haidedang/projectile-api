@@ -5,22 +5,10 @@ import StopWatch from './StopWatch';
 import ApiCaller from '../../../services/ApiCaller';
 import { normalizeDuration } from '../../../utils/timeFormat';
 
-function getDefaultState() {
-  return {
-    selectedOption: null,
-    clicked: false,
-    display: 'none',
-    StartDisplay: 'block',
-    StopDisplay: 'none',
-    note: '',
-    duration: 0
-  };
-}
-
 class Booking extends React.Component {
   constructor(props) {
     super(props);
-    this.state = getDefaultState();
+    this.state = this.getDefaultState();
     this.handlePackageChange = this.handlePackageChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleNote = this.handleNote.bind(this);
@@ -56,6 +44,18 @@ class Booking extends React.Component {
 
   handleClick(time) {
     this.setState({ duration: time });
+  }
+
+  getDefaultState() {
+    return {
+      selectedOption: null,
+      clicked: false,
+      display: 'none',
+      StartDisplay: 'block',
+      StopDisplay: 'none',
+      note: '',
+      duration: 0
+    };
   }
 
   render() {

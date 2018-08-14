@@ -4,19 +4,10 @@ import Controls from './Controls';
 
 import timeFormat from '../../../utils/timeFormat';
 
-function getDefaultState() {
-  return {
-    isRunning: false,
-    time: 0,
-    startTime: Date.now(),
-    currentTime: null
-  };
-}
-
 class StopWatch extends React.Component {
   constructor(props) {
     super(props);
-    this.state = getDefaultState();
+    this.state = this.getDefaultState();
     this.timerRef = null;
   }
 
@@ -65,7 +56,16 @@ class StopWatch extends React.Component {
   }
 
   reset() {
-    this.setState(getDefaultState());
+    this.setState(this.getDefaultState());
+  }
+
+  getDefaultState() {
+    return {
+      isRunning: false,
+      time: 0,
+      startTime: Date.now(),
+      currentTime: null
+    };
   }
 
   render() {

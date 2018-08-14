@@ -13,11 +13,9 @@ export function login(token) {
 }
 
 export function logout() {
-  return dispatch => {
-    dispatch({
-      type: LOGOUT
-    });
-    sessionStorage.removeItem('token');
-    console.log('LOGOUT successfully');
+  sessionStorage.removeItem('token');
+  console.log('LOGOUT successfully');
+  return {
+    type: LOGOUT
   };
 }
