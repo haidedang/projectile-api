@@ -38,7 +38,7 @@ class Booking extends React.Component {
       note: this.state.note
     });
 
-    this.setState(getDefaultState());
+    this.setState(this.getDefaultState());
     this.StopWatch.current.reset();
   }
 
