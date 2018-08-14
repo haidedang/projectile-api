@@ -264,6 +264,7 @@ class ProjectileService {
    * @param {*} str
    */
   escapeRegExp(str) {
+    // eslint-disable-next-line
     return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
   }
 
@@ -520,7 +521,7 @@ class ProjectileService {
       'activity': project,
       'note': note
     };
-    const debug = await this.setEntry(cookie, item, listEntry);
+    await this.setEntry(cookie, item, listEntry);
 
     // save entry
     const body = await this.saveEntries(cookie, employee);
@@ -695,7 +696,7 @@ class ProjectileService {
    */
   async deleteEntry(cookie, employee, number) {
     // mark entry for deletion, get popup response, extract ref and execute action to delete
-    const dayList = await getDayListToday(cookie, employee);
+    const dayList = await this.getDayListToday(cookie, employee);
     const listEntry = dayList[number];
     const body = await this.normalPostURL(
       'POST',
@@ -749,7 +750,7 @@ class ProjectileService {
    * @param {*} cookie
    * @param {*} employee
    */
-   /*
+  /*
   async getDayListNG(cookie, employee, date) {
     const temp = await this.normalPostURL(
       'POST',
@@ -772,9 +773,10 @@ class ProjectileService {
         ]
       }
     ); */
-    // const dayList = await temp['values'][employee][2]['v'];
-    // Length of daylist can be retrieved from: temp['values'][employee][1].v.length
-/*    console.log(JSON.stringify(temp, null, 2));
+  // const dayList = await temp['values'][employee][2]['v'];
+  // Length of daylist can be retrieved from: temp['values'][employee][1].v.length
+  /*
+  console.log(JSON.stringify(temp, null, 2));
     let dayList = [];
     for (const item of temp['values'][employee]) {
       if (item.n === 'DayList') {
@@ -881,9 +883,9 @@ class ProjectileService {
   async delete(date, listEntry) {
     const cookie = await this.login();
     const employee = await this.getEmployee(cookie);
-    if (await setCalendarDate(date, cookie, employee)) {
+    if (await this.setCalendarDate(date, cookie, employee)) {
       logger.debug('delete() -> setCalenderDate() - successfully.');
-      if (await deleteEntry(cookie, employee, listEntry)) {
+      if (await this.deleteEntry(cookie, employee, listEntry)) {
         logger.debug('Finished deleting entry ' + listEntry + ' for date ' + date);
       } else {
         logger.error('Error while deleting entry ' + listEntry + ' for date ' + date);
@@ -928,7 +930,7 @@ class ProjectileService {
     /* const cookie = await exports.login(); */
     /* const employee = await this.getEmployee(cookie); */
     // let jobList = await exports.jobList(cookie, employee); // fetch the actual joblist.
-//     const saveEntryResult = await this.saveEntry(cookie, employee, time, project, note, date);
+    // const saveEntryResult = await this.saveEntry(cookie, employee, time, project, note, date);
     if (await this.setCalendarDate(date, cookie, employee)) {
       const saveEntryResult = await this.saveEntry(cookie, employee, date, time, project, note);
       // saveEntry returns true or false depending on save result
@@ -941,11 +943,9 @@ class ProjectileService {
       }
       return saveEntryResult;
     }
-    /* return {
+    return {
       returnValue: false
-    }; */
-    return saveEntryResult;
-    // return false;
+    };
   }
 
   /*

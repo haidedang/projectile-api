@@ -4,7 +4,6 @@ const ProjectileService = require('../../api/services/ProjectileService');
 /* const projectile = require('../../../projectileAPI') */
 const authenticationMiddleware = require('../../lib/AuthenticationMiddleware');
 
-
 class BookingController {
   /**
    * Static middleware to book an activity.
@@ -24,7 +23,7 @@ class BookingController {
     try {
       const projectile = new ProjectileService();
       // check if date parameter is present or use current date
-      let date = '';
+      let date = "";
       if (!req.body.date) {
         date = new Date().toISOString().substr(0, 10); // YYYY/MM/DD
       } else {
@@ -70,7 +69,7 @@ class BookingController {
     } catch (e) {
       res
         .status(400)
-        .send('Something went wrong - /book');
+        .send(false);
       logger.error('Something went wrong - /book', e.stack);
       logger.info(e.stack);
     }
@@ -126,12 +125,11 @@ class BookingController {
    */
   static async showList(req, res) {
     const projectile = new ProjectileService();
-  /*   res.json({
-      status: 'ok'
-    }); */
+
     try {
       let jobList = await projectile.fetchNewJobList(req.cookie, req.employee);
-      if (req.params.pretty) { // any value for pretty should be ok
+      if (req.params.pretty) {
+        // any value for pretty should be ok
         let result = `<table border="1">
           <tbody>
             <tr>
@@ -141,22 +139,35 @@ class BookingController {
               <th>Zeit Limit</td>
               <th>gebuchte Zeit</td>
             </tr>`;
-        jobList.forEach((item) => {
-          result = result + '<tr><td>' + item.name + '</td><td>' + item.no + '</td><td>' + item.remainingTime +
-            '</td><td>' + item.limitTime + '</td><td>' + item.Totaltime + '</td></tr>';
+        jobList.forEach(item => {
+          result =
+            result +
+            "<tr><td>" +
+            item.name +
+            "</td><td>" +
+            item.no +
+            "</td><td>" +
+            item.remainingTime +
+            "</td><td>" +
+            item.limitTime +
+            "</td><td>" +
+            item.Totaltime +
+            "</td></tr>";
         });
-        result = result + `</table>
+        result =
+          result +
+          `</table>
           </tbody>`;
         res.status(200).send(result);
       } else {
         res.status(200).send(JSON.stringify(jobList));
       }
-      logger.debug('/showListProjectile done');
-    }catch(err){
-      console.log(err)
-      res.status(400).send('Something went wrong - /showListProjectile');
+      logger.debug("/showListProjectile done");
+    } catch (err) {
+      console.log(err);
+      res.status(400).send("Something went wrong - /showListProjectile");
     }
-    logger.debug('/showListProjectile done');
+    logger.debug("/showListProjectile done");
   }
 }
 

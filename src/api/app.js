@@ -33,10 +33,18 @@ const app = express();
 
 // initialize morgan logger
 app.use(morgan('dev'));
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'http://localhost:8080');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  next();
+});
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+// serve the client
+app.use('/client', express.static(path.join(__dirname, '../../dist')));
 // add the documentation route, this is static and has to be build before
 app.use('/api/doc', express.static(path.join(__dirname, 'public/api/doc')));
 
@@ -45,21 +53,19 @@ app.use('/api/v1', router);
 
 // add a default error for everything that goes here /
 app.use('/', (req, res) => {
-  res.status(404)
-    .json({
-      status: 404,
-      message: 'Resource not found.'
-    });
+  res.status(404).json({
+    status: 404,
+    message: 'Resource not found.'
+  });
 });
 
 // error handler middleware
 app.use((err, res) => {
   logger.error(err.stack);
-  res.status(500)
-    .json({
-      status: 500,
-      message: err.stack
-    });
+  res.status(500).json({
+    status: 500,
+    message: err.stack
+  });
 });
 
 /**
@@ -73,17 +79,15 @@ if (config.api.server.https === true) {
     cert: fs.readFileSync(path.join(rootPath, '/', config.api.server.cert))
   };
 
-  https.createServer(options, app)
-    .listen(
-      config.api.server.port,
-      config.api.server.host,
-      () => logger.info(`Server started on https://${config.api.server.host}:${config.api.server.port}`)
+  https
+    .createServer(options, app)
+    .listen(config.api.server.port, config.api.server.host, () =>
+      logger.info(`Server started on https://${config.api.server.host}:${config.api.server.port}`)
     );
 } else {
-  http.createServer(app)
-    .listen(
-      config.api.server.port,
-      config.api.server.host,
-      () => logger.info(`Server started on http://${config.api.server.host}:${config.api.server.port}`)
+  http
+    .createServer(app)
+    .listen(config.api.server.port, config.api.server.host, () =>
+      logger.info(`Server started on http://${config.api.server.host}:${config.api.server.port}`)
     );
 }
