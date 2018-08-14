@@ -2,7 +2,7 @@ const logger = require('../../lib/logger');
 
 const ProjectileService = require('../../api/services/ProjectileService');
 /* const projectile = require('../../../projectileAPI') */
-const authenticationMiddleware = require('../../lib/AuthenticationMiddleware');
+// const authenticationMiddleware = require('../../lib/AuthenticationMiddleware');
 
 class BookingController {
   /**
@@ -102,16 +102,17 @@ class BookingController {
       rewritten, no matter what happend in the meantime, to ensure consistency for this session */
       const result = await projectile.updateEntry(req.cookie, req.employee, json);
 
-      res.status(200).send('All fine - post /booking');
+      res.status(200).send(result);
       logger.debug('/editing results done');
     } catch(e) {
-      res.status(400).send('Something went wrong - post /booking');
+      res.status(400).send(false);
       logger.error('/editing results not successfull');
     }
   }
 
-  static async showDayList(req, res) { 
-
+  static async showDayList(req, res) {
+    console.log('please make me usefull');
+    res.status(200).send('Make me usefull');
   }
 
   /**

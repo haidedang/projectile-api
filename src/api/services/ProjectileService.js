@@ -1008,20 +1008,20 @@ class ProjectileService {
     /* const employee = await this.getEmployee(cookie); */
     // let jobList = await exports.jobList(cookie, employee); // fetch the actual joblist.
     saveEntryResult = await this.saveEntryNG(cookie, employee, date, time, project, note);
-/*
-    if (await this.setCalendarDate(date, cookie, employee)) {
-      saveEntryResult = await this.saveEntryNG2(cookie, employee, date, time, project, note);
-      // saveEntry returns true or false depending on save result
-      // returns { returnValue: false, errors: errorArray }
-      logger.debug('saveEntryResult --> ' + JSON.stringify(saveEntryResult, null, 2));
-      if (saveEntryResult.returnValue) {
-        logger.debug('Finished saving entry.');
-        // return true;
-        // return saveEntryResult;
-      }
-      return saveEntryResult;
-    }
-*/
+    /*
+        if (await this.setCalendarDate(date, cookie, employee)) {
+          saveEntryResult = await this.saveEntryNG2(cookie, employee, date, time, project, note);
+          // saveEntry returns true or false depending on save result
+          // returns { returnValue: false, errors: errorArray }
+          logger.debug('saveEntryResult --> ' + JSON.stringify(saveEntryResult, null, 2));
+          if (saveEntryResult.returnValue) {
+            logger.debug('Finished saving entry.');
+            // return true;
+            // return saveEntryResult;
+          }
+          return saveEntryResult;
+        }
+    */
     /* return {
       returnValue: false
     }; */
