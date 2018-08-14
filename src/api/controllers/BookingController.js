@@ -1,8 +1,8 @@
 const logger = require('../../lib/logger');
 
 const ProjectileService = require('../../api/services/ProjectileService');
- /* const projectile = require('../../../projectileAPI') */
- const authenticationMiddleware = require('../../lib/AuthenticationMiddleware');
+/* const projectile = require('../../../projectileAPI') */
+const authenticationMiddleware = require('../../lib/AuthenticationMiddleware');
 
 
 class BookingController {
@@ -33,8 +33,6 @@ class BookingController {
 
       // normalizing duration time if necessary (to x.xx and parse as float to avoid weird duration lengths)
       let time = await projectile.normalizetime(req.body.duration);
-      // parseFloat() is intentional! - now handled in setEntry! central handling!
-      // time = parseFloat(time);
 
       // Currently necessary to ensure that updates of a hypothetical second session of projectile (e.g. via browser) are recognized!
       // Without that updates might be invisible between those sessions, e.g. ignoring deletion of entries.
@@ -51,11 +49,12 @@ class BookingController {
           req.employee
         )
         .then(result => {
-          logger.debug('Saving in projectile successfull.');
+
           // handle result of save request!! TODO
           // res.status(200).send(date + ' ' + req.body.duration + ' ' + req.body.activity + ' ' + req.body.note);
-          if (result.resultValue === false) {
+          if (result.returnValue === false) {
             res.status(200).json(result);
+            logger.warn('Saving in projectile unsuccessfull!');
           } else {
             res.status(200).json({
               bookedEntry: {
@@ -65,6 +64,7 @@ class BookingController {
                 note: req.body.note
               }
             });
+            logger.debug('Saving in projectile successfull.');
           }
         });
     } catch (e) {
