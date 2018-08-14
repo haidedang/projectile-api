@@ -142,10 +142,6 @@ class ProjectileService {
 
     logger.debug(JSON.stringify(body));
 
-
-    // fs.writeFile("answer.json", JSON.stringify(body), (err)=>{.debug()});
-    // TODO TO CHECK necessary?
-
     /**
      * get name and NO. of Employee Job
      */
@@ -195,24 +191,6 @@ class ProjectileService {
   }
 
   /**
-   *  function to test if projectile webserver is alive/reachable
-   *  @returns {boolean} status
-   */
-  async projectileAlive() {
-    const status = await rp({ uri: 'https://projectile.office.sevenval.de/projectile/start', strictSSL: false })
-      .then(function() {
-        logger.silly('projectileAlive -> projectile is alive.');
-        return true;
-      })
-      .catch(function(err) {
-        logger.warn('projectileAlive -> projectile server seems to be unreachable.');
-        logger.silly(err);
-        return false;
-      });
-    return status;
-  }
-
-  /**
    *
    * @param cookie
    * @returns {Promise} Employee
@@ -258,46 +236,14 @@ class ProjectileService {
     return time;
   }
 
-  // helper
   /**
-   *
+   * Helper function to replace special characters
    * @param {*} str
+   * @returns {*} string with replaced special characters
    */
   escapeRegExp(str) {
     // eslint-disable-next-line
     return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, '\\$&');
-  }
-
-  /**
-   *
-   * helper function for saveEntry - check for problems that indicate saving was NOT successfull
-   *
-   */
-  async checkProblems(bodyString) {
-    let errorArray = [];
-    if (bodyString.includes('"problems":[{"ref"')) {
-      logger.warn("saveEntry -> Recognizing problem status: problem message found! returnValue can't be true!");
-      const indexOfErrorArrayStart = bodyString.lastIndexOf('problems":[');
-      const indexOfErrorArrayEnd = bodyString.slice(indexOfErrorArrayStart).indexOf('"}],');
-      logger.warn(
-        'saveEntry -> Error array: ',
-        'Start: ',
-        indexOfErrorArrayStart,
-        'length:',
-        indexOfErrorArrayEnd,
-        bodyString.slice(indexOfErrorArrayStart + 10, indexOfErrorArrayStart + indexOfErrorArrayEnd + 3)
-      );
-      errorArray = JSON.parse(
-        bodyString.slice(indexOfErrorArrayStart + 10, indexOfErrorArrayStart + indexOfErrorArrayEnd + 3)
-      );
-      logger.warn('saveEntry -> Error array itms: ', errorArray.length);
-      errorArray.forEach(item => {
-        logger.warn(item.message, item.severity);
-      });
-      // array contains: ref, message, severity
-      // error message should be returned!
-    }
-    return errorArray;
   }
 
   /**
@@ -323,7 +269,7 @@ class ProjectileService {
   }
 
   /**
-   * Helper function to extract info neccessary for further use, from data received through request to projectile
+   * Helper function to extract daylist info neccessary for further use from data received through request to projectile
    *
    * @param {*} cookie
    * @param {*} employee
@@ -334,9 +280,7 @@ class ProjectileService {
   async processAnswer(cookie, employee, answer) {
     const processedAnswer = [];
     for (const index in answer['values']) {
-      // recognize a DayList Entry through its "typical" length
-      // if (answer['values'][index].length === 35) {
-      // recognize a DayList Entry through splitting index and checking for "DayList" at [1]
+      // recognize a DayList Entry through keyword 'DayList'
       const indexSplit = index.split('|');
       if (indexSplit[1] === 'DayList') {
         // index 5, Time; 8, What; 28, Note; 31, Day
@@ -543,12 +487,14 @@ class ProjectileService {
     return returnValue;
   }
 
-  /*
-  *
-  * normalize a note (replacing umlauts)
-  *
-  * FIXME fix encoding issue that makes this hack necessary!
-  */
+  // FIXME fix encoding issue that makes this hack necessary!
+  /**
+   * normalize a note (replacing umlauts)
+   *
+   * @param {*} note note to normalize
+   *
+   * @return {*} normalized note
+   */
   async normalizeComment(note) {
     const result = note.replace(/ä/g, 'ae')
       .replace(/Ä/g, 'Ae')
@@ -561,18 +507,19 @@ class ProjectileService {
     return result;
   }
 
-  /*
-  *
-  * set an entry in time tracker (before saving later) - (supports saveEntry() and) updateEntry()
-  *
-  */
+  /**
+   * set an entry in time tracker (before saving later) - (supports saveEntry() and) updateEntry()
+   *
+   * @param {*} cookie cookie to access projectile
+   * @param {*} item item object containing the booking entry values
+   * @param {*} listEntry string that identifies a list entry in projectile
+   *
+   * @return {*} result of the request
+   */
   async setEntry(cookie, item, listEntry) {
-    // FIXME CLEANUP - why is ',' necessary for duration suddenly???? if other than ',' durations in projectile get's messed up
-    // const duration = item.duration.replace('.', ','); - possibly no longer necessary
     const duration = (item.duration ? parseFloat(item.duration) : '0'); // catch empty duration
     const activity = item.activity;
     const note = await this.normalizeComment(item.note);
-
     const result = await this.normalPostURL(
       'POST',
       'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit',
@@ -596,15 +543,17 @@ class ProjectileService {
         }
       }
     );
-    // TODO return true/false success/failed?!
     return result;
   }
 
-  /*
-  *
-  * save an entry or entries in time tracker
-  *
-  */
+  /**
+   * save an entry or entries in time tracker
+   *
+   * @param {*} cookie cookie to access projectile
+   * @param {*} employee employee id to access projectile
+   *
+   * @return {*} result of the request
+   */
   async saveEntries(cookie, employee) {
     const body = await this.normalPostURL(
       'POST',
@@ -622,8 +571,10 @@ class ProjectileService {
 
   /**
    * Check for error messages in result. If none present asume operation was successfull (false)
-   * @param {*} json
-   * @return {*} int - whether problems were found or not
+   *
+   * @param {*} json check for problems in the provided body from request
+   *
+   * @return {*} return whether problems were found or not
    */
   async problemsFound(body) {
     if (body.problems) {
@@ -636,6 +587,7 @@ class ProjectileService {
 
   /**
    * Print error messages. Assume that input is an array of problems (body.problems)
+   *
    * @param {*} json
    */
   async printProblems(problems) {
@@ -649,9 +601,12 @@ class ProjectileService {
 
   /**
    * update an entry or multiple entries on projectile on specific date
+   *
    * @param {*} cookie
    * @param {*} employee
    * @param {*} json
+   *
+   * @return {*} returnValue showing if task was completed successfully
    */
   async updateEntry(cookie, employee, json) {
     logger.debug('updateEntry() --> number of entry objects: ' + json.entries.length);
@@ -689,10 +644,12 @@ class ProjectileService {
   }
 
   /**
-   *
+   * Function to delete an entry from projectile
    * @param {*} cookie
    * @param {*} employee
-   * @param {*} number
+   * @param {*} number line selector number
+   *
+   * @returns {*} success
    */
   async deleteEntry(cookie, employee, number) {
     // mark entry for deletion, get popup response, extract ref and execute action to delete
@@ -709,7 +666,6 @@ class ProjectileService {
         Params: { ref: listEntry }
       }
     );
-    // logger.debug(body.dialog.structure[""][""]["0"][1].v); --> contains "Nicht erlaubt: Krank löschen" in spec case
     const secondBody = await this.normalPostURL(
       'POST',
       'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action',
@@ -721,7 +677,6 @@ class ProjectileService {
         Params: { isDialog: true }
       }
     );
-
     /*
       expected behaviour: after successfull deletion of a listEntry, the secondBody contains the line:
       "close":["1519808571525-0"],"clearProblems":["1519808571525-0"]} containing the ref value from first request twice
@@ -744,57 +699,13 @@ class ProjectileService {
     }
   }
 
-
+  // TODO obosolete once removed from deleteEntry function
   /**
-   *
+   * Function to get a day's dayList from projectile
    * @param {*} cookie
    * @param {*} employee
-   */
-  /*
-  async getDayListNG(cookie, employee, date) {
-    const temp = await this.normalPostURL(
-      'POST',
-      'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit',
-      cookie,
-      {'values':{[employee]:[{'n':'Begin', 'v': date + 'T00:00:00'}]}}
-    );
-    /*
-    const temp = await this.normalPostURL(
-      'POST',
-      'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get',
-      cookie,
-      {
-        Dock: ['Area.TrackingArea'],
-        [employee]: [
-          'DayList',
-          'JobList',
-          'Begin',
-          'TrackingRestriction'
-        ]
-      }
-    ); */
-  // const dayList = await temp['values'][employee][2]['v'];
-  // Length of daylist can be retrieved from: temp['values'][employee][1].v.length
-  /*
-  console.log(JSON.stringify(temp, null, 2));
-    let dayList = [];
-    for (const item of temp['values'][employee]) {
-      if (item.n === 'DayList') {
-        // dayList = item.v;
-        dayList.push(item.v);
-      }
-    }
-    // const dayList = await temp['values'][employee][2].v;
-
-    // WENN LEER, RUFE REFRESH AUF? :)
-
-    return dayList;
-  } */
-
-  /**
    *
-   * @param {*} cookie
-   * @param {*} employee
+   * @returns {*} Returns dayList array
    */
   async getDayListToday(cookie, employee) {
     const temp = await this.normalPostURL(
@@ -824,10 +735,13 @@ class ProjectileService {
   }
 
   /**
+   * Function to set a calender date in projectile
    *
    * @param {*} date
    * @param {*} cookie
    * @param {*} employee
+   *
+   * @returns {*} Returns true/false
    */
   async setCalendarDate(date, cookie, employee) {
     const dateComplete = date + 'T00:00:00';
@@ -838,8 +752,6 @@ class ProjectileService {
         'TrackingRestriction'
       ]
     });
-
-    // alternative to check for current date: bodyString.includes('[{"n":"Begin","d":true}]')
     if(answer0.values[employee][1].v !== date) {
       // set date to desired date
       const answer = await this.normalPostURL(
@@ -874,11 +786,13 @@ class ProjectileService {
     }
   }
 
-  // e.g.: index.delete('2018-02-01', 0)
   /**
+   * Function to allow deletion of projectile entry
    *
    * @param {*} date
    * @param {*} listEntry
+   *
+   * @returns {*} Return true/false
    */
   async delete(date, listEntry) {
     const cookie = await this.login();
@@ -887,36 +801,30 @@ class ProjectileService {
       logger.debug('delete() -> setCalenderDate() - successfully.');
       if (await this.deleteEntry(cookie, employee, listEntry)) {
         logger.debug('Finished deleting entry ' + listEntry + ' for date ' + date);
+        return true;
       } else {
         logger.error('Error while deleting entry ' + listEntry + ' for date ' + date);
+        return false;
       }
     }
-  }
-
-  // simplified for API use
-  /**
-   *
-   * @param {*} cookie
-   * @param {*} employee
-   */
-  async jobList(cookie, employee) {
-    logger.debug('fetching data for jobList.');
-    return this.showJobList(cookie, employee);
+    return false;
   }
 
   /**
+   * Helper function to retrieve the joblist from projectile
    *
    * @param {*} cookie
    * @param {*} employee
+   *
+   * @returns joblist
    */
   async fetchNewJobList(cookie, employee) {
     logger.debug('fetching new data for jobList...');
-    const data = await this.showJobList(cookie, employee);
-    return data;
+    return await this.showJobList(cookie, employee);
   }
 
-  // simplified for API Use
   /**
+   * Function to execute the saving a booking entry to projectile
    *
    * @param {*} date
    * @param {*} time
@@ -924,6 +832,8 @@ class ProjectileService {
    * @param {*} note
    * @param {*} cookie
    * @param {*} employee
+   *
+   * @returns {*} returnValue true/false
    */
   async saveNG(date, time, project, note, cookie, employee) {
     logger.debug('saving data...');
@@ -948,51 +858,8 @@ class ProjectileService {
     };
   }
 
-  /*
-   * ....
-   */
-  // Split Joblist into one without limit and one array with packages with limit
-  async joblistLimited(list, limitTime, callback) {
-    // "limitTime" is a fieldname
-    const limitedJobList = [];
-
-    // transform array to a bundle of property values
-    const temp = list.map(item => {
-      return item[limitTime];
-    });
-
-    // create copy
-    const iterationArr = temp.slice(0);
-
-    iterationArr.forEach(item => {
-      if (callback(item)) {
-        const a = list.splice(temp.indexOf(item), 1)[0];
-        limitedJobList.push(a);
-        temp.splice(temp.indexOf(item), 1);
-      }
-    });
-    // array of limited packages
-    logger.debug('exports.joblistLimited -> limitedJobList: ', JSON.stringify(limitedJobList, null, 2));
-    return limitedJobList;
-    /* logger.debug(list);
-      logger.debug(limitedJobList); */
-  }
-
-  /*  async getDayListToday() {
-    const cookie = await this.login();
-    const employee = await this.getEmployee(cookie);
-    return getDayListToday(cookie, employee);
-  };
-
- async setCalendarDate (date) {
-    const cookie = await this.login();
-    const employee = await this.getEmployee(cookie);
-    return setCalendarDate(date, cookie, employee);
-  };
- */
-
-  // simplified for API Use
   /**
+   * Function to save a booking entry to projectile
    *
    * @param {*} date
    * @param {*} time
@@ -1000,13 +867,12 @@ class ProjectileService {
    * @param {*} note
    * @param {*} cookie
    * @param {*} employee
+   *
+   * @returns {*} saveEntryResult true/false
    */
   async save(date, time, project, note, cookie, employee) {
     logger.debug('saving data...');
     let saveEntryResult;
-    /* const cookie = await exports.login(); */
-    /* const employee = await this.getEmployee(cookie); */
-    // let jobList = await exports.jobList(cookie, employee); // fetch the actual joblist.
     saveEntryResult = await this.saveEntryNG(cookie, employee, date, time, project, note);
     /*
         if (await this.setCalendarDate(date, cookie, employee)) {
@@ -1022,23 +888,21 @@ class ProjectileService {
           return saveEntryResult;
         }
     */
-    /* return {
-      returnValue: false
-    }; */
     return saveEntryResult;
-    // return false;
   }
 
   /**
+   * Function to get all entries in a time range
    *
    * @param {*} startDate
    * @param {*} endDate
+   *
+   * @returns {*} Returns the response
    */
   async getallEntriesInTimeFrame(startDate, endDate) {
     startDate = startDate + 'T00:00:00';
     endDate = endDate + 'T00:00:00';
     const cookie = await this.login();
-    // const employee = await exports.getEmployee(cookie); // FIXME necessary?!
     await this.normalPostURL(
       'POST',
       'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit',
@@ -1049,17 +913,12 @@ class ProjectileService {
         }
       }
     );
-    // handled with above normalPostURL request --> await normalPostURL('POST',
-    // "https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit", cookie ,
-    // {"values":{"Start":[{"n":"Field_TimeTrackerDate2","v":endDate}]}} );
     const response = await this.normalPostURL(
       'POST',
       'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action',
       cookie,
       { ref: 'Start', name: '*', action: 'TimeTracker1', Params: {} }
     );
-    // OBOSLETE? fs.writeFile('daylist.json', JSON.stringify(response,null,2), (err)  logger.error(err));
-    // TODO necessary? obsolete? // error got triggered, whats wrong there?!
     return response;
   }
 }
