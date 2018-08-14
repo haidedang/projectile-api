@@ -23,11 +23,6 @@ class BookingController {
     try {
       const projectile = new ProjectileService();
 
-      /*   e.g.
-           http://localhost:3000/book/1/2788-3/testing
-           http://localhost:3000/book/2018-05-23/1.5/2788-3/testing
-          */
-      // books in timeular and projectile!
       // TODO: check validity of date, duration, activitiy and note?
 
       // check if date parameter is present or use current date
@@ -79,62 +74,28 @@ class BookingController {
     logger.debug("/book/:date?/:duration/:activity/:note done");
   }
 
-  // static async showDayList (req, res) {
-
-  // }
-
   /**
    * Static middleware to handle showList route.
    *
    * @param {object} req ExpressJS request object.
-   * @param {string} req.body.pretty Attribute to tell the return format.
    * @param {object} req.cookie The projectile cookie that is read from the bearer token.
    * @param {object} res ExpressJS response object.
    * @returns {void}
    */
   static async showList(req, res) {
     const projectile = new ProjectileService();
+
     try {
       let jobList = await projectile.fetchNewJobList(req.cookie, req.employee);
-      if (req.params.pretty) {
-        // any value for pretty should be ok
-        let result = `<table border="1">
-          <tbody>
-            <tr>
-              <th>Paketname</td>
-              <th>Paketnummer</td>
-              <th>verfügbare Zeit</td>
-              <th>Zeit Limit</td>
-              <th>gebuchte Zeit</td>
-            </tr>`;
-        jobList.forEach(item => {
-          result =
-            result +
-            "<tr><td>" +
-            item.name +
-            "</td><td>" +
-            item.no +
-            "</td><td>" +
-            item.remainingTime +
-            "</td><td>" +
-            item.limitTime +
-            "</td><td>" +
-            item.Totaltime +
-            "</td></tr>";
-        });
-        result =
-          result +
-          `</table>
-          </tbody>`;
-        res.status(200).send(result);
-      } else {
-        res.status(200).send(JSON.stringify(jobList));
-      }
-      logger.debug("/showListProjectile done");
+      res.status(200).send(JSON.stringify(jobList));
     } catch (err) {
-      console.log(err);
-      res.status(400).send("Something went wrong - /showListProjectile");
+      logger.error(err.stack);
+      res.status(500).json({
+        status: 'error',
+        message: err.message
+      });
     }
+
     logger.debug("/showListProjectile done");
   }
 }

@@ -1,5 +1,5 @@
-import { LOGIN, LOGOUT } from './Actions/AuthentificationActions';
-import { ADD_SELECT_OPTIONS} from './Actions/PackageActions';
+import { LOGIN, LOGOUT } from './actions/AuthentificationActions';
+import { ADD_SELECT_OPTIONS} from './actions/PackageActions';
 
 const initialState = {
   token: false,

@@ -2,8 +2,9 @@ import React from 'react';
 import { Link, withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 
-import { logout } from '../../actions';
 import { getToken } from '../../reducers';
+import { logout } from '../../actions/AuthentificationActions';
+import SessionStorage from '../../utils/SessionStorage';
 
 class Nav extends React.Component {
   constructor(props) {
@@ -39,7 +40,7 @@ class Nav extends React.Component {
   }
 
   renderButtons() {
-    if (sessionStorage.token) {
+    if (SessionStorage.getItem('token')) {
       return this.renderLogoutButton();
     }
 
