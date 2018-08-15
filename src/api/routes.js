@@ -157,4 +157,43 @@ router.post('/book', authenticationMiddleware.authenticate, BookingController.bo
  */
 router.post('/edit', authenticationMiddleware.authenticate, BookingController.editEntry);
 
+/**
+ * @api {get} /api/v1/showListProjectile Returns a list of activities.
+ * @apiVersion 1.0.0
+ * @apiName ShowListProjectile
+ * @apiGroup Booking
+ * @apiDescription Returns a list of bookable activities.
+ *
+ * @apiHeader {string} Authorization Pass the JW Token by the bearer method. The token comes as a result of
+ * the login call.
+ * @apiHeaderExample {string} Header example:
+ *
+ * Authorization: Bearer 1F34A5C...
+ *
+ * @apiSuccess {string} status "ok" or "error"
+ * @apiSuccess {Object} response The response
+ *
+ * @apiSuccessExample Success response examples:
+ *     HTTP/1.1 200 OK
+ *     {
+ *         "status": "ok",
+ *         "response": {
+ *            ...
+ *         },
+ *     }
+ *
+ *     HTTP/1.1 200 OK
+ *     {
+ *         "status": "error"
+ *     }
+ *
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *         "status": "error",
+ *         "message": "Unauthorized"
+ *     }
+ *
+ */
+router.get('/showListProjectile/', authenticationMiddleware.authenticate, BookingController.showList);
+
 module.exports = router;

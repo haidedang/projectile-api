@@ -57,15 +57,14 @@ class BookingController {
         );
         logger.warn('Saving in projectile unsuccessfull!');
         return;
-      } else {
-        res.status(200).json(
-          {
-            "status": "ok"
-          }
-        );
-        logger.debug('Saving in projectile successfull.');
-        return;
       }
+      res.status(200).json(
+        {
+          "status": "ok"
+        }
+      );
+      logger.debug('Saving in projectile successfull.');
+      return;
     } catch (e) {
       res
         .status(200)
@@ -106,34 +105,55 @@ class BookingController {
       const result = await projectile.updateEntry(req.cookie, req.employee, json);
 
       if (result.returnValue === false) {
-        res.status(200).json(
-          {
-            "status": "error",
-            "message": (result.errors ? result.errors : '')
-          }
-        );
+        res.status(200).json({
+          status: 'error',
+          message: (result.errors ? result.errors : '')
+        });
         logger.warn('Editing in projectile unsuccessfull!');
         return;
-      } else {
-        res.status(200).json(
-          {
-            "status": "ok"
-          }
-        );
-        logger.debug('Editing in projectile successfull.');
-        return;
       }
+
+      res.status(200).json({
+        "status": "ok"
+      });
+      logger.debug('Editing in projectile successfull.');
+      return;
     } catch (e) {
       res
         .status(200)
         .json(
           {
-            "status": "error",
-            "message": e.message
+            status: "error",
+            message: e.message
           }
         );
       logger.error('Something went wrong - /edit');
       logger.error(e.stack);
+    }
+  }
+
+  /**
+   * Static middleware to handle showList route.
+   *
+   * @param {object} req ExpressJS request object.
+   * @param {string} req.body.pretty Attribute to tell the return format.
+   * @param {object} req.cookie The projectile cookie that is read from the bearer token.
+   * @param {object} res ExpressJS response object.
+   * @returns {void}
+   */
+  static async showList(req, res) {
+    const projectile = new ProjectileService();
+
+    try {
+      let jobList = await projectile.fetchNewJobList(req.cookie, req.employee);
+      res.status(200).json({
+        status: 'ok',
+        response: jobList
+      });
+    } catch (err) {
+      res.status(400).json({
+        status: 'error'
+      });
     }
   }
 
