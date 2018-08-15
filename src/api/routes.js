@@ -187,4 +187,49 @@ router.post('/edit', authenticationMiddleware.authenticate, BookingController.ed
  */
 router.get('/showListProjectile/', authenticationMiddleware.authenticate, BookingController.showList);
 
+/**
+ * @api {get} /api/v1/getDayList Returns a list of entries of a day.
+ * @apiVersion 1.0.0
+ * @apiName getDayList
+ * @apiGroup Booking
+ * @apiDescription Returns a list of all existing entries for a day.
+ *
+ * @apiParam {string} date The date as a json object for which the entries are requested.
+ * @apiParamExample {json} Request-Example:
+ *     {
+ *       "date": "2018-08-14"
+ *     }
+ *
+ * @apiHeader {string} Authorization Pass the JW Token by the bearer method. The token comes as a result of
+ * the login call.
+ * @apiHeaderExample {string} Header example:
+ *
+ * Authorization: Bearer 1F34A5C...
+ *
+ * @apiSuccess {string} status "ok" or "error"
+ * @apiSuccess {Object} response The response
+ *
+ * @apiSuccessExample Success response examples:
+ *     HTTP/1.1 200 OK
+ *     {
+ *         "status": "ok",
+ *         "response": [
+ *            ...
+ *         ],
+ *     }
+ *
+ *     HTTP/1.1 200 OK
+ *     {
+ *         "status": "error"
+ *     }
+ *
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *         "status": "error",
+ *         "message": "Unauthorized"
+ *     }
+ *
+ */
+router.post('/getdaylist', authenticationMiddleware.authenticate, BookingController.getDayList);
+
 module.exports = router;

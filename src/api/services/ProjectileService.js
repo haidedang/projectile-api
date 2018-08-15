@@ -341,10 +341,10 @@ class ProjectileService {
       if (indexSplit[1] === 'DayList') {
         // index 5, Time; 8, What; 28, Note; 31, Day
         const obj = {
-          'time': answer['values'][index][5]['v'],
+          'date': answer['values'][index][31]['v'],
+          'duration': answer['values'][index][5]['v'],
           'activity': answer['values'][index][8]['v'],
           'note': answer['values'][index][28]['v'],
-          'date': answer['values'][index][31]['v'],
           'line': indexSplit[2],
           'lineSelector': index
         };
@@ -383,6 +383,15 @@ class ProjectileService {
         }
       }
     );
+
+    // check for error messages
+    // {"problems":[{"message":"Session invalid","severity":"Info"}],"reload":true}
+    if (await this.problemsFound(answer0)) {
+      await this.printProblems(answer0);
+      // return errors/warnings immediately
+      return answer0;
+    }
+
     /*
       incomplete reply usually is < 5000 characters, better solution to try to access an entry?
       or look at size of reply?
@@ -428,6 +437,15 @@ class ProjectileService {
         ]
       }
     );
+
+    // check for error messages
+    // {"problems":[{"message":"Session invalid","severity":"Info"}],"reload":true}
+    if (await this.checkProblems(answer0)) {
+      await this.printProblems(answer0);
+      // return errors/warnings immediately
+      return answer0;
+    }
+
     /*
       incomplete reply usually is < 5000 characters, better solution to try to access an entry?
       or look at size of reply?
