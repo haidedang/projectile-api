@@ -251,8 +251,10 @@ class ProjectileService {
   async normalizetime(time) {
     if (time.includes(':')) {
       const tmp = time.split(':');
-      const tmp2 = (parseInt(tmp[1]) / 60) * 100;
-      time = tmp[0] + '.' + tmp2;
+      let tmp2 = parseFloat('0.' + tmp[1]) * (100 / 60);
+      tmp2 = tmp2.toString().split('.')[1];
+      // parseInt to turn 00 to 0, condition to allow for undefined tmp[1]
+      time = parseInt(tmp[0]) + (tmp2 ? '.' + tmp2 : '');
     } else if (time.includes(',')) {
       time = time.replace(',', '.');
     }
