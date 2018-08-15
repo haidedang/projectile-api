@@ -387,10 +387,10 @@ class ProjectileService {
 
     // check for error messages
     // {"problems":[{"message":"Session invalid","severity":"Info"}],"reload":true}
-    if (await this.problemsFound(answer0)) {
-      await this.printProblems(answer0);
+    if (await this.problemsFound(resultProjectile)) {
+      await this.printProblems(resultProjectile);
       // return errors/warnings immediately
-      return answer0;
+      return resultProjectile;
     }
 
     /*
@@ -441,10 +441,10 @@ class ProjectileService {
 
     // check for error messages
     // {"problems":[{"message":"Session invalid","severity":"Info"}],"reload":true}
-    if (await this.checkProblems(answer0)) {
-      await this.printProblems(answer0);
+    if (await this.checkProblems(resultProjectile)) {
+      await this.printProblems(resultProjectile);
       // return errors/warnings immediately
-      return answer0;
+      return resultProjectile;
     }
 
     /*
