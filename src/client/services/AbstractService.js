@@ -24,8 +24,6 @@ class AbstractService {
       host +
       (port ? ":" + port : "") +
       "/api/v1/";
-
-    console.log(config);
   }
 
   async sendRequest(endpoint, method, body) {

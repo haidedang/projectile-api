@@ -11,11 +11,11 @@ class DashboardService extends AbstractService {
     try {
       const activityListResult = await this.sendRequest('showListProjectile', METHOD.GET);
 
-      if (activityListResult.error) {
+      if (activityListResult.status !== 'ok') {
         throw new Error(activityListResult.message);
       }
 
-      return activityListResult;
+      return activityListResult.response;
     } catch (e) {
       throw e;
     }

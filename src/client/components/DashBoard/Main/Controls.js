@@ -21,7 +21,7 @@ class Controls extends React.Component {
    * @returns {React.Component} A react component to display a circle with stop icon.
    */
   getStopCircle() {
-    return <FaStopCircle onClick={this.props.stop} id="stop" size={50} />;
+    return <FaStopCircle className="stop-circle" onClick={this.props.stop} id="stop" size={50} />;
   }
 
   /**

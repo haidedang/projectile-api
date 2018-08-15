@@ -149,8 +149,9 @@ class BookingController {
         response: jobList
       });
     } catch (err) {
-      res.status(400).json({
-        status: 'error'
+      res.status(200).json({
+        status: 'error',
+        message: err.message
       });
     }
   }
