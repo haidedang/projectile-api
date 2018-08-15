@@ -8,9 +8,6 @@ import SessionStorage from '../../../utils/SessionStorage';
 import StopWatch from './StopWatch';
 import { normalizeDuration } from '../../../utils/timeFormat';
 
-// styles
-import './Booking.css';
-
 /**
  * React Booking component.
  */
