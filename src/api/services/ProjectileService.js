@@ -244,9 +244,10 @@ class ProjectileService {
 
   /**
    * normalize the duration value
-   * @param {duration} duration value
-   * @returns {duration} duration value that is cleaned to x.xx
    *
+   * @param {string} duration value
+   *
+   * @returns {string} duration value that is cleaned to x.xx
    */
   async normalizetime(time) {
     if (time.includes(':')) {
@@ -259,10 +260,12 @@ class ProjectileService {
     return time;
   }
 
-  // helper
   /**
+   * Helper function to escape strings
    *
    * @param {*} str
+   *
+   * @returns {*} escaped string
    */
   escapeRegExp(str) {
     // eslint-disable-next-line
@@ -309,7 +312,7 @@ class ProjectileService {
    * @param {*} employee
    */
   async refreshProjectile(cookie, employee) {
-    const answer = await this.normalPostURL(
+    const result = await this.normalPostURL(
       'POST',
       'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action',
       cookie,
@@ -320,7 +323,7 @@ class ProjectileService {
         'Params': {}
       }
     );
-    return answer;
+    return result;
   }
 
   /**
@@ -335,8 +338,6 @@ class ProjectileService {
   async processAnswer(cookie, employee, answer) {
     const processedAnswer = [];
     for (const index in answer['values']) {
-      // recognize a DayList Entry through its "typical" length
-      // if (answer['values'][index].length === 35) {
       // recognize a DayList Entry through splitting index and checking for "DayList" at [1]
       const indexSplit = index.split('|');
       if (indexSplit[1] === 'DayList') {
@@ -366,16 +367,16 @@ class ProjectileService {
    * their corresponding line numbers
    */
   async getDayListNG(cookie, employee, date) {
-    let result = {};
+    let resultToReturn = {};
     logger.debug('getDayListNG() -> Trying to get complete DayList for specific date.');
     // set date
-    const answer0 = await this.normalPostURL(
+    const resultProjectile = await this.normalPostURL(
       'POST',
       'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit',
       cookie,
       {
         values: {
-          'TimeTracker!^.|Default|Employee|1|357': [
+          [employee]: [
             {
               n: 'Begin',
               v: date + 'T00:00:00'
@@ -388,17 +389,17 @@ class ProjectileService {
       incomplete reply usually is < 5000 characters, better solution to try to access an entry?
       or look at size of reply?
     */
-    if (JSON.stringify(answer0).length < 5000) {
+    if (JSON.stringify(resultProjectile).length < 5000) {
       logger.info('getDayListNG() -> too small reply from set day request recognized. Desired info not contained.');
       logger.info('getDayListNG() -> Refreshing projectile tracker and trying to get complete info this way.');
-      const answer1 = await this.refreshProjectile(cookie, employee);
-      result = await this.processAnswer(cookie, employee, answer1);
+      const resultRefresh = await this.refreshProjectile(cookie, employee);
+      resultToReturn = await this.processAnswer(cookie, employee, resultRefresh);
     } else {
-      result = await this.processAnswer(cookie, employee, answer0);
+      resultToReturn = await this.processAnswer(cookie, employee, resultProjectile);
     }
-    logger.info('getDayListNG() -> processedAnswer() result is ' + result.length + ' entries wide.');
+    logger.info('getDayListNG() -> processedAnswer() result is ' + resultToReturn.length + ' entries wide.');
     // logger.debug('getDayListNG() -> result: ' + JSON.stringify(result, null, 2));
-    return result;
+    return resultToReturn;
   }
 
   /**
@@ -413,15 +414,15 @@ class ProjectileService {
    */
   async getDayListNG2(cookie, employee, date) {
     await this.setCalendarDate(date, cookie, employee);
-    let result = {};
+    let resultToReturn = {};
     logger.debug('getDayListNG2() -> Trying to get complete DayList for specific date. Date set before!');
     // get tracker infos
-    const answer0 = await this.normalPostURL(
+    const resultProjectile = await this.normalPostURL(
       'POST',
       'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get',
       cookie,
       {
-        'TimeTracker!^.|Default|Employee|1|357':
+        [employee]:
         [
           'DayList',
           'JobList',
@@ -433,17 +434,17 @@ class ProjectileService {
       incomplete reply usually is < 5000 characters, better solution to try to access an entry?
       or look at size of reply?
     */
-    if (JSON.stringify(answer0).length < 5000) {
+    if (JSON.stringify(resultProjectile).length < 5000) {
       logger.info('getDayListNG2() -> too small reply from set day request recognized. Desired info not contained.');
       logger.info('getDayListNG2() -> Refreshing projectile tracker and trying to get complete info this way.');
-      const answer1 = await this.refreshProjectile(cookie, employee);
-      result = await this.processAnswer(cookie, employee, answer1);
+      const resultRefresh = await this.refreshProjectile(cookie, employee);
+      resultToReturn = await this.processAnswer(cookie, employee, resultRefresh);
     } else {
-      result = await this.processAnswer(cookie, employee, answer0);
+      resultToReturn = await this.processAnswer(cookie, employee, resultProjectile);
     }
-    logger.info('getDayListNG2() -> processedAnswer() result is ' + result.length + ' entries wide.');
+    logger.info('getDayListNG2() -> processedAnswer() result is ' + resultToReturn.length + ' entries wide.');
     // logger.debug('getDayListNG2() -> result: ' + JSON.stringify(result, null, 2));
-    return result;
+    return resultToReturn;
   }
 
   /**
@@ -983,9 +984,6 @@ class ProjectileService {
   async save(date, time, project, note, cookie, employee) {
     logger.debug('saving data...');
     let saveEntryResult;
-    /* const cookie = await exports.login(); */
-    /* const employee = await this.getEmployee(cookie); */
-    // let jobList = await exports.jobList(cookie, employee); // fetch the actual joblist.
     saveEntryResult = await this.saveEntryNG(cookie, employee, date, time, project, note);
     /*
         if (await this.setCalendarDate(date, cookie, employee)) {
@@ -1001,11 +999,7 @@ class ProjectileService {
           return saveEntryResult;
         }
     */
-    /* return {
-      returnValue: false
-    }; */
     return saveEntryResult;
-    // return false;
   }
 
   /**

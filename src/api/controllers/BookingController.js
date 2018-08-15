@@ -38,7 +38,7 @@ class BookingController {
       await projectile.refreshProjectile(req.cookie, req.employee);
 
       // book in projectile
-      await projectile
+      let result = await projectile
         .save(
           date,
           time,
@@ -46,36 +46,38 @@ class BookingController {
           req.body.note,
           req.cookie,
           req.employee
-        )
-        .then(result => {
+        );
 
-          // handle result of save request!! TODO
-          // res.status(200).send(date + ' ' + req.body.duration + ' ' + req.body.activity + ' ' + req.body.note);
-          if (result.returnValue === false) {
-            res.status(200).json(result);
-            logger.warn('Saving in projectile unsuccessfull!');
-          } else {
-            res.status(200).json({
-              bookedEntry: {
-                date,
-                duration: req.body.duration,
-                activity: req.body.activity,
-                note: req.body.note
-              }
-            });
-            logger.debug('Saving in projectile successfull.');
+      if (result.returnValue === false) {
+        res.status(200).json(
+          {
+            "status": "error",
+            "message": (result.errors ? result.errors : '')
           }
-        });
+        );
+        logger.warn('Saving in projectile unsuccessfull!');
+        return;
+      }
+      res.status(200).json(
+        {
+          "status": "ok"
+        }
+      );
+      logger.debug('Saving in projectile successfull.');
+      return;
     } catch (e) {
       res
-        .status(400)
-        .send(false);
-      logger.error('Something went wrong - /book', e.stack);
-      logger.info(e.stack);
+        .status(200)
+        .json(
+          {
+            "status": "error",
+            "message": e.message
+          }
+        );
+      logger.error('Something went wrong - /book');
+      logger.error(e.stack);
     }
-    logger.debug('/book done');
   }
-
 
   /**
    * Static middleware to update an activity.
@@ -102,11 +104,31 @@ class BookingController {
       rewritten, no matter what happend in the meantime, to ensure consistency for this session */
       const result = await projectile.updateEntry(req.cookie, req.employee, json);
 
-      res.status(200).send(result);
-      logger.debug('/editing results done');
-    } catch(e) {
-      res.status(400).send(false);
-      logger.error('/editing results not successfull');
+      if (result.returnValue === false) {
+        res.status(200).json({
+          status: 'error',
+          message: (result.errors ? result.errors : '')
+        });
+        logger.warn('Editing in projectile unsuccessfull!');
+        return;
+      }
+
+      res.status(200).json({
+        "status": "ok"
+      });
+      logger.debug('Editing in projectile successfull.');
+      return;
+    } catch (e) {
+      res
+        .status(200)
+        .json(
+          {
+            status: "error",
+            message: e.message
+          }
+        );
+      logger.error('Something went wrong - /edit');
+      logger.error(e.stack);
     }
   }
 
@@ -126,17 +148,15 @@ class BookingController {
       const jobList = await projectile.getJobListNG(req.cookie, req.employee);
 
       if (jobList.problems !== undefined) {
-        res.status(401).send(
-          {
-            "status": "error",
-            "message": "Unauthorized"
-          }
-        );
+        res.status(401).send({
+          status: 'error',
+          message: 'Unauthorized'
+        });
         logger.debug('/getJobList -> unsuccessfull. Unauthorized access');
       } else {
         const result = {
-          "status": "ok",
-          "response": jobList
+          status: 'ok',
+          response: jobList
         };
         res.status(200).send(result);
         logger.debug('/getJobList -> successfull');
@@ -144,7 +164,9 @@ class BookingController {
       }
     } catch (err) {
       logger.error(err);
-      res.status(200).send({"status": "error"});
+      res.status(200).send({
+        status: 'error'
+      });
       logger.error('/getJobList -> not successfull.');
     }
   }
