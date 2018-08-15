@@ -386,14 +386,15 @@ class ProjectileService {
         }
       }
     );
-    /*
-      incomplete reply usually is < 5000 characters, better solution to try to access an entry?
-      or look at size of reply?
-    */
-    if (JSON.stringify(resultProjectile).length < 5000) {
+    // check if a DayList entry exists, act accordingly
+    if (resultProjectile['values']['+.|DayList|0|' + employee] === undefined) {
       logger.info('getDayListNG() -> too small reply from set day request recognized. Desired info not contained.');
       logger.info('getDayListNG() -> Refreshing projectile tracker and trying to get complete info this way.');
       const resultRefresh = await this.refreshProjectile(cookie, employee);
+      if (resultRefresh['values']['+.|DayList|0|' + employee] === undefined) {
+        logger.error('getDayListNG() -> Refreshing projectile tracker and retrieving complete daylist went wrong!');
+        return {};
+      }
       resultToReturn = await this.processAnswer(cookie, employee, resultRefresh);
     } else {
       resultToReturn = await this.processAnswer(cookie, employee, resultProjectile);
@@ -404,7 +405,7 @@ class ProjectileService {
   }
 
   /**
-   * Function to get the DayList for a specific date.
+   * Function to get the DayList for a specific date. (alternative way, up to 3 requests, instead of max. 2 for NG)
    *
    * @param {*} cookie
    * @param {*} employee
@@ -431,14 +432,15 @@ class ProjectileService {
         ]
       }
     );
-    /*
-      incomplete reply usually is < 5000 characters, better solution to try to access an entry?
-      or look at size of reply?
-    */
-    if (JSON.stringify(resultProjectile).length < 5000) {
+    // check if a DayList entry exists, act accordingly
+    if (resultProjectile['values']['+.|DayList|0|' + employee] === undefined) {
       logger.info('getDayListNG2() -> too small reply from set day request recognized. Desired info not contained.');
       logger.info('getDayListNG2() -> Refreshing projectile tracker and trying to get complete info this way.');
       const resultRefresh = await this.refreshProjectile(cookie, employee);
+      if (resultRefresh['values']['+.|DayList|0|' + employee] === undefined) {
+        logger.error('getDayListNG2() -> Refreshing projectile tracker and retrieving complete daylist went wrong!');
+        return {};
+      }
       resultToReturn = await this.processAnswer(cookie, employee, resultRefresh);
     } else {
       resultToReturn = await this.processAnswer(cookie, employee, resultProjectile);
@@ -503,7 +505,7 @@ class ProjectileService {
    */
   async saveEntryNG(cookie, employee, date, time, project, note) {
     let dayListBeforeChange = await this.getDayListNG(cookie, employee, date);
-    logger.debug('saveEntryNG2() -> dayListBeforeChange: ' + JSON.stringify(dayListBeforeChange, null, 2));
+    logger.debug('saveEntryNG() -> dayListBeforeChange: ' + JSON.stringify(dayListBeforeChange, null, 2));
 
     let lineSelector = await this.getCorrectLineSelector(dayListBeforeChange, date);
 
