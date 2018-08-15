@@ -38,7 +38,7 @@ class BookingController {
       await projectile.refreshProjectile(req.cookie, req.employee);
 
       // book in projectile
-      await projectile
+      let result = await projectile
         .save(
           date,
           time,
@@ -46,36 +46,38 @@ class BookingController {
           req.body.note,
           req.cookie,
           req.employee
-        )
-        .then(result => {
+        );
 
-          // handle result of save request!! TODO
-          // res.status(200).send(date + ' ' + req.body.duration + ' ' + req.body.activity + ' ' + req.body.note);
-          if (result.returnValue === false) {
-            res.status(200).json(result);
-            logger.warn('Saving in projectile unsuccessfull!');
-          } else {
-            res.status(200).json({
-              bookedEntry: {
-                date,
-                duration: req.body.duration,
-                activity: req.body.activity,
-                note: req.body.note
-              }
-            });
-            logger.debug('Saving in projectile successfull.');
+      if (result.returnValue === false) {
+        res.status(200).json(
+          {
+            "status": "error",
+            "message": (result.errors ? result.errors : '')
           }
-        });
+        );
+        logger.warn('Saving in projectile unsuccessfull!');
+        return;
+      }
+      res.status(200).json(
+        {
+          "status": "ok"
+        }
+      );
+      logger.debug('Saving in projectile successfull.');
+      return;
     } catch (e) {
       res
-        .status(400)
-        .send(false);
-      logger.error('Something went wrong - /book', e.stack);
-      logger.info(e.stack);
+        .status(200)
+        .json(
+          {
+            "status": "error",
+            "message": e.message
+          }
+        );
+      logger.error('Something went wrong - /book');
+      logger.error(e.stack);
     }
-    logger.debug('/book done');
   }
-
 
   /**
    * Static middleware to update an activity.
@@ -102,17 +104,32 @@ class BookingController {
       rewritten, no matter what happend in the meantime, to ensure consistency for this session */
       const result = await projectile.updateEntry(req.cookie, req.employee, json);
 
-      res.status(200).send(result);
-      logger.debug('/editing results done');
-    } catch(e) {
-      res.status(400).send(false);
-      logger.error('/editing results not successfull');
-    }
-  }
+      if (result.returnValue === false) {
+        res.status(200).json({
+          status: 'error',
+          message: (result.errors ? result.errors : '')
+        });
+        logger.warn('Editing in projectile unsuccessfull!');
+        return;
+      }
 
-  static async showDayList(req, res) {
-    console.log('please make me usefull');
-    res.status(200).send('Make me usefull');
+      res.status(200).json({
+        "status": "ok"
+      });
+      logger.debug('Editing in projectile successfull.');
+      return;
+    } catch (e) {
+      res
+        .status(200)
+        .json(
+          {
+            status: "error",
+            message: e.message
+          }
+        );
+      logger.error('Something went wrong - /edit');
+      logger.error(e.stack);
+    }
   }
 
   /**
@@ -129,47 +146,17 @@ class BookingController {
 
     try {
       let jobList = await projectile.fetchNewJobList(req.cookie, req.employee);
-      if (req.params.pretty) {
-        // any value for pretty should be ok
-        let result = `<table border="1">
-          <tbody>
-            <tr>
-              <th>Paketname</td>
-              <th>Paketnummer</td>
-              <th>verfügbare Zeit</td>
-              <th>Zeit Limit</td>
-              <th>gebuchte Zeit</td>
-            </tr>`;
-        jobList.forEach(item => {
-          result =
-            result +
-            "<tr><td>" +
-            item.name +
-            "</td><td>" +
-            item.no +
-            "</td><td>" +
-            item.remainingTime +
-            "</td><td>" +
-            item.limitTime +
-            "</td><td>" +
-            item.Totaltime +
-            "</td></tr>";
-        });
-        result =
-          result +
-          `</table>
-          </tbody>`;
-        res.status(200).send(result);
-      } else {
-        res.status(200).send(JSON.stringify(jobList));
-      }
-      logger.debug("/showListProjectile done");
+      res.status(200).json({
+        status: 'ok',
+        response: jobList
+      });
     } catch (err) {
-      console.log(err);
-      res.status(400).send("Something went wrong - /showListProjectile");
+      res.status(400).json({
+        status: 'error'
+      });
     }
-    logger.debug("/showListProjectile done");
   }
+
 }
 
 module.exports = BookingController;
