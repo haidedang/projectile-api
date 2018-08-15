@@ -110,66 +110,45 @@ class BookingController {
     }
   }
 
-  static async showDayList(req, res) {
-    console.log('please make me usefull');
-    res.status(200).send('Make me usefull');
-  }
-
   /**
-   * Static middleware to handle showList route.
+   * Static middleware to handle getjoblist route.
    *
    * @param {object} req ExpressJS request object.
-   * @param {string} req.body.pretty Attribute to tell the return format.
    * @param {object} req.cookie The projectile cookie that is read from the bearer token.
+   * @param {object} req.employee The projectile employee that is read from the bearer token.
    * @param {object} res ExpressJS response object.
+   * @param {string} res.status String with 'ok' or 'error'.
    * @returns {void}
    */
-  static async showList(req, res) {
+  static async getJobList(req, res) {
     const projectile = new ProjectileService();
-
     try {
-      let jobList = await projectile.fetchNewJobList(req.cookie, req.employee);
-      if (req.params.pretty) {
-        // any value for pretty should be ok
-        let result = `<table border="1">
-          <tbody>
-            <tr>
-              <th>Paketname</td>
-              <th>Paketnummer</td>
-              <th>verfügbare Zeit</td>
-              <th>Zeit Limit</td>
-              <th>gebuchte Zeit</td>
-            </tr>`;
-        jobList.forEach(item => {
-          result =
-            result +
-            "<tr><td>" +
-            item.name +
-            "</td><td>" +
-            item.no +
-            "</td><td>" +
-            item.remainingTime +
-            "</td><td>" +
-            item.limitTime +
-            "</td><td>" +
-            item.Totaltime +
-            "</td></tr>";
-        });
-        result =
-          result +
-          `</table>
-          </tbody>`;
-        res.status(200).send(result);
+      const jobList = await projectile.getJobListNG(req.cookie, req.employee);
+
+      if (jobList.problems !== undefined) {
+        res.status(401).send(
+          {
+            "status": "error",
+            "message": "Unauthorized"
+          }
+        );
+        logger.debug('/getJobList -> unsuccessfull. Unauthorized access');
       } else {
-        res.status(200).send(JSON.stringify(jobList));
+        const result = {
+          "status": "ok",
+          "response": jobList
+        };
+        res.status(200).send(result);
+        logger.debug('/getJobList -> successfull');
+        logger.debug('/getJobList -> jobList of size ' + jobList.length + ' sent.');
       }
-      logger.debug("/showListProjectile done");
     } catch (err) {
-      console.log(err);
-      res.status(400).send("Something went wrong - /showListProjectile");
+      logger.error(err);
+      res.status(200).send({"status": "error"});
+      logger.error('/getJobList -> not successfull.');
     }
-    logger.debug("/showListProjectile done");
   }
+
 }
 
 module.exports = BookingController;

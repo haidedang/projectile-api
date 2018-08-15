@@ -149,9 +149,9 @@ router.post('/book', authenticationMiddleware.authenticate, BookingController.bo
 router.post('/edit', authenticationMiddleware.authenticate, BookingController.editEntry);
 
 /**
- * @api {get} /api/v1/showListProjectile Returns a list of activities.
+ * @api {get} /api/v1/getjoblist Returns a list of activities.
  * @apiVersion 1.0.0
- * @apiName ShowListProjectile
+ * @apiName getjoblist
  * @apiGroup Booking
  * @apiDescription Returns a list of bookable activities.
  *
@@ -168,9 +168,9 @@ router.post('/edit', authenticationMiddleware.authenticate, BookingController.ed
  *     HTTP/1.1 200 OK
  *     {
  *         "status": "ok",
- *         "response": {
+ *         "response": [
  *            ...
- *         },
+ *         ]
  *     }
  *
  *     HTTP/1.1 200 OK
@@ -185,6 +185,6 @@ router.post('/edit', authenticationMiddleware.authenticate, BookingController.ed
  *     }
  *
  */
-router.get('/showListProjectile/', authenticationMiddleware.authenticate, BookingController.showList);
+router.get('/getjoblist', authenticationMiddleware.authenticate, BookingController.getJobList);
 
 module.exports = router;

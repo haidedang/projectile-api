@@ -97,80 +97,81 @@ class ProjectileService {
   }
 
   /**
+   * Helper function to extract joblist info neccessary for further use, from data received through request to projectile
+   *
+   * @param {*} cookie
+   * @param {*} employee
+   * @param {*} answer - body retrieved from request to projectile
+   *
+   * @return {*} processedAnswer - processed data containing only DayList entries and their corresponding line numbers
+   */
+  async processJobListAnswer(cookie, employee, answer) {
+    const processedAnswer = [];
+    for (const index in answer['values']) {
+      // recognize a DayList Entry through splitting index and checking for "DayList" at [1]
+      const indexSplit = index.split('|');
+      if (indexSplit[1] === 'JobList') {
+        // jobname 32, jobNumber 11, remainingTime 33, limitTime 34, totalTime 10
+        // Customer 1, DueTime 30, TopProjectName 55
+        const obj = {
+          'jobName': answer['values'][index][32]['v'],
+          'jobNumber': answer['values'][index][11]['v'],
+          'projectName': answer['values'][index][55]['v'], // Projekt
+          'Customer': answer['values'][index][1]['v'],
+          'remainingTime': answer['values'][index][33]['v'],
+          'timeLimit': answer['values'][index][34]['v'], // Plan-Aufwand
+          'totalTime': answer['values'][index][10]['v'], // Ist-Aufwand
+          'dueTime': answer['values'][index][30]['v'], // Faelligkeit
+          'line': indexSplit[2],
+        };
+        processedAnswer.push(obj);
+      }
+    }
+    return processedAnswer;
+  }
+
+  /**
+   * Function to get the jobList from projectile (similar to getDayListNG)
    *
    * @param {*} cookie  projectile cookie
    * @param {*} employee projectile Employee ID
+   *
+   * @return {*} processedAnswer - processed data containing only jobList entries
    */
-  async showJobList(cookie, employee) {
-    console.log(employee);
-
-    logger.debug('parameters:');
-    logger.debug(
-      'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get',
-      cookie,
-      {
-        [employee]: [
-          'DayList',
-          'JobList',
-          'Begin',
-          'Favorites',
-          'TrackingRestriction',
-          'FilterCustomer',
-          'FilterProject'
-        ],
-        Dock: ['Area.TrackingArea', 'Area.ProjectManagementArea']
-      }
-    );
-
-    const body = await this.normalPostURL(
+  async getJobListNG(cookie, employee) {
+    logger.debug('getJobListNG() -> Trying to get complete jobList.');
+    let result = {};
+    // try to get the joblist
+    const answer0 = await this.normalPostURL(
       'POST',
       'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get',
       cookie,
       {
         [employee]: [
-          'DayList',
           'JobList',
-          'Begin',
-          'Favorites',
-          'TrackingRestriction',
-          'FilterCustomer',
-          'FilterProject'
-        ],
-        Dock: ['Area.TrackingArea', 'Area.ProjectManagementArea']
+        ]
       }
     );
 
-    logger.debug(JSON.stringify(body));
-
-
-    // fs.writeFile("answer.json", JSON.stringify(body), (err)=>{.debug()});
-    // TODO TO CHECK necessary?
-
-    /**
-     * get name and NO. of Employee Job
-     */
-    const temp = body['values'][employee][11]['v'];
-    const joblist = []; // const because NO reassignment happens, just adding to it -> valid
-
-    for (let i = 0; i < temp.length; i++) {
-      joblist.push(temp[i]);
+    // check for error messages
+    // {"problems":[{"message":"Session invalid","severity":"Info"}],"reload":true}
+    if (await this.problemsFound(answer0)) {
+      await this.printProblems(answer0);
+      // return errors/warnings immediately
+      return answer0;
     }
 
-    const advJoblist = [];
-
-    for (let i = 0; i < joblist.length; i++) {
-      const obj = {};
-      obj.name = body['values'][joblist[i]][32]['v']; // TODO:  to retrieve index of jobname and joblink
-      obj.no = body['values'][joblist[i]][11]['v'];
-      obj.remainingTime = body['values'][joblist[i]][33]['v'];
-      obj.limitTime = body['values'][joblist[i]][34]['v'];
-      obj.Totaltime = body['values'][joblist[i]][10]['v'];
-      advJoblist.push(obj);
+    // do we need to refresh or can we extract the necessary info right away?
+    if (answer0['values']['+.|JobList|0|' + employee] === undefined) {
+      logger.info('getJobListNG() -> too small reply from JobList request recognized. Desired info not contained.');
+      logger.info('getJobListNG() -> Refreshing projectile and trying to get complete info this way.');
+      const answer1 = await this.refreshProjectile(cookie, employee);
+      result = await this.processJobListAnswer(cookie, employee, answer1);
+    } else {
+      result = await this.processJobListAnswer(cookie, employee, answer0);
     }
-    this.joblist = [];
-    // get an actual copy of the joblist fetched from server
-    this.joblist = advJoblist; // TODO why a copy?
-    return advJoblist;
+    logger.info('getDayListNG() -> processedAnswer() result is ' + result.length + ' entries wide.');
+    return result;
   }
 
   /**
@@ -891,28 +892,6 @@ class ProjectileService {
         logger.error('Error while deleting entry ' + listEntry + ' for date ' + date);
       }
     }
-  }
-
-  // simplified for API use
-  /**
-   *
-   * @param {*} cookie
-   * @param {*} employee
-   */
-  async jobList(cookie, employee) {
-    logger.debug('fetching data for jobList.');
-    return this.showJobList(cookie, employee);
-  }
-
-  /**
-   *
-   * @param {*} cookie
-   * @param {*} employee
-   */
-  async fetchNewJobList(cookie, employee) {
-    logger.debug('fetching new data for jobList...');
-    const data = await this.showJobList(cookie, employee);
-    return data;
   }
 
   // simplified for API Use
