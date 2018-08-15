@@ -105,6 +105,12 @@ router.post('/book', authenticationMiddleware.authenticate, BookingController.bo
  * to provide the correct line value from which the entry was originally retrieved, so the correct entry gets updated
  * when calling this route.
  *
+ * @apiHeader {string} Authorization Pass the JW Token by the bearer method. The token comes as a result of
+ * the login call.
+ * @apiHeaderExample {string} Header example:
+ *
+ * Authorization: Bearer 1F34A5C...
+ *
  * @apiParam {string} date The date when the activity has done.
  * @apiParam {string} duration How long did this took.
  * @apiParam {string} activity An ID of the activity.
@@ -137,7 +143,10 @@ router.post('/book', authenticationMiddleware.authenticate, BookingController.bo
  *
  *     HTTP/1.1 200 OK
  *     {
- *         "status": "error"
+ *         "status": "error",
+ *         "message": [
+ *            ...
+ *         ]
  *     }
  *
  *     HTTP/1.1 401 Unauthorized
