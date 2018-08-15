@@ -238,17 +238,11 @@ class ProjectileService {
   }
 
   /**
-<<<<<<< HEAD
-   * Helper function to replace special characters
-   * @param {*} str
-   * @returns {*} string with replaced special characters
-=======
    * Helper function to escape strings
    *
    * @param {*} str
    *
    * @returns {*} escaped string
->>>>>>> development
    */
   escapeRegExp(str) {
     // eslint-disable-next-line
@@ -289,11 +283,7 @@ class ProjectileService {
   async processAnswer(cookie, employee, answer) {
     const processedAnswer = [];
     for (const index in answer['values']) {
-<<<<<<< HEAD
       // recognize a DayList Entry through keyword 'DayList'
-=======
-      // recognize a DayList Entry through splitting index and checking for "DayList" at [1]
->>>>>>> development
       const indexSplit = index.split('|');
       if (indexSplit[1] === 'DayList') {
         // index 5, Time; 8, What; 28, Note; 31, Day
