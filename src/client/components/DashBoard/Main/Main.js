@@ -1,8 +1,11 @@
 import React from 'react';
+import Booking from './Booking';
 
 class Main extends React.Component {
   render() {
-    return <div />;
+    return (
+      <Booking options = {this.props.options} />
+    );
   }
 }
 

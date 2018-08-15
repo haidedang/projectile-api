@@ -1,8 +1,6 @@
 const logger = require('../../lib/logger');
 
 const ProjectileService = require('../../api/services/ProjectileService');
-/* const projectile = require('../../../projectileAPI') */
-// const authenticationMiddleware = require('../../lib/AuthenticationMiddleware');
 
 class BookingController {
   /**
@@ -22,6 +20,7 @@ class BookingController {
   static async bookEntry(req, res) {
     try {
       const projectile = new ProjectileService();
+
       // check if date parameter is present or use current date
       let date = "";
       if (!req.body.date) {
@@ -136,7 +135,6 @@ class BookingController {
    * Static middleware to handle showList route.
    *
    * @param {object} req ExpressJS request object.
-   * @param {string} req.body.pretty Attribute to tell the return format.
    * @param {object} req.cookie The projectile cookie that is read from the bearer token.
    * @param {object} res ExpressJS response object.
    * @returns {void}
@@ -151,8 +149,9 @@ class BookingController {
         response: jobList
       });
     } catch (err) {
-      res.status(400).json({
-        status: 'error'
+      res.status(200).json({
+        status: 'error',
+        message: err.message
       });
     }
   }
