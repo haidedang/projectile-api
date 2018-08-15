@@ -184,7 +184,7 @@ cyclicPackageSync = async function() {
     }
   } catch (e) {
     winston.warn('cyclicPackageSync() -> Failed to run cyclicPackageSync() with setTimeout.');
-    setTimeout(cyclicPackageSync, config.timeOutForSync ||  defaultInterval);
+    setTimeout(cyclicPackageSync, config.timeOutForSync || defaultInterval);
   }
 };
 
@@ -728,10 +728,9 @@ app.post(basePath + '/editing', async(req, res) => {
     if (json.changes){
       winston.debug('/editing -> Changes is true!');
 
-      for (const index in json.valuesAfterChange) { // for...in => index no
+      for (const index in json.valuesAfterChange) {
         const item = json.valuesAfterChange[index];
         if (JSON.stringify(json.valuesBeforeChange[index]) !== JSON.stringify(item)) {
-          console.log('####');
           winston.debug('/editing -> Difference detected. Update triggered.', item.line);
           // exports.delete for delete route
           // exports.deleteEntry

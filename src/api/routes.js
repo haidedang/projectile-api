@@ -97,6 +97,67 @@ router.post('/login', AuthController.login);
 router.post('/book', authenticationMiddleware.authenticate, BookingController.bookEntry);
 
 /**
+ * @api {POST} /api/v1/edit Edits an activity.
+ * @apiVersion 1.0.0
+ * @apiName Edit
+ * @apiGroup Booking
+ * @apiDescription This route is used to edit an activity within the projectile system. It's important and mandatory
+ * to provide the correct line value from which the entry was originally retrieved, so the correct entry gets updated
+ * when calling this route.
+ *
+ * @apiHeader {string} Authorization Pass the JW Token by the bearer method. The token comes as a result of
+ * the login call.
+ * @apiHeaderExample {string} Header example:
+ *
+ * Authorization: Bearer 1F34A5C...
+ *
+ * @apiParam {string} date The date when the activity has done.
+ * @apiParam {string} duration How long did this took.
+ * @apiParam {string} activity An ID of the activity.
+ * @apiParam {string} note A more detailed description of what was done for that activity.
+ * @apiParam {string} line The line represents the entrys position in the entry list retrieved for a specific day.
+ *
+ * @apiParamExample {json} Request example:
+ *
+ *     {
+ *         "date": "2018-02-12",
+ *         "entries":
+ *         [
+ *             {
+ *                 "date": "2018-02-12",
+ *                 "duration": "2.25",
+ *                 "activity": "1234",
+ *                 "note": "Did some stuff for ticket xy"
+ *                 "line": "0"
+ *             }
+ *         ]
+ *     }
+ *
+ * @apiSuccess {string} status The creation status, one of "ok" or "error"
+ *
+ * @apiSuccessExample Success response examples:
+ *     HTTP/1.1 200 OK
+ *     {
+ *         "status": "ok",
+ *     }
+ *
+ *     HTTP/1.1 200 OK
+ *     {
+ *         "status": "error",
+ *         "message": [
+ *            ...
+ *         ]
+ *     }
+ *
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *         "status": "error",
+ *         "message": "Unauthorized"
+ *     }
+ */
+router.post('/edit', authenticationMiddleware.authenticate, BookingController.editEntry);
+
+/**
  * @api {get} /api/v1/showListProjectile Returns a list of activities.
  * @apiVersion 1.0.0
  * @apiName ShowListProjectile
@@ -136,4 +197,3 @@ router.post('/book', authenticationMiddleware.authenticate, BookingController.bo
 router.get('/showListProjectile/', authenticationMiddleware.authenticate, BookingController.showList);
 
 module.exports = router;
-
