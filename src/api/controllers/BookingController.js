@@ -1,8 +1,6 @@
 const logger = require('../../lib/logger');
 
 const ProjectileService = require('../../api/services/ProjectileService');
-/* const projectile = require('../../../projectileAPI') */
-// const authenticationMiddleware = require('../../lib/AuthenticationMiddleware');
 
 class BookingController {
   /**
@@ -22,6 +20,7 @@ class BookingController {
   static async bookEntry(req, res) {
     try {
       const projectile = new ProjectileService();
+
       // check if date parameter is present or use current date
       let date = '';
       if (!req.body.date) {
@@ -163,8 +162,7 @@ class BookingController {
       logger.debug('/getJobList -> successfull');
       logger.debug('/getJobList -> jobList of size ' + jobList.length + ' sent.');
     } catch (err) {
-      logger.error(err);
-      res.status(200).send({
+      res.status(200).json({
         status: 'error',
         message: err.message
       });

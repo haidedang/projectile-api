@@ -1,0 +1,5 @@
+.play-circle:hover,
+.stop-circle:hover {
+  cursor: pointer;
+}
+
