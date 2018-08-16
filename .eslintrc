@@ -21,6 +21,7 @@
     "no-console": 0,
     "indent": ["error", 2, { "SwitchCase": 1 }],
     "react/prop-types": 0,
-    "eqeqeq": ["error", "always"]
+    "eqeqeq": ["error", "always"],
+    "quotes": [2, "single", "avoid-escape"]
   }
 }

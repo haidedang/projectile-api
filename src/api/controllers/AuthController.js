@@ -37,8 +37,10 @@ class AuthController {
         exp,
         employee
       });
-    } catch(e) {
-      logger.error(`An error occured while logging into projectile. ${e.stack}`);
+    } catch (e) {
+      logger.error(
+        `An error occured while logging into projectile. ${e.stack}`
+      );
       // send an error response
       return res.json({
         status: 'error',
