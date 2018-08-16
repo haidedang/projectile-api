@@ -162,6 +162,7 @@ class BookingController {
       logger.debug('/getJobList -> successfull');
       logger.debug('/getJobList -> jobList of size ' + jobList.length + ' sent.');
     } catch (err) {
+      logger.error(err);
       res.status(200).json({
         status: 'error',
         message: err.message

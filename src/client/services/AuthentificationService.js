@@ -4,7 +4,6 @@
  */
 class AuthentificationService {
   static async login(username, password) {
-    console.log('logging in the user ');
     try {
       const result = await fetch('http://localhost:3000/api/v1/login', {
         credentials: 'include',
