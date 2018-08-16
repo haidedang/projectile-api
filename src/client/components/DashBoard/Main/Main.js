@@ -3,9 +3,7 @@ import Booking from './Booking';
 
 class Main extends React.Component {
   render() {
-    return (
-      <Booking options = {this.props.options} />
-    );
+    return <Booking options={this.props.options} />;
   }
 }
 
