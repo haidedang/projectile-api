@@ -120,7 +120,7 @@ class Booking extends React.Component {
             value={selectedOption}
             onChange={this.handlePackageChange}
             options={options.map(item => {
-              return { value: item.no, label: item.name };
+              return { value: item.jobNumber, label: item.jobName };
             })}
           />
           <br />
