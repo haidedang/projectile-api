@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 $(document).ready(function() {
   // check if projectile server is available and place a badge in case of error
@@ -6,11 +6,11 @@ $(document).ready(function() {
 
   (function checkProjectileStatus() {
     $.ajax({
-      url: "//localhost:{port}/projectileStatus",
+      url: '//localhost:{port}/projectileStatus',
       cache: false,
       contentType: false,
       processData: false,
-      type: "get",
+      type: 'get',
       success: function(response) {
         // console.log('DEBUG: projectileStatus: ' + response.projectileStatus);
 
@@ -18,19 +18,19 @@ $(document).ready(function() {
 
         if (!response.projectileStatus) {
           // set badge
-          if (!document.getElementById("headerWarning")) {
+          if (!document.getElementById('headerWarning')) {
             $(
               '<div class="row" id="headerWarning"><div class="col" id="headerInfoText">' +
                 '<span class="badge badge-warning">The projectile server seems to be unreachable. Please check your ' +
-                "network connection. Do you have access to the Sevenval network?</span>" +
-                "</div></div>"
-            ).insertAfter("#header");
+                'network connection. Do you have access to the Sevenval network?</span>' +
+                '</div></div>'
+            ).insertAfter('#header');
           }
         } else {
-          $("#headerWarning").remove();
+          $('#headerWarning').remove();
         }
       },
-      dataType: "json"
+      dataType: 'json'
     });
     setTimeout(checkProjectileStatus, 3000);
   })();
@@ -39,37 +39,37 @@ $(document).ready(function() {
   // stops cycle once creds are present
   (function checkCredsStatus() {
     $.ajax({
-      url: "//localhost:{port}/credsStatus",
+      url: '//localhost:{port}/credsStatus',
       cache: false,
       contentType: false,
       processData: false,
-      type: "get",
+      type: 'get',
       success: function(response) {
-        console.log("DEBUG: Credential status: " + response.credsPresent);
+        console.log('DEBUG: Credential status: ' + response.credsPresent);
         if (!response.credsPresent && projectileStatus) {
           // set badge
-          if (!document.getElementById("headerInfo")) {
+          if (!document.getElementById('headerInfo')) {
             $(
               '<div class="col" id="headerInfo">' +
                 '<span class="badge badge-warning">No sufficient credentials available, please visit <a ' +
                 'href="//localhost:{port}/start">http://localhost:{port}/start</a></span>' +
-                "</div>"
-            ).insertAfter("#headerText");
+                '</div>'
+            ).insertAfter('#headerText');
           }
           // Setup the next poll recursively, only while credsPresent is false!
           setTimeout(checkCredsStatus, 1000);
         } else {
-          $("#headerInfo").remove();
+          $('#headerInfo').remove();
         }
       },
-      dataType: "json"
+      dataType: 'json'
     });
   })();
 
   // clean results in general
   function cleanResults() {
-    $(".syncOutput").remove();
-    $("#headerInfo").remove();
+    $('.syncOutput').remove();
+    $('#headerInfo').remove();
     // $('#syncActInfo').html(''); // fades out
   }
 
@@ -82,76 +82,76 @@ $(document).ready(function() {
     if (response !== '""') {
       // change that weird response!
       $.each(responseJSON.gesResult, function(key, value) {
-        console.log("gesResult: " + key, JSON.stringify(value, null, 2));
-        if (value.Result === "negative") {
+        console.log('gesResult: ' + key, JSON.stringify(value, null, 2));
+        if (value.Result === 'negative') {
           // generate Error messages badges
-          let errors = "";
+          let errors = '';
           if (value.Errors) {
             $.each(value.Errors, function(key, value) {
               // "message":"Die Daten wurden nicht gespeichert","severity":"Warning"
-              console.log(value.severity + " -> " + value.message);
+              console.log(value.severity + ' -> ' + value.message);
               errors =
                 errors +
                 '<span class="badge badge-warning text-left" style="white-space: normal">' +
                 value.severity +
-                " -> " +
+                ' -> ' +
                 value.message +
-                "</span>";
+                '</span>';
             });
           }
 
-          $("#results").append(
+          $('#results').append(
             '<li class="list-group-item list-group-item-warning syncOutput"><div class="row">' +
               '<div class="col-md-3">' +
               value.StartDate +
-              "</div>" +
+              '</div>' +
               '<div class="col-md-2">' +
               value.Duration.toString().substring(0, 6) +
-              "</div>" +
+              '</div>' +
               '<div class="col-md-2">' +
-              (value.Activity === "" ? "-" : value.Activity) +
-              "</div>" +
+              (value.Activity === '' ? '-' : value.Activity) +
+              '</div>' +
               '<div class="col-md">' +
-              (value.Note === "" ? "-" : value.Note) +
-              "</div></div>" +
+              (value.Note === '' ? '-' : value.Note) +
+              '</div></div>' +
               '<div class="row"><div class="col">' +
-              (value.Activity === ""
+              (value.Activity === ''
                 ? '<span class="badge badge-warning">no matching projectile package - Timeular only</span>'
-                : "") +
-              (value.Note === ""
+                : '') +
+              (value.Note === ''
                 ? '<span class="badge badge-warning">Note missing - not synchronized</span>'
-                : "") +
-              (value.LimitHit === "yes"
+                : '') +
+              (value.LimitHit === 'yes'
                 ? '<span class="badge badge-warning">Package limit hit - not synchronized</span>'
-                : "") +
-              (errors !== "" ? errors : "") +
-              "</div></div>" +
-              "</li>"
+                : '') +
+              (errors !== '' ? errors : '') +
+              '</div></div>' +
+              '</li>'
           );
         } else {
-          $("#results").append(
+          $('#results').append(
             '<li class="list-group-item list-group-item-success syncOutput"><div class="row">' +
               '<div class="col-md-3">' +
               value.StartDate +
-              "</div>" +
+              '</div>' +
               '<div class="col-md-2">' +
               value.Duration.toString().substring(0, 6) +
-              "</div>" +
+              '</div>' +
               '<div class="col-md-2">' +
               value.Activity +
-              "</div>" +
+              '</div>' +
               '<div class="col-md">' +
               value.Note +
-              "</div></div></li>"
+              '</div></div></li>'
           );
         }
       });
     } else {
-      console.log("nothing to do");
-      $("#results").append(
+      console.log('nothing to do');
+      $('#results').append(
         '<li class="list-group-item list-group-item-success syncOutput"><div class="row"><div ' +
           'class="col">nothing to do' +
-          "</div></div></li>"
+          '</div></div></li>'
       );
     }
   }
@@ -159,56 +159,56 @@ $(document).ready(function() {
   /**
    *  open modal, set interval
    */
-  $("#setSync").click(function() {
+  $('#setSync').click(function() {
     // set interval
     $.ajax({
-      url: "//localhost:{port}/syncinterval",
+      url: '//localhost:{port}/syncinterval',
       cache: false,
       contentType: false,
       processData: false,
-      type: "get",
+      type: 'get',
       success: function(response, status) {
         console.log(
-          "DEBUG: retrieved current sync interval value: " +
+          'DEBUG: retrieved current sync interval value: ' +
             response +
-            " status: " +
+            ' status: ' +
             status
         );
         if (response) {
-          $("#syncInterval").val(response);
+          $('#syncInterval').val(response);
         }
         // open modal
-        $("#setIntervalModal").modal();
+        $('#setIntervalModal').modal();
       },
-      dataType: "json"
+      dataType: 'json'
     });
   });
 
   /**
    *  sync today
    */
-  $("#buttonSyncToday, #buttonSyncWeek, #buttonSyncMonth").click(function() {
-    var target = $("#" + this.id).data("target");
-    console.log("DEBUG: Sync " + target);
+  $('#buttonSyncToday, #buttonSyncWeek, #buttonSyncMonth').click(function() {
+    var target = $('#' + this.id).data('target');
+    console.log('DEBUG: Sync ' + target);
     //check if target valid?
     cleanResults();
-    $("#syncChoiceInfo").html(
+    $('#syncChoiceInfo').html(
       '<span class="badge badge-info">Synchronizing started...</span>'
     );
 
     $.ajax({
-      url: "//localhost:{port}/syncbookings/" + target,
+      url: '//localhost:{port}/syncbookings/' + target,
       cache: false,
       contentType: false,
       processData: false,
       //data: form_data,
-      type: "get",
+      type: 'get',
       success: function(response, status) {
-        console.log("DEBUG: Response: " + response + " status: " + status);
+        console.log('DEBUG: Response: ' + response + ' status: ' + status);
 
         // fadeout of info badge
-        $("#syncChoiceInfo").fadeOut(function() {
-          $(this).html("");
+        $('#syncChoiceInfo').fadeOut(function() {
+          $(this).html('');
           $(this).show();
         });
 
@@ -218,13 +218,13 @@ $(document).ready(function() {
       error: function(error) {
         // foobar handle bad reply
         console.log(error);
-        $("#syncChoiceInfo")
+        $('#syncChoiceInfo')
           .html(
             '<span class="badge badge-warning">Synchronizing currently not possible...</span>'
           )
           .delay(5000)
           .fadeOut(function() {
-            $(this).html("");
+            $(this).html('');
             $(this).show();
           });
       }
@@ -234,28 +234,28 @@ $(document).ready(function() {
   /**
    *  sync range
    */
-  $("#buttonSyncRange").click(function() {
-    var startDate = $("#startDate").val();
-    var endDate = $("#endDate").val();
+  $('#buttonSyncRange').click(function() {
+    var startDate = $('#startDate').val();
+    var endDate = $('#endDate').val();
 
     if (startDate && endDate) {
-      console.log("Syncing range from " + startDate + " to " + endDate);
+      console.log('Syncing range from ' + startDate + ' to ' + endDate);
       //check if target valid?
       cleanResults();
-      $("#syncRangeInfo").html(
+      $('#syncRangeInfo').html(
         '<span class="badge badge-info">Synchronizing within range started...</span>'
       );
 
       $.ajax({
-        url: "//localhost:{port}/syncbookings/" + startDate + "/" + endDate,
+        url: '//localhost:{port}/syncbookings/' + startDate + '/' + endDate,
         cache: false,
         contentType: false,
         processData: false,
         //data: form_data,
-        type: "get",
+        type: 'get',
         success: function(response, status) {
           console.log(
-            "Sync bookings with range - response + status: " + response,
+            'Sync bookings with range - response + status: ' + response,
             status
           );
 
@@ -263,8 +263,8 @@ $(document).ready(function() {
           outputResults(response);
 
           // fadeout of info badge
-          $("#syncRangeInfo").fadeOut(function() {
-            $(this).html("");
+          $('#syncRangeInfo').fadeOut(function() {
+            $(this).html('');
             $(this).show();
           });
         },
@@ -272,40 +272,40 @@ $(document).ready(function() {
           //show error here
           console.log(error);
           if (error.status !== 504) {
-            $("#syncRangeInfo")
+            $('#syncRangeInfo')
               .html(
                 '<span class="badge badge-warning">Couldn\'t sync in range from ' +
                   startDate +
-                  " to " +
+                  ' to ' +
                   endDate +
-                  "</span>"
+                  '</span>'
               )
               .delay(5000)
               .fadeOut(function() {
-                $(this).html("");
+                $(this).html('');
                 $(this).show();
               });
           } else {
-            $("#syncRangeInfo")
+            $('#syncRangeInfo')
               .html(
                 '<span class="badge badge-warning">Synchronizing currently not possible...</span>'
               )
               .delay(5000)
               .fadeOut(function() {
-                $(this).html("");
+                $(this).html('');
                 $(this).show();
               });
           }
         }
       });
     } else {
-      $("#syncRangeInfo")
+      $('#syncRangeInfo')
         .html(
           '<span class="badge badge-warning">Couldn\'t sync, no range given.</span>'
         )
         .delay(5000)
         .fadeOut(function() {
-          $(this).html("");
+          $(this).html('');
           $(this).show();
         });
     }
@@ -314,38 +314,38 @@ $(document).ready(function() {
   /**
    *  sync activities
    */
-  $("#buttonSyncActivities").click(function() {
+  $('#buttonSyncActivities').click(function() {
     cleanResults();
-    $("#syncActInfo").html(
+    $('#syncActInfo').html(
       '<span class="badge badge-success">Projectile packages sychronized with Timeular ' +
-        "activities.</span>"
+        'activities.</span>'
     );
 
     $.ajax({
-      url: "//localhost:{port}/syncactivities",
+      url: '//localhost:{port}/syncactivities',
       cache: false,
       contentType: false,
       processData: false,
       //data: form_data,
-      type: "get",
+      type: 'get',
       success: function(response, status) {
         console.log(response, status);
-        $("#syncActInfo").fadeOut(function() {
-          $(this).html("");
+        $('#syncActInfo').fadeOut(function() {
+          $(this).html('');
           $(this).show();
         });
       },
       error: function(error) {
         //show error here
         console.log(error);
-        $("#syncActInfo")
+        $('#syncActInfo')
           .html(
             '<span class="badge badge-warning">Projectile packages not sychronized with Timeular ' +
-              "activities. An Error occured</span>"
+              'activities. An Error occured</span>'
           )
           .delay(5000)
           .fadeOut(function() {
-            $(this).html("");
+            $(this).html('');
             $(this).show();
           });
       }
@@ -355,22 +355,22 @@ $(document).ready(function() {
   /**
    *  set sync interval
    */
-  $("#buttonSetSyncInterval").click(function() {
-    if ($("#syncInterval").val() >= 1) {
+  $('#buttonSetSyncInterval').click(function() {
+    if ($('#syncInterval').val() >= 1) {
       $.ajax({
-        url: "//localhost:{port}/syncinterval/" + $("#syncInterval").val(),
+        url: '//localhost:{port}/syncinterval/' + $('#syncInterval').val(),
         cache: false,
         contentType: false,
         processData: false,
         //data: form_data,
-        type: "get",
+        type: 'get',
         success: function(response, status) {
-          console.log("Setting sync interval returned: " + response, status);
+          console.log('Setting sync interval returned: ' + response, status);
         },
         error: function(error) {
           //show error here
           console.log(
-            "Something went wrong while setting new sync interval:",
+            'Something went wrong while setting new sync interval:',
             error
           );
           // setIntervalField();

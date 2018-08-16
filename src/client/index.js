@@ -1,10 +1,10 @@
-import React from "react";
-import ReactDOM from "react-dom";
-import { HashRouter as Router } from "react-router-dom";
-import { Provider } from "react-redux";
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { HashRouter as Router } from 'react-router-dom';
+import { Provider } from 'react-redux';
 
-import App from "./components/App/App";
-import store from "./store";
+import App from './components/App/App';
+import store from './store';
 
 // global document
 ReactDOM.render(
@@ -13,5 +13,5 @@ ReactDOM.render(
       <App />
     </Router>
   </Provider>,
-  document.getElementById("root")
+  document.getElementById('root')
 );

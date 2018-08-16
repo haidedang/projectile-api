@@ -2,8 +2,8 @@ import * as config from '../../../config/default.json';
 
 // eslint-disable-next-line
 export const METHOD = Object.freeze({
-  GET:   'GET',
-  POST:  'POST'
+  GET: 'GET',
+  POST: 'POST'
 });
 
 /**
@@ -20,10 +20,10 @@ class AbstractService {
 
     this.token = token;
     this.url =
-      (https ? "https://" : "http://") +
+      (https ? 'https://' : 'http://') +
       host +
-      (port ? ":" + port : "") +
-      "/api/v1/";
+      (port ? ':' + port : '') +
+      '/api/v1/';
   }
 
   async sendRequest(endpoint, method, body) {
@@ -35,14 +35,14 @@ class AbstractService {
         method: method,
         body: JSON.stringify(body),
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer " + this.token
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + this.token
         }
       });
 
       return result.json();
     } catch (e) {
-      console.log("Error:", e);
+      console.log('Error:', e);
     }
   }
 }
