@@ -3,7 +3,8 @@ import { connect } from 'react-redux';
 import { withRouter, Redirect } from 'react-router-dom';
 
 import AuthentificationService from '../../services/AuthentificationService';
-import { login } from '../../actions';
+import { login } from '../../actions/AuthentificationActions';
+import SessionStorage from '../../utils/SessionStorage';
 import { getToken } from '../../reducers';
 
 // eslint-disable-next-line
@@ -18,7 +19,7 @@ class Login extends React.Component {
   }
 
   renderRedirect () {
-    if (this.props.token) {
+    if (SessionStorage.getItem('token')) {
       return <Redirect to='/dashboard' />
     }
   }
@@ -48,7 +49,7 @@ class Login extends React.Component {
 
       if (res.token) {
         this.props.dispatch(login(res.token));
-        this.props.history.push({ pathname: '/dashboard' });
+        // this.props.history.push({ pathname: '/dashboard' });
       }
     } catch (e) {
       console.log('Error: ', e);

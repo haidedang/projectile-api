@@ -1,8 +1,9 @@
-import { LOGIN } from "./actions";
-import { LOGOUT } from "./actions";
+import { LOGIN, LOGOUT } from './actions/AuthentificationActions';
+import { ADD_SELECT_OPTIONS} from './actions/PackageActions';
 
 const initialState = {
-  token: false
+  token: false,
+  options:{}
 };
 
 const rootReducer = (state = initialState, action) => {
@@ -17,10 +18,17 @@ const rootReducer = (state = initialState, action) => {
         ...state,
         token: false
       };
+    case ADD_SELECT_OPTIONS:
+      return {
+        ...state,
+        options: action.options
+      }
     default:
       return state;
   }
 };
 
 export const getToken = state => state.token;
+export const getSelectOptions = state => state.options;
+
 export default rootReducer;
