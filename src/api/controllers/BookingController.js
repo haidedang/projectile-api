@@ -23,7 +23,7 @@ class BookingController {
     try {
       const projectile = new ProjectileService();
       // check if date parameter is present or use current date
-      let date = "";
+      let date = '';
       if (!req.body.date) {
         date = new Date().toISOString().substr(0, 10); // YYYY/MM/DD
       } else {
@@ -51,8 +51,8 @@ class BookingController {
       if (result.returnValue === false) {
         res.status(200).json(
           {
-            "status": "error",
-            "message": (result.errors ? result.errors : '')
+            status: 'error',
+            message: (result.errors ? result.errors : '')
           }
         );
         logger.warn('Saving in projectile unsuccessfull!');
@@ -60,7 +60,7 @@ class BookingController {
       }
       res.status(200).json(
         {
-          "status": "ok"
+          status: 'ok'
         }
       );
       logger.debug('Saving in projectile successfull.');
@@ -70,8 +70,8 @@ class BookingController {
         .status(200)
         .json(
           {
-            "status": "error",
-            "message": e.message
+            status: 'error',
+            message: e.message
           }
         );
       logger.error('Something went wrong - /book');
@@ -114,7 +114,7 @@ class BookingController {
       }
 
       res.status(200).json({
-        "status": "ok"
+        status: 'ok'
       });
       logger.debug('Editing in projectile successfull.');
       return;
@@ -123,7 +123,7 @@ class BookingController {
         .status(200)
         .json(
           {
-            status: "error",
+            status: 'error',
             message: e.message
           }
         );
@@ -148,24 +148,25 @@ class BookingController {
       const jobList = await projectile.getJobListNG(req.cookie, req.employee);
 
       if (jobList.problems !== undefined) {
-        res.status(401).send({
+        res.status(401).json({
           status: 'error',
           message: 'Unauthorized'
         });
         logger.debug('/getJobList -> unsuccessfull. Unauthorized access');
-      } else {
-        const result = {
-          status: 'ok',
-          response: jobList
-        };
-        res.status(200).send(result);
-        logger.debug('/getJobList -> successfull');
-        logger.debug('/getJobList -> jobList of size ' + jobList.length + ' sent.');
+        return;
       }
+
+      res.status(200).json({
+        status: 'ok',
+        response: jobList
+      });
+      logger.debug('/getJobList -> successfull');
+      logger.debug('/getJobList -> jobList of size ' + jobList.length + ' sent.');
     } catch (err) {
       logger.error(err);
       res.status(200).send({
-        status: 'error'
+        status: 'error',
+        message: err.message
       });
       logger.error('/getJobList -> not successfull.');
     }

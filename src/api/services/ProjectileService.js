@@ -107,6 +107,7 @@ class ProjectileService {
    */
   async processJobListAnswer(cookie, employee, answer) {
     const processedAnswer = [];
+
     for (const index in answer['values']) {
       // recognize a DayList Entry through splitting index and checking for "DayList" at [1]
       const indexSplit = index.split('|');
@@ -140,9 +141,9 @@ class ProjectileService {
    */
   async getJobListNG(cookie, employee) {
     logger.debug('getJobListNG() -> Trying to get complete jobList.');
-    let result = {};
+    let resultToReturn = {};
     // try to get the joblist
-    const answer0 = await this.normalPostURL(
+    const resultProjectile = await this.normalPostURL(
       'POST',
       'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get',
       cookie,
@@ -155,23 +156,23 @@ class ProjectileService {
 
     // check for error messages
     // {"problems":[{"message":"Session invalid","severity":"Info"}],"reload":true}
-    if (await this.problemsFound(answer0)) {
-      await this.printProblems(answer0);
+    if (await this.problemsFound(resultProjectile)) {
+      await this.printProblems(resultProjectile);
       // return errors/warnings immediately
-      return answer0;
+      return resultProjectile;
     }
 
     // do we need to refresh or can we extract the necessary info right away?
-    if (answer0['values']['+.|JobList|0|' + employee] === undefined) {
+    if (resultProjectile['values']['+.|JobList|0|' + employee] === undefined) {
       logger.info('getJobListNG() -> too small reply from JobList request recognized. Desired info not contained.');
       logger.info('getJobListNG() -> Refreshing projectile and trying to get complete info this way.');
-      const answer1 = await this.refreshProjectile(cookie, employee);
-      result = await this.processJobListAnswer(cookie, employee, answer1);
+      const resultRefresh = await this.refreshProjectile(cookie, employee);
+      resultToReturn = await this.processJobListAnswer(cookie, employee, resultRefresh);
     } else {
-      result = await this.processJobListAnswer(cookie, employee, answer0);
+      resultToReturn = await this.processJobListAnswer(cookie, employee, resultProjectile);
     }
-    logger.info('getDayListNG() -> processedAnswer() result is ' + result.length + ' entries wide.');
-    return result;
+    logger.info('getDayListNG() -> processedAnswer() result is ' + resultToReturn.length + ' entries wide.');
+    return resultToReturn;
   }
 
   /**
