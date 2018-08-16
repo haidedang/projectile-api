@@ -132,6 +132,52 @@ class BookingController {
   }
 
   /**
+   * Static middleware to handle getdaylist route.
+   *
+   * @param {object} req ExpressJS request object.
+   * @param {string} req.body.date date value.
+   * @param {string} req.cookie Cookie from Projectile
+   * @param {string} req.employee  Projectile Employee ID
+   * @param {object} res ExpressJS response object.
+   * @param {string} res.status String with 'ok' or 'error'.
+   * @returns {void}
+   */
+  static async getDayList(req, res) {
+    try {
+      logger.debug('/getDayList -> starting for date: ' + req.body.date);
+      const projectile = new ProjectileService();
+      const json = req.body;
+
+      // Currently necessary to ensure that updates of a hypothetical second session of projectile (e.g. via browser) are recognized!
+      // Without that updates might be invisible between those sessions, e.g. ignoring deletion of entries.
+      await projectile.refreshProjectile(req.cookie, req.employee);
+
+      const dayList = await projectile.getDayListNG(req.cookie, req.employee, json.date);
+
+      if (dayList.problems !== undefined) {
+        res.status(401).send(
+          {
+            "status": "error",
+            "message": "Unauthorized"
+          }
+        );
+        logger.debug('/getDayList -> unsuccessfull. Unauthorized access');
+      } else {
+        const result = {
+          "status": "ok",
+          "response": dayList
+        };
+        res.status(200).send(result);
+        logger.debug('/getDayList -> successfull');
+        logger.debug('/getDayList -> dayList of size ' + dayList.length + ' sent.');
+      }
+    } catch(e) {
+      res.status(200).send({"status": "error"});
+      logger.error('/getDayList -> not successfull.');
+    }
+  }
+
+  /**
    * Static middleware to handle getjoblist route.
    *
    * @param {object} req ExpressJS request object.

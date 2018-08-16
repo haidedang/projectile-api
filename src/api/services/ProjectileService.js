@@ -346,10 +346,10 @@ class ProjectileService {
       if (indexSplit[1] === 'DayList') {
         // index 5, Time; 8, What; 28, Note; 31, Day
         const obj = {
-          'time': answer['values'][index][5]['v'],
+          'date': answer['values'][index][31]['v'],
+          'duration': answer['values'][index][5]['v'],
           'activity': answer['values'][index][8]['v'],
           'note': answer['values'][index][28]['v'],
-          'date': answer['values'][index][31]['v'],
           'line': indexSplit[2],
           'lineSelector': index
         };
@@ -388,6 +388,15 @@ class ProjectileService {
         }
       }
     );
+
+    // check for error messages
+    // {"problems":[{"message":"Session invalid","severity":"Info"}],"reload":true}
+    if (await this.problemsFound(resultProjectile)) {
+      await this.printProblems(resultProjectile);
+      // return errors/warnings immediately
+      return resultProjectile;
+    }
+
     // check if a DayList entry exists, act accordingly
     if (resultProjectile['values']['+.|DayList|0|' + employee] === undefined) {
       logger.info('getDayListNG() -> too small reply from set day request recognized. Desired info not contained.');
@@ -434,6 +443,15 @@ class ProjectileService {
         ]
       }
     );
+
+    // check for error messages
+    // {"problems":[{"message":"Session invalid","severity":"Info"}],"reload":true}
+    if (await this.checkProblems(resultProjectile)) {
+      await this.printProblems(resultProjectile);
+      // return errors/warnings immediately
+      return resultProjectile;
+    }
+
     // check if a DayList entry exists, act accordingly
     if (resultProjectile['values']['+.|DayList|0|' + employee] === undefined) {
       logger.info('getDayListNG2() -> too small reply from set day request recognized. Desired info not contained.');
