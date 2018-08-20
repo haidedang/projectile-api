@@ -777,15 +777,23 @@ class ProjectileService {
   async setCalendarDate(date, cookie, employee) {
     const dateComplete = date + 'T00:00:00';
     // open timetracker page and check for current date
-    const answer0 = await this.normalPostURL('POST', 'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get', cookie, {
-      [employee]: [
-        'Begin',
-        'TrackingRestriction'
-      ]
-    });
-    if(answer0.values[employee][1].v !== date) {
+    const resultGetDate = await this.normalPostURL(
+      'POST',
+      'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get',
+      cookie,
+      {
+        [employee]: [
+          'Begin',
+          'TrackingRestriction'
+        ]
+      });
+
+    logger.debug('setCalenderDate() -> resultGetDate: ', resultGetDate);
+
+    if(resultGetDate.values[employee][1].v !== date) {
+      logger.debug('setCalenderDate() -> need to set the desired date.');
       // set date to desired date
-      const answer = await this.normalPostURL(
+      const resultSetDate = await this.normalPostURL(
         'POST',
         'https://projectile.office.sevenval.de/projectile/gui5ajax?action=commit',
         cookie,
@@ -800,17 +808,33 @@ class ProjectileService {
           }
         }
       );
-      // reduce bodyString to contain only the first listEntry
-      // BE AWARE returned value depends on currently set date, ONLY if a date change happens the expected returned body
-      // is received, else its just a "true" value within a smaller json
-      let bodyString = JSON.stringify(answer);
-      if (bodyString.includes('update"}]')) {
-        bodyString = bodyString.slice(0, bodyString.indexOf('update"}]') + 9);
-        return bodyString.includes(date); // standard behaviour - date gets changed
-      } else {
-        logger.warn('setCalenderDate --> Something went wrong. Date update not successfull.');
-        return false;
+
+      /*
+        assumed behaviour:
+        first request result (to check the current date):
+          {
+            "n": "Begin",
+            "v": "2018-08-17",
+            "d": false,
+            "e": true
+          }
+        second request result (if date had to be changed!)
+          {
+            "n": "Begin",
+            "d": true,
+          }
+
+        I assume that "d": true is marking a successfull update.
+      */
+      for (const item of resultSetDate.values[employee]) {
+        if (item.n === 'Begin') {
+          if (item.d === true) {
+            return true;
+          }
+        }
       }
+      logger.warn('setCalenderDate --> Something went wrong. Date update not successfull.');
+      return false;
     } else {
       logger.info('setCalenderDate --> date is already set to desired date ' + date + '. No further action necessary.');
       return true;
