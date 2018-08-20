@@ -32,22 +32,18 @@ class BookingController {
       // normalizing duration time if necessary (to x.xx and parse as float to avoid weird duration lengths)
       let time = await projectile.normalizetime(req.body.duration);
 
-      /*
-        Currently necessary to ensure that updates of a hypothetical second session of projectile (e.g. via browser)
-        are recognized!
-        Without that updates might be invisible between those sessions, e.g. ignoring deletion of entries.
-      */
+      // Currently necessary to ensure that updates of a hypothetical second session of projectile (e.g. via browser) are recognized!
+      // Without that updates might be invisible between those sessions, e.g. ignoring deletion of entries.
       await projectile.refreshProjectile(req.cookie, req.employee);
 
-
       // book in projectile
-      let result = await projectile.saveEntry(
-        req.cookie,
-        req.employee,
+      let result = await projectile.save(
         date,
         time,
         req.body.activity,
-        req.body.note
+        req.body.note,
+        req.cookie,
+        req.employee
       );
 
       if (result.returnValue === false) {
@@ -81,7 +77,7 @@ class BookingController {
    * @param {string} req.body.duration The duration time of the work on that activity.
    * @param {string} req.body.activity An ID or the name of the activity, that was retrieved by the showList method.
    * @param {string} req.body.note A description what has been done on that activity.
-   * @param {string} req.body.line line represents the entrys position in the entry list retrieved for a specific day.
+   * @param {string} req.body.line The line represents the entrys position in the entry list retrieved for a specific day.
    * @param {string} req.cookie Cookie from Projectile
    * @param {string} req.employee  Projectile Employee ID
    * @param {object} res ExpressJS response object.
@@ -191,7 +187,7 @@ class BookingController {
   static async getJobList(req, res) {
     const projectile = new ProjectileService();
     try {
-      const jobList = await projectile.getJobList(req.cookie, req.employee);
+      const jobList = await projectile.getJobListNG(req.cookie, req.employee);
 
       if (jobList.problems !== undefined) {
         res.status(401).json({
