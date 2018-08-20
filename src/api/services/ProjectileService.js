@@ -69,17 +69,18 @@ class ProjectileService {
       // return the whole cookie
       return cookie;
     } catch (e) {
-      // Zeitüberschreitung beim Verbinden zum projectile Server... Bitte überprüfe deine Netzwerkverbindung." + error
       logger.error(`projectile login error. ${e.stack}`);
     }
   }
 
   /**
+   * Helper function to create the option object for an http request
    *
-   * @param {*} method  HTTP method
-   * @param {*} url     Server URL
-   * @param {*} cookie  cookie response
-   * @param {*} body    HTTP body if post request
+   * @param {string} method  HTTP method
+   * @param {string} url     Server URL
+   * @param {string} cookie  cookie response
+   * @param {object} body    HTTP body if post request
+   * @return {object} returns the option object created within the function
    */
   option(method, url, cookie, body) {
     const options = {
@@ -99,11 +100,11 @@ class ProjectileService {
   /**
    * Helper function to extract joblist info neccessary for further use, from data received through request to projectile
    *
-   * @param {*} cookie
-   * @param {*} employee
-   * @param {*} answer - body retrieved from request to projectile
-   *
-   * @return {*} processedAnswer - processed data containing only DayList entries and their corresponding line numbers
+   * @param {string} cookie
+   * @param {string} employee
+   * @param {object} answer - body retrieved from request to projectile
+   * @return {object} processedAnswer - processed data containing only DayList entries and their corresponding
+   *                  line numbers
    */
   async processJobListAnswer(cookie, employee, answer) {
     const processedAnswer = [];
@@ -134,13 +135,12 @@ class ProjectileService {
   /**
    * Function to get the jobList from projectile (similar to getDayListNG)
    *
-   * @param {*} cookie  projectile cookie
-   * @param {*} employee projectile Employee ID
-   *
-   * @return {*} processedAnswer - processed data containing only jobList entries
+   * @param {string} cookie  projectile cookie
+   * @param {string} employee projectile Employee ID
+   * @return {object} processedAnswer - processed data containing only jobList entries
    */
-  async getJobListNG(cookie, employee) {
-    logger.debug('getJobListNG() -> Trying to get complete jobList.');
+  async getJobList(cookie, employee) {
+    logger.debug('getJobList() -> Trying to get complete jobList.');
     let resultToReturn = {};
     // try to get the joblist
     const resultProjectile = await this.normalPostURL(
@@ -164,23 +164,24 @@ class ProjectileService {
 
     // do we need to refresh or can we extract the necessary info right away?
     if (resultProjectile['values']['+.|JobList|0|' + employee] === undefined) {
-      logger.info('getJobListNG() -> too small reply from JobList request recognized. Desired info not contained.');
-      logger.info('getJobListNG() -> Refreshing projectile and trying to get complete info this way.');
+      logger.info('getJobList() -> too small reply from JobList request recognized. Desired info not contained.');
+      logger.info('getJobList() -> Refreshing projectile and trying to get complete info this way.');
       const resultRefresh = await this.refreshProjectile(cookie, employee);
       resultToReturn = await this.processJobListAnswer(cookie, employee, resultRefresh);
     } else {
       resultToReturn = await this.processJobListAnswer(cookie, employee, resultProjectile);
     }
-    logger.info('getDayListNG() -> processedAnswer() result is ' + resultToReturn.length + ' entries wide.');
+    logger.info('getJobList() -> processedAnswer() result is ' + resultToReturn.length + ' entries wide.');
     return resultToReturn;
   }
 
   /**
+   * Helper function to request a url and return the response
    *
-   * @param method
-   * @param url
-   * @param cookie
-   * @param body
+   * @param {string} method hhtp method
+   * @param {string} url url to point the request to
+   * @param {string} cookie web cookie to use for the request
+   * @param {object} body request payload
    * @returns {Promise.<T>}
    */
   normalPostURL(method, url, cookie, body) {
@@ -197,10 +198,9 @@ class ProjectileService {
   }
 
   /**
-   *
-   * @param cookie
-   * @returns {Promise} Employee
-   * # possible Error Case: wrong login data.
+   * Helper function to retrieve the employee string necessary for other functions
+   * @param {string} cookie cookie to use for the request
+   * @returns {string} Employee string
    */
   async getEmployee(cookie) {
     // Überprüfe ob Request in Ordnung ging
@@ -226,11 +226,10 @@ class ProjectileService {
   }
 
   /**
-   * normalize the duration value
+   * Helper function to normalize the duration value
    *
-   * @param {string} duration value
-   *
-   * @returns {string} duration value that is cleaned to x.xx
+   * @param {string} duration hours and minutes of working time on a project
+   * @returns {string} duration value that is cleaned to x.xx format!
    */
   async normalizetime(time) {
     if (time.includes(':')) {
@@ -248,9 +247,8 @@ class ProjectileService {
   /**
    * Helper function to escape strings
    *
-   * @param {*} str
-   *
-   * @returns {*} escaped string
+   * @param {string} str raw string
+   * @returns {string} escaped string
    */
   escapeRegExp(str) {
     // eslint-disable-next-line
@@ -261,8 +259,9 @@ class ProjectileService {
    * Helper function to ensure the retrieved daylist is up to date even if a second projectile session is active and
    * alters content
    *
-   * @param {*} cookie
-   * @param {*} employee
+   * @param {string} cookie cookie to use for the http request
+   * @param {string} employee employee string necessary
+   * @return {object} the unfiltered body reply of the request
    */
   async refreshProjectile(cookie, employee) {
     const result = await this.normalPostURL(
@@ -282,13 +281,12 @@ class ProjectileService {
   /**
    * Helper function to extract daylist info neccessary for further use from data received through request to projectile
    *
-   * @param {*} cookie
-   * @param {*} employee
-   * @param {*} answer - body retrieved from request to projectile
-   *
-   * @return {*} processedAnswer - processed data containing only DayList entries and their corresponding line numbers
+   * @param {string} cookie cookie to use for http request
+   * @param {string} employee employee string necessary for function
+   * @param {object} answer - body retrieved from request to projectile
+   * @return {object} processedAnswer - processed data containing only DayList entries and their corresponding line numbers
    */
-  async processAnswer(cookie, employee, answer) {
+  async processDayListAnswer(cookie, employee, answer) {
     const processedAnswer = [];
     for (const index in answer['values']) {
       // recognize a DayList Entry through keyword 'DayList'
@@ -312,16 +310,15 @@ class ProjectileService {
   /**
    * Function to get the DayList for a specific date.
    *
-   * @param {*} cookie
-   * @param {*} employee
-   * @param {*} date
-   *
-   * @return {*} processedAnswer - processed data containing only DayList entries (time, activity, note, date) and
+   * @param {string} cookie cookie to use for http request
+   * @param {string} employee employee string necessary for function
+   * @param {string} date date string
+   * @return {object} processedAnswer - processed data containing only DayList entries (time, activity, note, date) and
    * their corresponding line numbers
    */
-  async getDayListNG(cookie, employee, date) {
+  async getDayList(cookie, employee, date) {
     let resultToReturn = {};
-    logger.debug('getDayListNG() -> Trying to get complete DayList for specific date.');
+    logger.debug('getDayList() -> Trying to get complete DayList for specific date.');
     // set date
     const resultProjectile = await this.normalPostURL(
       'POST',
@@ -349,36 +346,36 @@ class ProjectileService {
 
     // check if a DayList entry exists, act accordingly
     if (resultProjectile['values']['+.|DayList|0|' + employee] === undefined) {
-      logger.info('getDayListNG() -> too small reply from set day request recognized. Desired info not contained.');
-      logger.info('getDayListNG() -> Refreshing projectile tracker and trying to get complete info this way.');
+      logger.info('getDayList() -> too small reply from set day request recognized. Desired info not contained.');
+      logger.info('getDayList() -> Refreshing projectile tracker and trying to get complete info this way.');
       const resultRefresh = await this.refreshProjectile(cookie, employee);
       if (resultRefresh['values']['+.|DayList|0|' + employee] === undefined) {
-        logger.error('getDayListNG() -> Refreshing projectile tracker and retrieving complete daylist went wrong!');
+        logger.error('getDayList() -> Refreshing projectile tracker and retrieving complete daylist went wrong!');
         return {};
       }
-      resultToReturn = await this.processAnswer(cookie, employee, resultRefresh);
+      resultToReturn = await this.processDayListAnswer(cookie, employee, resultRefresh);
     } else {
-      resultToReturn = await this.processAnswer(cookie, employee, resultProjectile);
+      resultToReturn = await this.processDayListAnswer(cookie, employee, resultProjectile);
     }
-    logger.info('getDayListNG() -> processedAnswer() result is ' + resultToReturn.length + ' entries wide.');
-    // logger.debug('getDayListNG() -> result: ' + JSON.stringify(result, null, 2));
+    logger.info('getDayList() -> processedAnswer() result is ' + resultToReturn.length + ' entries wide.');
+    // logger.debug('getDayList() -> result: ' + JSON.stringify(result, null, 2));
     return resultToReturn;
   }
 
+  // TODO - if getDayList() proves reliables, the getDayListSecondApproach() can be removed as obsolete function
   /**
    * Function to get the DayList for a specific date. (alternative way, up to 3 requests, instead of max. 2 for NG)
    *
-   * @param {*} cookie
-   * @param {*} employee
-   * @param {*} date
-   *
-   * @return {*} processedAnswer - processed data containing only DayList entries (time, activity, note, date) and
+   * @param {string} cookie cookie to use with http request
+   * @param {string} employee employee string necessary for function
+   * @param {string} date date string
+   * @return {object} processedAnswer - processed data containing only DayList entries (time, activity, note, date) and
    * their corresponding line numbers
    */
-  async getDayListNG2(cookie, employee, date) {
+  async getDayListSecondApproach(cookie, employee, date) {
     await this.setCalendarDate(date, cookie, employee);
     let resultToReturn = {};
-    logger.debug('getDayListNG2() -> Trying to get complete DayList for specific date. Date set before!');
+    logger.debug('getDayListSecondApproach() -> Trying to get complete DayList for specific date. Date set before!');
     // get tracker infos
     const resultProjectile = await this.normalPostURL(
       'POST',
@@ -404,29 +401,28 @@ class ProjectileService {
 
     // check if a DayList entry exists, act accordingly
     if (resultProjectile['values']['+.|DayList|0|' + employee] === undefined) {
-      logger.info('getDayListNG2() -> too small reply from set day request recognized. Desired info not contained.');
-      logger.info('getDayListNG2() -> Refreshing projectile tracker and trying to get complete info this way.');
+      logger.info('getDayListSecondApproach() -> too small reply from set day request recognized. Desired info not contained.');
+      logger.info('getDayListSecondApproach() -> Refreshing projectile tracker and trying to get complete info this way.');
       const resultRefresh = await this.refreshProjectile(cookie, employee);
       if (resultRefresh['values']['+.|DayList|0|' + employee] === undefined) {
-        logger.error('getDayListNG2() -> Refreshing projectile tracker and retrieving complete daylist went wrong!');
+        logger.error('getDayListSecondApproach() -> Refreshing projectile tracker and retrieving complete daylist went wrong!');
         return {};
       }
-      resultToReturn = await this.processAnswer(cookie, employee, resultRefresh);
+      resultToReturn = await this.processDayListAnswer(cookie, employee, resultRefresh);
     } else {
-      resultToReturn = await this.processAnswer(cookie, employee, resultProjectile);
+      resultToReturn = await this.processDayListAnswer(cookie, employee, resultProjectile);
     }
-    logger.info('getDayListNG2() -> processedAnswer() result is ' + resultToReturn.length + ' entries wide.');
-    // logger.debug('getDayListNG2() -> result: ' + JSON.stringify(result, null, 2));
+    logger.info('getDayListSecondApproach() -> processedAnswer() result is ' + resultToReturn.length + ' entries wide.');
+    // logger.debug('getDayListSecondApproach() -> result: ' + JSON.stringify(result, null, 2));
     return resultToReturn;
   }
 
   /**
    * Helper function to check if the content in projectile actually changed!
    *
-   * @param {*} dayListBeforeChange
-   * @param {*} dayListAfterChange
-   *
-   * @return {*} changeDetected true/false
+   * @param {object} dayListBeforeChange the day list object before any changes
+   * @param {object} dayListAfterChange the day list object after changes
+   * @return {boolean} change detected
    */
   async recognizeChange(dayListBeforeChange, dayListAfterChange) {
     logger.debug('recognizeChange() -> Checking the dayLists for changes - if booking was successfull.)');
@@ -443,10 +439,9 @@ class ProjectileService {
   /**
    * Helper function to find the last occurence of a specific date in a daylist that seem to cover more than one day
    *
-   * @param {*} dayListBeforeChange dayList before booking
-   * @param {*} date date of target day
-   *
-   * @return {*} dateLastFoundLine - line number to save to
+   * @param {object} dayListBeforeChange dayList before booking
+   * @param {string} date date of target day
+   * @return {integer} dateLastFoundLine - line number to save to
    */
   async getCorrectLineSelector(dayListBeforeChange, date) {
     let dateLastFoundLine = 0;
@@ -464,28 +459,27 @@ class ProjectileService {
    * Function to save a single entry to projectile
    * Gets correct Lineselector, looks for occuring problems, checks if dayList really changed
    *
-   * @param {*} cookie projectile cookie
-   * @param {*} employee projectile employee ID
-   * @param {*} date date of target day
-   * @param {*} time task duration
-   * @param {*} project project ID
-   * @param {*} note task description
-   *
-   * @return {*} returnValue - true/false
+   * @param {string} cookie projectile cookie
+   * @param {string} employee projectile employee ID
+   * @param {string} date date of target day
+   * @param {string|float} time task duration
+   * @param {string} project project ID
+   * @param {string} note task description
+   * @return {boolean} returnValue
    */
-  async saveEntryNG(cookie, employee, date, time, project, note) {
-    let dayListBeforeChange = await this.getDayListNG(cookie, employee, date);
-    logger.debug('saveEntryNG() -> dayListBeforeChange: ' + JSON.stringify(dayListBeforeChange, null, 2));
+  async saveEntry(cookie, employee, date, time, project, note) {
+    let dayListBeforeChange = await this.getDayList(cookie, employee, date);
+    logger.debug('saveEntry() -> dayListBeforeChange: ' + JSON.stringify(dayListBeforeChange, null, 2));
 
     let lineSelector = await this.getCorrectLineSelector(dayListBeforeChange, date);
 
     if (dayListBeforeChange.length >= 49) {
-      logger.warn('saveEntryNG() -> Unexpected array length of dayListBeforeChange.');
-      logger.debug('saveEntryNG() -> Daylist suggests a length of ' + dayListBeforeChange.length + ' where getCorrectLineSelector() ' +
+      logger.warn('saveEntry() -> Unexpected array length of dayListBeforeChange.');
+      logger.debug('saveEntry() -> Daylist suggests a length of ' + dayListBeforeChange.length + ' where getCorrectLineSelector() ' +
       'finds ' + lineSelector + ' to be the correct target line. getDayListNG seem have returned a week long daylist ' +
       'instead of a single day.');
     }
-    logger.debug('saveEntryNG() -> lineSelector: ' + lineSelector);
+    logger.debug('saveEntry() -> lineSelector: ' + lineSelector);
     // String to access the listEntry
     const listEntry = dayListBeforeChange[lineSelector].lineSelector;
 
@@ -508,11 +502,11 @@ class ProjectileService {
     // check for problems in results
     const problemsFoundResult = await this.problemsFound(body);
     if (problemsFoundResult) {
-      logger.warn('saveEntryNG() -> ' + body.problems.length + ' problems found. ' + problemsFoundResult);
+      logger.warn('saveEntry() -> ' + body.problems.length + ' problems found. ' + problemsFoundResult);
       await this.printProblems(body.problems);
       returnValue['errors'] = body.problems;
     } else {
-      let dayListAfterChange = await this.getDayListNG(cookie, employee, date);
+      let dayListAfterChange = await this.getDayList(cookie, employee, date);
       returnValue.returnValue = await this.recognizeChange(dayListBeforeChange, dayListAfterChange);
     }
     return returnValue;
@@ -522,9 +516,8 @@ class ProjectileService {
   /**
    * normalize a note (replacing umlauts)
    *
-   * @param {*} note note to normalize
-   *
-   * @return {*} normalized note
+   * @param {string} note note to normalize
+   * @return {string} normalized note
    */
   async normalizeComment(note) {
     const result = note.replace(/ä/g, 'ae')
@@ -539,13 +532,12 @@ class ProjectileService {
   }
 
   /**
-   * set an entry in time tracker (before saving later) - (supports saveEntry() and) updateEntry()
+   * Helper function to set an entry in time tracker (before saving later) - (supports saveEntry() and) updateEntry()
    *
-   * @param {*} cookie cookie to access projectile
-   * @param {*} item item object containing the booking entry values
-   * @param {*} listEntry string that identifies a list entry in projectile
-   *
-   * @return {*} result of the request
+   * @param {string} cookie cookie to access projectile
+   * @param {object} item item object containing the booking entry values
+   * @param {string} listEntry string that identifies a list entry in projectile
+   * @return {object} result of the request (body object)
    */
   async setEntry(cookie, item, listEntry) {
     const duration = (item.duration ? parseFloat(item.duration) : '0'); // catch empty duration
@@ -578,12 +570,11 @@ class ProjectileService {
   }
 
   /**
-   * save an entry or entries in time tracker
+   * Helper function to save an entry or entries in time tracker
    *
-   * @param {*} cookie cookie to access projectile
-   * @param {*} employee employee id to access projectile
-   *
-   * @return {*} result of the request
+   * @param {string} cookie cookie to access projectile
+   * @param {string} employee employee id to access projectile
+   * @return {object} result of the request (body object)
    */
   async saveEntries(cookie, employee) {
     const body = await this.normalPostURL(
@@ -601,11 +592,10 @@ class ProjectileService {
   }
 
   /**
-   * Check for error messages in result. If none present asume operation was successfull (false)
+   * Helper function to check for error messages in result. If none present asume operation was successfull (false)
    *
-   * @param {*} json check for problems in the provided body from request
-   *
-   * @return {*} return whether problems were found or not
+   * @param {object} json check for problems in the provided body from request
+   * @return {boolean} return whether problems were found or not
    */
   async problemsFound(body) {
     if (body.problems) {
@@ -617,9 +607,9 @@ class ProjectileService {
   }
 
   /**
-   * Print error messages. Assume that input is an array of problems (body.problems)
+   * Helper function to print error messages. Assume that input is an array of problems (body.problems)
    *
-   * @param {*} json
+   * @param {object} json
    */
   async printProblems(problems) {
     logger.warn('checkProblems -> Found warnings and/or error messages.');
@@ -633,21 +623,21 @@ class ProjectileService {
   /**
    * update an entry or multiple entries on projectile on specific date
    *
-   * @param {*} cookie
-   * @param {*} employee
-   * @param {*} json
-   *
-   * @return {*} returnValue showing if task was completed successfully
+   * @param {string} cookie cookie for http request
+   * @param {string} employee employee string necessary for function
+   * @param {object} json object containing the updated info that has to be set/updated in projectile
+   * @return {object} returnValue showing if task was completed successfully, in errors occured error messages included
    */
   async updateEntry(cookie, employee, json) {
-    logger.debug('updateEntry() --> number of entry objects: ' + json.entries.length);
+    logger.debug('updateEntry() -> number of entry objects: ' + json.entries.length);
     let returnValue = {
       'returnValue': false
     };
     if (await this.setCalendarDate(json.date, cookie, employee)) {
+      logger.debug('updateEntry() -> calender date set, lets work.');
       // set entry/entries
       // json = {date, entries:[{ date, duration, activtiy, note}]}
-      for (const item of json.entries) { // for...in => index no; for..of => content
+      for (const item of json.entries) {
         logger.debug('updateEntry -> provided object: ' + JSON.stringify(item, null, 2));
         logger.debug('updateEntry -> line selector: ' + item.line);
         logger.debug('updateEntry -> preparing entry in projectile');
@@ -676,11 +666,11 @@ class ProjectileService {
 
   /**
    * Function to delete an entry from projectile
-   * @param {*} cookie
-   * @param {*} employee
-   * @param {*} number line selector number
    *
-   * @returns {*} success
+   * @param {string} cookie cookie to use for http connection
+   * @param {string} employee employee string necessary for function
+   * @param {integer} number line selector number
+   * @returns {boolean} success
    */
   async deleteEntry(cookie, employee, number) {
     // mark entry for deletion, get popup response, extract ref and execute action to delete
@@ -768,11 +758,10 @@ class ProjectileService {
   /**
    * Function to set a calender date in projectile
    *
-   * @param {*} date
-   * @param {*} cookie
-   * @param {*} employee
-   *
-   * @returns {*} Returns true/false
+   * @param {string} date date string
+   * @param {string} cookie cookie to use for http connection
+   * @param {string} employee employee string necessary for function
+   * @returns {boolean} setting calender date successfull?
    */
   async setCalendarDate(date, cookie, employee) {
     const dateComplete = date + 'T00:00:00';
@@ -820,10 +809,9 @@ class ProjectileService {
   /**
    * Function to allow deletion of projectile entry
    *
-   * @param {*} date
-   * @param {*} listEntry
-   *
-   * @returns {*} Return true/false
+   * @param {string} date
+   * @param {string} listEntry
+   * @returns {boolean} Deletion successfull?
    */
   async delete(date, listEntry) {
     const cookie = await this.login();
@@ -842,80 +830,11 @@ class ProjectileService {
   }
 
   /**
-   * Function to execute the saving a booking entry to projectile
-   *
-   * @param {*} date
-   * @param {*} time
-   * @param {*} project
-   * @param {*} note
-   * @param {*} cookie
-   * @param {*} employee
-   *
-   * @returns {*} returnValue true/false
-   */
-  async saveNG(date, time, project, note, cookie, employee) {
-    logger.debug('saving data...');
-    /* const cookie = await exports.login(); */
-    /* const employee = await this.getEmployee(cookie); */
-    // let jobList = await exports.jobList(cookie, employee); // fetch the actual joblist.
-    // const saveEntryResult = await this.saveEntry(cookie, employee, time, project, note, date);
-    if (await this.setCalendarDate(date, cookie, employee)) {
-      const saveEntryResult = await this.saveEntry(cookie, employee, date, time, project, note);
-      // saveEntry returns true or false depending on save result
-      // returns { returnValue: false, errors: errorArray }
-      logger.debug('saveEntryResult --> ' + JSON.stringify(saveEntryResult, null, 2));
-      if (saveEntryResult.returnValue) {
-        logger.debug('Finished saving entry.');
-        // return true;
-        // return saveEntryResult;
-      }
-      return saveEntryResult;
-    }
-    return {
-      returnValue: false
-    };
-  }
-
-  /**
-   * Function to save a booking entry to projectile
-   *
-   * @param {*} date
-   * @param {*} time
-   * @param {*} project
-   * @param {*} note
-   * @param {*} cookie
-   * @param {*} employee
-   *
-   * @returns {*} saveEntryResult true/false
-   */
-  async save(date, time, project, note, cookie, employee) {
-    logger.debug('saving data...');
-    let saveEntryResult;
-    saveEntryResult = await this.saveEntryNG(cookie, employee, date, time, project, note);
-    /*
-        if (await this.setCalendarDate(date, cookie, employee)) {
-          saveEntryResult = await this.saveEntryNG2(cookie, employee, date, time, project, note);
-          // saveEntry returns true or false depending on save result
-          // returns { returnValue: false, errors: errorArray }
-          logger.debug('saveEntryResult --> ' + JSON.stringify(saveEntryResult, null, 2));
-          if (saveEntryResult.returnValue) {
-            logger.debug('Finished saving entry.');
-            // return true;
-            // return saveEntryResult;
-          }
-          return saveEntryResult;
-        }
-    */
-    return saveEntryResult;
-  }
-
-  /**
    * Function to get all entries in a time range
    *
-   * @param {*} startDate
-   * @param {*} endDate
-   *
-   * @returns {*} Returns the response
+   * @param {string} startDate start date of time range
+   * @param {string} endDate end date of time range
+   * @returns {object} Returns the raw response (body object)
    */
   async getallEntriesInTimeFrame(startDate, endDate) {
     startDate = startDate + 'T00:00:00';
