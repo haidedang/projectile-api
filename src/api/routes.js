@@ -133,7 +133,7 @@ router.post('/book', authenticationMiddleware.authenticate, BookingController.bo
  *         ]
  *     }
  *
- * @apiSuccess {string} status The creation status, one of "ok" or "error"
+ * @apiSuccess {string} status The update status, one of "ok" or "error"
  *
  * @apiSuccessExample Success response examples:
  *     HTTP/1.1 200 OK
@@ -156,6 +156,61 @@ router.post('/book', authenticationMiddleware.authenticate, BookingController.bo
  *     }
  */
 router.post('/edit', authenticationMiddleware.authenticate, BookingController.editEntry);
+
+/**
+ * @api {POST} /api/v1/delete Deletes an activity.
+ * @apiVersion 1.0.0
+ * @apiName Delete
+ * @apiGroup Booking
+ * @apiDescription This route is used to delte an activity within the projectile system. It's important and mandatory
+ * to provide the correct line value from which the entry was originally retrieved, so the correct entry gets deleted
+ * when calling this route.
+ *
+ * Between retrieving the line numbers and sending the deletion request with the line numbers selected for deletion
+ * there must not be any update or book requests. There is a risk of deleting the wrong entry in case the line number
+ * is no longer up to date.
+ *
+ * @apiHeader {string} Authorization Pass the JW Token by the bearer method. The token comes as a result of
+ * the login call.
+ * @apiHeaderExample {string} Header example:
+ *
+ * Authorization: Bearer 1F34A5C...
+ *
+ * @apiParam {string} line The line represents the entrys position in the entry list retrieved for a specific day.
+ *
+ * @apiParamExample {json} Request example:
+ *
+ *     {
+ *         "date": "2018-02-12",
+ *         "entry":
+ *         {
+ *             "line": "0"
+ *         }
+ *     }
+ *
+ * @apiSuccess {string} status The deletion status, one of "ok" or "error"
+ *
+ * @apiSuccessExample Success response examples:
+ *     HTTP/1.1 200 OK
+ *     {
+ *         "status": "ok",
+ *     }
+ *
+ *     HTTP/1.1 200 OK
+ *     {
+ *         "status": "error",
+ *         "message": [
+ *            ...
+ *         ]
+ *     }
+ *
+ *     HTTP/1.1 401 Unauthorized
+ *     {
+ *         "status": "error",
+ *         "message": "Unauthorized"
+ *     }
+ */
+router.post('/delete', authenticationMiddleware.authenticate, BookingController.delete);
 
 /**
  * @api {get} /api/v1/getjoblist Returns a list of activities.

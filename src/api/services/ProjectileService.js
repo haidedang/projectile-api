@@ -682,11 +682,18 @@ class ProjectileService {
    *
    * @returns {*} success
    */
-  async deleteEntry(cookie, employee, number) {
+  async deleteEntry(cookie, employee, json) {
     // mark entry for deletion, get popup response, extract ref and execute action to delete
-    const dayList = await this.getDayListToday(cookie, employee);
-    const listEntry = dayList[number];
-    const body = await this.normalPostURL(
+    let returnValue = {
+      'returnValue': false
+    };
+    const resultSetDate = await this.setCalendarDate(json.date, cookie, employee);
+    logger.debug('deleteEntry() -> setCalenderDate return value: ' + resultSetDate);
+
+    const listEntry = '+.|DayList|' + json.entry.line + '|' + employee;
+
+    // mark for deletion and get ref id from dialog
+    const resultDeletionRequest = await this.normalPostURL(
       'POST',
       'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action',
       cookie,
@@ -697,72 +704,34 @@ class ProjectileService {
         Params: { ref: listEntry }
       }
     );
-    const secondBody = await this.normalPostURL(
-      'POST',
-      'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action',
-      cookie,
-      {
-        ref: body.dialog.ref,
-        name: '*',
-        action: '+0+1__null_',
-        Params: { isDialog: true }
+
+    if (typeof(resultDeletionRequest.dialog) !== 'undefined') {
+      // confirm deletion intention
+      const resultDeletionConfirmation = await this.normalPostURL(
+        'POST',
+        'https://projectile.office.sevenval.de/projectile/gui5ajax?action=action',
+        cookie,
+        {
+          ref: resultDeletionRequest.dialog.ref,
+          name: '*',
+          action: '+0+1__null_',
+          Params: { isDialog: true }
+        }
+      );
+
+      if ((resultDeletionConfirmation.close[0] === resultDeletionRequest.dialog.ref) &&
+      (resultDeletionConfirmation.clearProblems[0] === resultDeletionRequest.dialog.ref)) {
+        logger.debug('deleteEntry() -> Deletion successfull.');
+        return {
+          returnValue: true
+        };
       }
-    );
-    /*
-      expected behaviour: after successfull deletion of a listEntry, the secondBody contains the line:
-      "close":["1519808571525-0"],"clearProblems":["1519808571525-0"]} containing the ref value from first request twice
-      */
-    const bodyString = JSON.stringify(secondBody);
-    const confirmDeletion = bodyString.slice(bodyString.indexOf('"close":["'));
-    const re = new RegExp(body.dialog.ref, 'g');
-    const delMatch = confirmDeletion.match(re);
-    let count = 0;
-    if (delMatch) {
-      count = delMatch.length;
-    }
-    // DEBUG
-    // logger.debug(count + ' DELETE FCT ' + body.dialog.ref);
-    if (count === 2) {
-      return true;
+
     } else {
-      logger.warn('There might be an issue while deleting a listEntry: count: ' + count + ' ref: ' + body.dialog.ref);
-      return false;
+      logger.debug('deleteEntry() -> resultDeletionRequest.dialog \'undefined\'. Can\'t proceed with deletion process.');
     }
-  }
-
-  // TODO obosolete once removed from deleteEntry function
-  /**
-   * Function to get a day's dayList from projectile
-   * @param {*} cookie
-   * @param {*} employee
-   *
-   * @returns {*} Returns dayList array
-   */
-  async getDayListToday(cookie, employee) {
-    const temp = await this.normalPostURL(
-      'POST',
-      'https://projectile.office.sevenval.de/projectile/gui5ajax?action=get',
-      cookie,
-      {
-        Dock: ['Area.TrackingArea'],
-        [employee]: [
-          'DayList',
-          'JobList',
-          'Begin',
-          'Favorites',
-          'TrackingRestriction',
-          'FilterCustomer',
-          'FilterProject'
-        ]
-      }
-    );
-
-    // DEBUG
-    console.log('getDayListToday() -> result: ' + temp['values'][employee].length + ' entries ' +
-      JSON.stringify(temp['values'][employee]).length + ' characters');
-
-    const dayList = await temp['values'][employee][2]['v'];
-    return dayList;
+    logger.warn('deleteEntry() -> Deletion unsuccessfull.');
+    return returnValue;
   }
 
   /**
@@ -815,30 +784,6 @@ class ProjectileService {
       logger.info('setCalenderDate --> date is already set to desired date ' + date + '. No further action necessary.');
       return true;
     }
-  }
-
-  /**
-   * Function to allow deletion of projectile entry
-   *
-   * @param {*} date
-   * @param {*} listEntry
-   *
-   * @returns {*} Return true/false
-   */
-  async delete(date, listEntry) {
-    const cookie = await this.login();
-    const employee = await this.getEmployee(cookie);
-    if (await this.setCalendarDate(date, cookie, employee)) {
-      logger.debug('delete() -> setCalenderDate() - successfully.');
-      if (await this.deleteEntry(cookie, employee, listEntry)) {
-        logger.debug('Finished deleting entry ' + listEntry + ' for date ' + date);
-        return true;
-      } else {
-        logger.error('Error while deleting entry ' + listEntry + ' for date ' + date);
-        return false;
-      }
-    }
-    return false;
   }
 
   /**
