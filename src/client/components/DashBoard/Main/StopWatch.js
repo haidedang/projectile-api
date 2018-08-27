@@ -15,7 +15,7 @@ class StopWatch extends React.Component {
     const that = this;
     window.addEventListener('focus', function() {
       if (that.state.isRunning) {
-        const now = Date.now() - that.state.startTime;
+        const now = (Date.now() - that.state.startTime) - that.state.pauseTime;
         that.setState({ time: now });
       }
     });
@@ -27,10 +27,26 @@ class StopWatch extends React.Component {
   }
 
   start() {
+    if (!this.state.notBooked) {
+      this.setState(
+        {
+          startTime: Date.now()
+        }
+      );
+    }
+
+    if (this.state.pausedAt !== 0) {
+      const newPauseTime = this.state.pauseTime + (Date.now() - this.state.pausedAt);
+      this.setState(
+        {
+          pauseTime: newPauseTime
+        }
+      );
+    }
+
     this.setState(
       {
-        isRunning: true,
-        startTime: Date.now()
+        isRunning: true
       },
       () => {
         this.timerRef = setInterval(() => {
@@ -41,12 +57,17 @@ class StopWatch extends React.Component {
   }
 
   stop() {
-    let newTime = timeFormat(this.state.time).split(':');
+    /* Remove second from duration time. Only full minutes get booked. */
+    let newTime = timeFormat((Date.now() - this.state.startTime) - this.state.pauseTime).split(':');
+
     newTime.pop();
 
     this.setState(
       {
-        isRunning: false
+        isRunning: false,
+        time: (Date.now() - this.state.startTime) - this.state.pauseTime,
+        notBooked: true,
+        pausedAt: Date.now()
       },
       () => {
         clearInterval(this.timerRef);
@@ -62,10 +83,13 @@ class StopWatch extends React.Component {
 
   getDefaultState() {
     return {
+      notBooked: false,
       isRunning: false,
       time: 0,
       startTime: 0,
-      currentTime: null
+      currentTime: null,
+      pauseTime: 0,
+      pausedAt: 0
     };
   }
 
@@ -74,7 +98,7 @@ class StopWatch extends React.Component {
 
     return (
       <div>
-        <Timer time={time} />
+        <Timer time={time}/>
         <Controls
           isRunning={isRunning}
           start={() => this.start()}
