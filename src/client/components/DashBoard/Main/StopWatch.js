@@ -29,7 +29,8 @@ class StopWatch extends React.Component {
   start() {
     this.setState(
       {
-        isRunning: true
+        isRunning: true,
+        startTime: Date.now()
       },
       () => {
         this.timerRef = setInterval(() => {
@@ -63,7 +64,7 @@ class StopWatch extends React.Component {
     return {
       isRunning: false,
       time: 0,
-      startTime: Date.now(),
+      startTime: 0,
       currentTime: null
     };
   }
