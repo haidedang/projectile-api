@@ -28,20 +28,16 @@ class StopWatch extends React.Component {
 
   start() {
     if (!this.state.notBooked) {
-      this.setState(
-        {
-          startTime: Date.now()
-        }
-      );
+      this.setState({
+        startTime: Date.now()
+      });
     }
 
     if (this.state.pausedAt !== 0) {
       const newPauseTime = this.state.pauseTime + (Date.now() - this.state.pausedAt);
-      this.setState(
-        {
-          pauseTime: newPauseTime
-        }
-      );
+      this.setState({
+        pauseTime: newPauseTime
+      });
     }
 
     this.setState(
@@ -62,17 +58,15 @@ class StopWatch extends React.Component {
 
     newTime.pop();
 
-    this.setState(
-      {
-        isRunning: false,
-        time: (Date.now() - this.state.startTime) - this.state.pauseTime,
-        notBooked: true,
-        pausedAt: Date.now()
-      },
-      () => {
-        clearInterval(this.timerRef);
-      }
-    );
+    this.setState({
+      isRunning: false,
+      time: (Date.now() - this.state.startTime) - this.state.pauseTime,
+      notBooked: true,
+      pausedAt: Date.now()
+    },
+    () => {
+      clearInterval(this.timerRef);
+    });
 
     this.props.handleClick(newTime.join(':'));
   }
