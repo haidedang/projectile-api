@@ -4,6 +4,7 @@ import Select from 'react-select';
 
 // app stuff
 import BookingService from '../../../services/BookingService';
+import ShowResult from './Result';
 import SessionStorage from '../../../utils/SessionStorage';
 import StopWatch from './StopWatch';
 import { normalizeDuration } from '../../../utils/timeFormat';
@@ -40,7 +41,8 @@ class Booking extends React.Component {
       StartDisplay: 'block',
       StopDisplay: 'none',
       note: '',
-      duration: 0
+      duration: 0,
+      result: ''
     };
   }
 
@@ -87,15 +89,19 @@ class Booking extends React.Component {
     let formattedDate = today.toISOString().substr(0, 10);
     let duration = normalizeDuration(this.state.duration);
 
-    await service.addBooking({
+    const result = await service.addBooking({
       date: formattedDate,
       duration: duration.toString(),
       activity: this.state.selectedOption.value,
       note: this.state.note
     });
 
-    this.setState(this.getDefaultState());
-    this.StopWatch.current.reset();
+    this.setState({result: result});
+
+    if (result.status === 'ok') {
+      this.setState(this.getDefaultState());
+      this.StopWatch.current.reset();
+    }
   }
 
   /**
@@ -144,6 +150,7 @@ class Booking extends React.Component {
           >
             Book Entry
           </button>
+          <ShowResult result={this.state.result}/>
         </div>
       </div>
     );
