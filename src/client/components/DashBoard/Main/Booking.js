@@ -4,8 +4,8 @@ import Select from 'react-select';
 
 // app stuff
 import BookingService from '../../../services/BookingService';
-import ShowResult from './Result';
 import SessionStorage from '../../../utils/SessionStorage';
+import ShowResult from './Result';
 import StopWatch from './StopWatch';
 import { normalizeDuration } from '../../../utils/timeFormat';
 
