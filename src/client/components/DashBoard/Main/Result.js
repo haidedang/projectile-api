@@ -1,5 +1,8 @@
 import React from 'react';
 
+// styles
+import './Result.css'
+
 class ShowResult extends React.Component {
   constructor(props) {
     super(props);
@@ -9,22 +12,21 @@ class ShowResult extends React.Component {
     let messageList = []
 
     for (const item in messages) {
-      messageList.push(<li key={item}>{messages[item].message}</li>);
+      messageList.push(<div className="warn--info">{messages[item].message}</div>);
     }
+
     return messageList
   }
 
   render() {
     const { result } = this.props;
     if (result.status === 'ok') {
-      return <div className="result">{result.status}</div>;
+      return <div className="result success--font">Booking: {result.status}</div>;
     } else if (result.status === 'error'){
       return (
-        <div className="result">
-          <p>{result.status}</p>
-          <ul>
-            { this.createList(result.message) }
-          </ul>
+        <div className="result warn--border">
+          <p className="warn--font">{result.status}</p>
+          { this.createList(result.message) }
         </div>
       );
     }
