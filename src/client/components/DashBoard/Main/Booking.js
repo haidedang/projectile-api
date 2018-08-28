@@ -73,6 +73,7 @@ class Booking extends React.Component {
    * @returns {void}
    */
   handleClick(time) {
+    this.setState({result: ''});
     this.setState({ duration: time });
   }
 
@@ -96,12 +97,12 @@ class Booking extends React.Component {
       note: this.state.note
     });
 
-    this.setState({result: result});
-
     if (result.status === 'ok') {
       this.setState(this.getDefaultState());
       this.StopWatch.current.reset();
     }
+
+    this.setState({result: result});
   }
 
   /**
