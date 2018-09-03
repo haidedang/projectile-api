@@ -50,6 +50,8 @@ class StopWatch extends React.Component {
         }, 100);
       }
     );
+
+    this.props.removeResults();
   }
 
   stop() {

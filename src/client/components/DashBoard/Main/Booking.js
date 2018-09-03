@@ -5,6 +5,7 @@ import Select from 'react-select';
 // app stuff
 import BookingService from '../../../services/BookingService';
 import SessionStorage from '../../../utils/SessionStorage';
+import Result from './Result';
 import StopWatch from './StopWatch';
 import { normalizeDuration } from '../../../utils/timeFormat';
 
@@ -40,7 +41,8 @@ class Booking extends React.Component {
       StartDisplay: 'block',
       StopDisplay: 'none',
       note: '',
-      duration: 0
+      duration: 0,
+      result: ''
     };
   }
 
@@ -75,6 +77,15 @@ class Booking extends React.Component {
   }
 
   /**
+   * Remove the booking result.
+   *
+   * @returns {void}
+   */
+  removeResults() {
+    this.setState({ result: '' });
+  }
+
+  /**
    * When the submit button is triggered call the BookingService to save a new
    * booking entry.
    *
@@ -87,15 +98,19 @@ class Booking extends React.Component {
     let formattedDate = today.toISOString().substr(0, 10);
     let duration = normalizeDuration(this.state.duration);
 
-    await service.addBooking({
+    const result = await service.addBooking({
       date: formattedDate,
       duration: duration.toString(),
       activity: this.state.selectedOption.value,
       note: this.state.note
     });
 
-    this.setState(this.getDefaultState());
-    this.StopWatch.current.reset();
+    if (result.status === 'ok') {
+      this.setState(this.getDefaultState());
+      this.StopWatch.current.reset();
+    }
+
+    this.setState({result: result});
   }
 
   /**
@@ -137,6 +152,7 @@ class Booking extends React.Component {
           <StopWatch
             ref={this.StopWatch}
             handleClick={this.handleClick.bind(this)}
+            removeResults={this.removeResults.bind(this)}
           />
           <button
             className="btn btn-outline-success my-2 my-sm-0"
@@ -144,6 +160,7 @@ class Booking extends React.Component {
           >
             Book Entry
           </button>
+          <Result result={this.state.result}/>
         </div>
       </div>
     );
