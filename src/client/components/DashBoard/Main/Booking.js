@@ -73,8 +73,16 @@ class Booking extends React.Component {
    * @returns {void}
    */
   handleClick(time) {
-    this.setState({result: ''});
-    this.setState({ duration: time });
+    this.setState({ duration: time});
+  }
+
+  /**
+   * Remove the booking result.
+   *
+   * @returns {void}
+   */
+  removeResults() {
+    this.setState({ result: '' });
   }
 
   /**
@@ -144,6 +152,7 @@ class Booking extends React.Component {
           <StopWatch
             ref={this.StopWatch}
             handleClick={this.handleClick.bind(this)}
+            removeResults={this.removeResults.bind(this)}
           />
           <button
             className="btn btn-outline-success my-2 my-sm-0"
