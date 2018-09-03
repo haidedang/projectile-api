@@ -3,11 +3,17 @@ import React from 'react';
 // styles
 import './Result.css'
 
-class ShowResult extends React.Component {
+class Result extends React.Component {
   constructor(props) {
     super(props);
   }
 
+  /**
+   * Returns a list of warning messages.
+   *
+   * @param {object} messages A JSON object with error and warning messages
+   * @returns {Array} An array of prepared error and warning messages.
+   */
   createList(messages) {
     let messageList = []
 
@@ -18,6 +24,9 @@ class ShowResult extends React.Component {
     return messageList
   }
 
+  /**
+   * Render everything.
+   */
   render() {
     const { result } = this.props;
     if (result.status === 'ok') {
@@ -34,4 +43,4 @@ class ShowResult extends React.Component {
   }
 }
 
-export default ShowResult;
+export default Result;

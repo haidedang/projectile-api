@@ -5,7 +5,7 @@ import Select from 'react-select';
 // app stuff
 import BookingService from '../../../services/BookingService';
 import SessionStorage from '../../../utils/SessionStorage';
-import ShowResult from './Result';
+import Result from './Result';
 import StopWatch from './StopWatch';
 import { normalizeDuration } from '../../../utils/timeFormat';
 
@@ -160,7 +160,7 @@ class Booking extends React.Component {
           >
             Book Entry
           </button>
-          <ShowResult result={this.state.result}/>
+          <Result result={this.state.result}/>
         </div>
       </div>
     );
