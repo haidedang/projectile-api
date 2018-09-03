@@ -31,7 +31,8 @@ class Result extends React.Component {
     const { result } = this.props;
     if (result.status === 'ok') {
       return <div className="result success--font">Booking: {result.status}</div>;
-    } else if (result.status === 'error'){
+    } else {
+      /* error */
       return (
         <div className="result warn--border">
           <p className="warn--font">{result.status}</p>
@@ -39,7 +40,6 @@ class Result extends React.Component {
         </div>
       );
     }
-    return null;
   }
 }
 
