@@ -25,21 +25,41 @@ class Result extends React.Component {
   }
 
   /**
+   * Returns success status html.
+   *
+   * @param {string} status The status returned from API request
+   * @returns {html} The status as html output.
+   */
+  getSuccessMessage(status) {
+    return <div className="result success--font">Booking: {status}</div>;
+  }
+
+  /**
+   * Returns a list of formated warning messages and the status.
+   *
+   * @param {string} status The status returned from API request
+   * @param {Array} message An array of warning and error messages
+   * @returns {html} Html output.
+   */
+  getErrorMessage(status, message) {
+    return (
+      <div className="result warn--border">
+        <p className="warn--font">{status}</p>
+        { this.createList(message) }
+      </div>
+    );
+  }
+
+  /**
    * Render everything.
    */
   render() {
     const { result } = this.props;
+
     if (result.status === 'ok') {
-      return <div className="result success--font">Booking: {result.status}</div>;
-    } else {
-      /* error */
-      return (
-        <div className="result warn--border">
-          <p className="warn--font">{result.status}</p>
-          { this.createList(result.message) }
-        </div>
-      );
+      return this.getSuccessMessage(result.status);
     }
+    return this.getErrorMessage(result.status, result.message);
   }
 }
 
