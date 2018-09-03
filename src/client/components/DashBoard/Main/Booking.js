@@ -73,7 +73,7 @@ class Booking extends React.Component {
    * @returns {void}
    */
   handleClick(time) {
-    this.setState({ duration: time});
+    this.setState({ duration: time });
   }
 
   /**
