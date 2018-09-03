@@ -827,10 +827,8 @@ class ProjectileService {
         I assume that "d": true is marking a successfull update.
       */
       for (const item of resultSetDate.values[employee]) {
-        if (item.n === 'Begin') {
-          if (item.d === true) {
-            return true;
-          }
+        if (item.n === 'Begin' && item.d === true) {
+          return true;
         }
       }
       logger.warn('setCalenderDate --> Something went wrong. Date update not successfull.');
