@@ -728,7 +728,7 @@ class ProjectileService {
       }
 
     } else {
-      logger.debug('deleteEntry() -> resultDeletionRequest.dialog \'undefined\'. Can\'t proceed with deletion process.');
+      logger.debug('deleteEntry() -> resultDeletionRequest.dialog "undefined". Can\'t proceed with deletion process.');
     }
     logger.warn('deleteEntry() -> Deletion unsuccessfull.');
     return returnValue;
