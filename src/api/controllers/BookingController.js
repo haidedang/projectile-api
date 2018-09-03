@@ -125,6 +125,63 @@ class BookingController {
   }
 
   /**
+   * Static middleware to delete an activity.
+   *
+   * @param {object} req ExpressJS request object.
+   * @param {string} req.body.date Optional date value.
+   * @param {string} req.body.duration The duration time of the work on that activity.
+   * @param {string} req.body.activity An ID or the name of the activity, that was retrieved by the showList method.
+   * @param {string} req.body.note A description what has been done on that activity.
+   * @param {string} req.body.line The line represents the entrys position in the entry list retrieved for a specific day.
+   * @param {string} req.cookie Cookie from Projectile
+   * @param {string} req.employee  Projectile Employee ID
+   * @param {object} res ExpressJS response object.
+   * @param {string} res.status String with 'ok' or 'error'.
+   * @returns {void}
+   */
+  static async delete(req, res) {
+    try {
+      logger.debug(
+        '/delete -> starting deletion of entry...'
+      );
+      const projectile = new ProjectileService();
+      const json = req.body; // array of entry objects
+
+      // provide a fresh start to avoid issues, where setDate/deletion doesn't work all the time!
+      const resultRefresh = await projectile.refreshProjectile(req.cookie, req.employee)
+      logger.debug('/delete -> refresh of projectile successfull: ' + resultRefresh);
+
+      const resultDeleteEntry = await projectile.deleteEntry(
+        req.cookie,
+        req.employee,
+        json
+      );
+
+      if (resultDeleteEntry.returnValue === false) {
+        res.status(200).json({
+          status: 'error',
+          message: resultDeleteEntry.errors ? resultDeleteEntry.errors : ''
+        });
+        logger.warn('Deletion in projectile unsuccessfull!');
+        return;
+      }
+
+      res.status(200).json({
+        status: 'ok'
+      });
+      logger.debug('Deletion in projectile successfull.');
+      return;
+    } catch (e) {
+      res.status(200).json({
+        status: 'error',
+        message: e.message
+      });
+      logger.error('Something went wrong - /delete');
+      logger.error(e.stack);
+    }
+  }
+
+  /**
    * Static middleware to handle getdaylist route.
    *
    * @param {object} req ExpressJS request object.
