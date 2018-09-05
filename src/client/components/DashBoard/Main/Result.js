@@ -58,8 +58,10 @@ class Result extends React.Component {
 
     if (result.status === 'ok') {
       return this.getSuccessMessage(result.status);
+    } else if (result.status === 'error') {
+      return this.getErrorMessage(result.status, result.message);
     }
-    return this.getErrorMessage(result.status, result.message);
+    return null;
   }
 }
 
