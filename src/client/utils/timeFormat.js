@@ -32,5 +32,5 @@ export function normalizeDuration(time) {
   } else if (time.includes(',')) {
     time = time.replace(',', '.');
   }
-  return parseFloat(time); // FIXME same for booking.js?
+  return parseFloat(time);
 }
