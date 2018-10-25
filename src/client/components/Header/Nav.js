@@ -50,10 +50,24 @@ class Nav extends React.Component {
   render() {
     return (
       <nav className="navbar navbar-light bg-light justify-content-between">
-        <Link to="/dashboard" className="navbar-brand">
-          Projectile API
-        </Link>
+        <div>
+          <span className="navbar-brand">
+            Projectile API
+          </span>
+          <span className="navbar-text">
+            Webclient
+          </span>
+        </div>
+
+        <div className="navbar">
+          <Link to="/dashboard" className="nav-item nav-link">
+            Stopwatch</Link>
+          <Link to="/booking" className="nav-item nav-link">
+            Booking</Link>
+        </div>
+
         {this.renderButtons()}
+
       </nav>
     );
   }
