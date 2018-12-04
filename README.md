@@ -1,69 +1,54 @@
 # Projectile API
 
-API and CLI to access projectile and timeular to book and synchronize bookings from timeular to projectile.
+API to access projectile to book and synchronize bookings.
+
+## API
 
 ### Setup and Running
 
 ```
-yarn install
-LOGIN={your projectile login} PASSWORD={your projectile password} node userCred.js
-```
-Go to https://profile.timeular.com/ and create an API key and API Secret and provide it here as an environment variable:
-```
-apiKey=<key> apiSecret=<key> node getTimeularToken.js
-```
-To run the CLI
-```
-node cli.js
-```
-To run the API
-```
-node api.js
+$ yarn install
+$ yarn build # builds the api documentation
+$ yarn api   # starts the api
 ```
 
-## available features
-# API
-http://localhost:3000/syncactivities --> synchronizes projectile joblist/packages to timeular activities
-http://localhost:3000/syncbookings/{value} --> synchronize timeular bookings to projectile. Options: today, week, month
-http://localhost:3000/syncbookings/{startdate}/{enddate} --> synchronize timeular bookings to projectile. Provide start- and end date in format YYYY-MM-DD.
+You can access the API at http://localhost:3000 and the documentation under
+http://localhost:3000/api/doc.
 
-Booking: nur auf Timeular, nur auf Projectile oder immer gleich auf beidem?!
-derzeit direkt auf beidem - PoC
-http://localhost:3000/book/2018-03-07/1.75/127170/testing
-http://localhost:3000/book/2018-03-07/1.75/2759-62/testing
+### Authentication
 
-booking without date may be removed in favor for booking without a note
+The API is using JSON Web Token to identify a user after its first login. This token has to be added to the
+_Authorization_ header with the _Bearer_ method. Further information on that can be found in the API documentation.  
 
-http://localhost:3000/showListProjectile
-http://localhost:3000/showListTimeular
+At first, a client has to call the `login` route with the users credentials for Projectile. As a result it gets the
+token that contains the cookie information and the expiration time of Projectile.  
 
+If the expiration time is up it returns an error `Unauthorized`. Then the login route has to be called again to get a
+new token.
 
-Not stable yet.
+The handling of the user credentials is with the client. From there it is possible to use the keychain/keyring of the
+operating system to store the user credentials encrypted. There are ways on any major operating system to do that. 
+But depending on the security awareness of the client developer it is also possible to save the credentials within an
+unencrypted text file.  
 
-http://localhost:3000/book/{date}/{time}/{package/activity}/{note} - still an issue with time value
+### Status
 
-# CLI
-( - not fully updated - )
-(show) - show job package list - to get the jobnames for booking
-(book) book working time
-(bookjob) book working time, interactively chose target job package
-(sync) - Timeular sync
-sync {startdate} {enddate}
-sync {today} or {week} or {month}
-(help) list of available commands
-(exit) exit
+The API is currently under heavy development. We have changed the structure a little bit to fit the needs of further
+maintenance. Also we are working hardly on the routes for booking and editing to get everything important up and running
+again as soon as possible.
 
+What actually already works is the _login_ and _authentication_ stuff.
 
-## todo
+## Client
 
+To test the client you have to checkout the master branch where everything is at an older state. The current client has
+to be adjusted in some areas to fit to the new API structure so it wont work actually. 
 
-* make everything nice
+### Forecast
 
+We have planned a web client that is already available but not yet functional and also an Electron App that uses the web
+client to give the user a better experience. For example it is planned to build in the functionality for the
+keychain/keyring mechanism to allow users to pass their credentials only once. Furthermore the Electron App could better handle
+synchronization errors that are caused by a lag of network access to the API which can be accomplished through an internal database 
+and a proper synchronization process.
 
-## done
-
-* read booking packages
-* read vacation list
-* set default Employer ID for follwing calls
-* write bookings
-* simple CLI program interface

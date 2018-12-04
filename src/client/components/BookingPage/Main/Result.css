@@ -1,0 +1,27 @@
+.result {
+  margin-top: 2rem;
+  border-style: solid;
+  border-width: 2px;
+  border-color: green;
+}
+
+.success--font {
+  color: green;
+}
+
+.warn--border {
+  border-color: red;
+}
+
+.warn--font {
+  color: red;
+}
+
+li {
+  font-size: 0.3rem;
+}
+
+.warn--info {
+  margin-bottom: 0.5rem;
+  font-size: 0.75rem;
+}

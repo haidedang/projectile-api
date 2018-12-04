@@ -99,7 +99,6 @@ let token;
 
 let cookie = '';
 let employee = '';
-let jobList = '';
 
 const defaultInterval = 300000; // 5min
 const defaultProjectileAliveInterval = 10000;
@@ -185,7 +184,7 @@ cyclicPackageSync = async function() {
     }
   } catch (e) {
     winston.warn('cyclicPackageSync() -> Failed to run cyclicPackageSync() with setTimeout.');
-    setTimeout(cyclicPackageSync, config.timeOutForSync ||  defaultInterval);
+    setTimeout(cyclicPackageSync, config.timeOutForSync || defaultInterval);
   }
 };
 
@@ -713,7 +712,7 @@ app.get(basePath + '/editing', (req, res) => {
 app.post(basePath + '/editing', async(req, res) => {
   winston.debug('editing results entered.');
   try {
-    let json = req.body;
+    const json = req.body;
     /*
     currentJson.valuesAfterChange
     currentJson.valuesBeforeChange
@@ -729,10 +728,9 @@ app.post(basePath + '/editing', async(req, res) => {
     if (json.changes){
       winston.debug('/editing -> Changes is true!');
 
-      for (const index in json.valuesAfterChange) { // for...in => index no
+      for (const index in json.valuesAfterChange) {
         const item = json.valuesAfterChange[index];
         if (JSON.stringify(json.valuesBeforeChange[index]) !== JSON.stringify(item)) {
-          console.log('####');
           winston.debug('/editing -> Difference detected. Update triggered.', item.line);
           // exports.delete for delete route
           // exports.deleteEntry
@@ -767,15 +765,15 @@ app.get(basePath + '/bookingslist/:date/:date2?', async(req, res) => {
   winston.debug('bookingslist website entered.');
   // projectile.setCalendarDate(req.params.date);
   // const dayList = await projectile.getDayListToday();
-  const dayList = await projectile.getallEntriesInTimeFrame(req.params.date, req.params.date2 ? req.params.date2 : req.params.date);
+  const dayList = await projectile.getallEntriesInTimeFrame(req.params.date, req.params.date2 || req.params.date);
 
-  let dayListJSON = {};
+  const dayListJSON = {};
   dayListJSON['employee'] = employee;
   // dayListJSON['values'] = dayList2.values;
   dayListJSON['values'] = [];
   // console.log(dayList2.values[employee][2].v.length);
   for (let i = 0; i < dayList.values[employee][2].v.length; i++) {
-    let obj = {};
+    const obj = {};
     obj.date = dayList.values['+.|DayList|' + i + '|' + employee][32].v; // date
     obj.duration = dayList.values['+.|DayList|' + i + '|' + employee][5].v; // duration
     obj.packageNo = dayList.values['+.|DayList|' + i + '|' + employee][8].v; // packageNo
@@ -788,7 +786,8 @@ app.get(basePath + '/bookingslist/:date/:date2?', async(req, res) => {
   }
   // dayListJSON.values.push({})
 
-  // iterate through json, find entries WITH time value !== null, add to array with 4 values object, provide employee string
+  // iterate through json, find entries WITH time value !== null,
+  // add to array with 4 values object, provide employee string
 
   res.status(200).send(dayListJSON);
   // res.status(200).send(JSON.stringify(dayList2));
